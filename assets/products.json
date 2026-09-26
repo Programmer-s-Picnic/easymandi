@@ -1,19 +1,143 @@
 {
   "version": 1,
   "currency": "INR",
-  "store": {"name": "Easy Mandi", "tagline": "Fresh vegetables, simply delivered", "city": "Varanasi", "supportPhone": "+919335874326", "deliveryFee": 30, "freeDeliveryAbove": 499, "minimumOrder": 99, "deliveryNote": "Demo service area: Varanasi. Delivery availability and prices are confirmed before fulfillment."},
-  "categories": ["All", "Vegetables", "Leafy greens", "Essentials"],
+  "store": {
+    "name": "Easy Mandi",
+    "tagline": "Fresh vegetables, simply delivered",
+    "city": "Varanasi",
+    "supportPhone": "",
+    "deliveryFee": 30,
+    "freeDeliveryAbove": 499,
+    "minimumOrder": 99,
+    "deliveryNote": "Demo service area: Varanasi. Delivery availability and prices are confirmed before fulfillment."
+  },
+  "categories": [
+    "All",
+    "Vegetables",
+    "Leafy greens",
+    "Essentials"
+  ],
   "products": [
-    {"id":"onion","name":"Onion","hindi":"प्याज","category":"Vegetables","unit":"1 kg","price":40,"description":"Everyday kitchen onions","emoji":"🧅","available":true},
-    {"id":"potato","name":"Potato","hindi":"आलू","category":"Vegetables","unit":"1 kg","price":35,"description":"Fresh potatoes for daily cooking","emoji":"🥔","available":true},
-    {"id":"tomato","name":"Tomato","hindi":"टमाटर","category":"Vegetables","unit":"1 kg","price":50,"description":"Ripe, versatile tomatoes","emoji":"🍅","available":true},
-    {"id":"carrot","name":"Carrot","hindi":"गाजर","category":"Vegetables","unit":"500 g","price":35,"description":"Crisp seasonal carrots","emoji":"🥕","available":true},
-    {"id":"cauliflower","name":"Cauliflower","hindi":"फूलगोभी","category":"Vegetables","unit":"1 piece","price":45,"description":"Fresh whole cauliflower","emoji":"🥦","available":true},
-    {"id":"cabbage","name":"Cabbage","hindi":"पत्तागोभी","category":"Vegetables","unit":"1 piece","price":40,"description":"Firm and fresh cabbage","emoji":"🥬","available":true},
-    {"id":"spinach","name":"Spinach","hindi":"पालक","category":"Leafy greens","unit":"1 bunch","price":25,"description":"Fresh leafy spinach","emoji":"🥬","available":true},
-    {"id":"coriander","name":"Coriander","hindi":"धनिया","category":"Leafy greens","unit":"1 bunch","price":15,"description":"Fragrant coriander leaves","emoji":"🌿","available":true},
-    {"id":"green_chilli","name":"Green chilli","hindi":"हरी मिर्च","category":"Essentials","unit":"100 g","price":15,"description":"Add a fresh kick to meals","emoji":"🌶️","available":true},
-    {"id":"ginger","name":"Ginger","hindi":"अदरक","category":"Essentials","unit":"250 g","price":40,"description":"Fresh ginger for cooking and tea","emoji":"🫚","available":true},
-    {"id":"garlic","name":"Garlic","hindi":"लहसुन","category":"Essentials","unit":"250 g","price":45,"description":"Aromatic garlic bulbs","emoji":"🧄","available":true}
+    {
+      "id": "onion",
+      "name": "Onion",
+      "hindi": "प्याज",
+      "category": "Vegetables",
+      "unit": "1 kg",
+      "price": 40,
+      "description": "Everyday kitchen onions",
+      "emoji": "🧅",
+      "available": true
+    },
+    {
+      "id": "potato",
+      "name": "Potato",
+      "hindi": "आलू",
+      "category": "Vegetables",
+      "unit": "1 kg",
+      "price": 35,
+      "description": "Fresh potatoes for daily cooking",
+      "emoji": "🥔",
+      "available": true
+    },
+    {
+      "id": "tomato",
+      "name": "Tomato",
+      "hindi": "टमाटर",
+      "category": "Vegetables",
+      "unit": "1 kg",
+      "price": 50,
+      "description": "Ripe, versatile tomatoes",
+      "emoji": "🍅",
+      "available": true
+    },
+    {
+      "id": "carrot",
+      "name": "Carrot",
+      "hindi": "गाजर",
+      "category": "Vegetables",
+      "unit": "500 g",
+      "price": 35,
+      "description": "Crisp seasonal carrots",
+      "emoji": "🥕",
+      "available": true
+    },
+    {
+      "id": "cauliflower",
+      "name": "Cauliflower",
+      "hindi": "फूलगोभी",
+      "category": "Vegetables",
+      "unit": "1 piece",
+      "price": 45,
+      "description": "Fresh whole cauliflower",
+      "emoji": "🥦",
+      "available": true
+    },
+    {
+      "id": "cabbage",
+      "name": "Cabbage",
+      "hindi": "पत्तागोभी",
+      "category": "Vegetables",
+      "unit": "1 piece",
+      "price": 40,
+      "description": "Firm and fresh cabbage",
+      "emoji": "🥬",
+      "available": true
+    },
+    {
+      "id": "spinach",
+      "name": "Spinach",
+      "hindi": "पालक",
+      "category": "Leafy greens",
+      "unit": "1 bunch",
+      "price": 25,
+      "description": "Fresh leafy spinach",
+      "emoji": "🥬",
+      "available": true
+    },
+    {
+      "id": "coriander",
+      "name": "Coriander",
+      "hindi": "धनिया",
+      "category": "Leafy greens",
+      "unit": "1 bunch",
+      "price": 15,
+      "description": "Fragrant coriander leaves",
+      "emoji": "🌿",
+      "available": true
+    },
+    {
+      "id": "green_chilli",
+      "name": "Green chilli",
+      "hindi": "हरी मिर्च",
+      "category": "Essentials",
+      "unit": "100 g",
+      "price": 15,
+      "description": "Add a fresh kick to meals",
+      "emoji": "🌶️",
+      "available": true
+    },
+    {
+      "id": "ginger",
+      "name": "Ginger",
+      "hindi": "अदरक",
+      "category": "Essentials",
+      "unit": "250 g",
+      "price": 40,
+      "description": "Fresh ginger for cooking and tea",
+      "emoji": "🫚",
+      "available": true
+    },
+    {
+      "id": "garlic",
+      "name": "Garlic",
+      "hindi": "लहसुन",
+      "category": "Essentials",
+      "unit": "250 g",
+      "price": 45,
+      "description": "Aromatic garlic bulbs",
+      "emoji": "🧄",
+      "available": true
+    }
   ]
 }
