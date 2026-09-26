@@ -8,8 +8,6 @@ Install Flutter, then run `flutter create --platforms=android --org in.easymandi
 
 ## Client demo
 
-Browse/search products, filter by category, change quantities, review delivery and total, and share the order via WhatsApp. Checkout is an order enquiry, not a paid order. The demo leaves the WhatsApp recipient selectable; set `store.supportPhone` in the JSON to a confirmed business number before taking real orders. Prices and availability are illustrative until confirmed. The app does not collect payment or transmit addresses to Easy Mandi servers.
+Browse/search products, filter by category, change quantities, review delivery and total, and share the order via WhatsApp. Checkout is an order enquiry, not a paid order. Prices and availability are illustrative until confirmed. The app does not collect payment or transmit addresses to Easy Mandi servers.
 
-## Contact and address format
-
-The checkout requires a 10-digit Indian mobile number beginning with 6–9, house/building, street/locality, and a six-digit Indian PIN. The demo delivery city is Varanasi. The WhatsApp enquiry includes the formatted +91 number and full address.
+The Android app keeps basket quantities and saved delivery addresses in a device-local SQLite database. Checkout can select, edit, or delete saved addresses. The first launch after updating moves a previously saved basket from SharedPreferences into SQLite. Uninstalling or clearing app storage removes these records; they are not synchronized across devices. The static web preview uses browser storage and does not share Android's SQLite database.
