@@ -18,21 +18,8 @@ jobs:
         run: |
           sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/><application/' android/app/src/main/AndroidManifest.xml
           sed -i 's/android:label="easy_mandi"/android:label="Easy Mandi"/' android/app/src/main/AndroidManifest.xml
-      - name: Remove generated template checks
-        run: rm -rf test analysis_options.yaml
       - run: flutter pub get
       - run: flutter analyze
-      - name: Restore demo signing key
-        uses: actions/cache@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: easy-mandi-demo-signing-v1
-      - name: Create demo signing key if absent
-        run: |
-          mkdir -p "$HOME/.android"
-          if [ ! -f "$HOME/.android/debug.keystore" ]; then
-            keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
-          fi
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
