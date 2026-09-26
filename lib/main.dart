@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'local_store.dart';
 
 const catalogUrl =
     'https://raw.githubusercontent.com/Programmer-s-Picnic/easymandidata/main/catalog/products.json';
@@ -62,6 +62,7 @@ class _StorePageState extends State<StorePage> {
   Map<String, dynamic> checkoutRules = {};
   List<String> categories = ['All'];
   final Map<String, int> cart = {};
+  Future<void> _cartWrite = Future.value();
   String category = 'All', query = '', message = '';
   bool loading = true, usingOffline = false;
 
@@ -92,8 +93,8 @@ class _StorePageState extends State<StorePage> {
     try {
       final data = jsonDecode(raw) as Map<String, dynamic>;
       final parsed = (data['products'] as List).map((e) => Product(e as Map<String, dynamic>)).toList();
-      final prefs = await SharedPreferences.getInstance();
-      final saved = jsonDecode(prefs.getString('cart') ?? '{}') as Map<String, dynamic>;
+      await _cartWrite;
+      final saved = await LocalStore.instance.loadCart();
       if (!mounted) return;
       setState(() {
         products = parsed;
@@ -120,7 +121,10 @@ class _StorePageState extends State<StorePage> {
       final next = ((cart[p.id] ?? 0) + difference).clamp(0, 99);
       if (next == 0) { cart.remove(p.id); } else { cart[p.id] = next; }
     });
-    SharedPreferences.getInstance().then((prefs) => prefs.setString('cart', jsonEncode(cart)));
+    final quantity = cart[p.id] ?? 0;
+    _cartWrite = _cartWrite.then((_) => LocalStore.instance.setQuantity(p.id, quantity)).catchError((Object error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save the basket on this device.')));
+    });
   }
 
   int get count => cart.values.fold(0, (a, b) => a + b);
@@ -146,15 +150,39 @@ class _StorePageState extends State<StorePage> {
     final city = store['city'] as String? ?? 'Varanasi';
     final state = checkoutRules['state'] as String? ?? 'Uttar Pradesh';
     final form = GlobalKey<FormState>();
+    List<SavedAddress> savedAddresses;
+    try {
+      savedAddresses = await LocalStore.instance.loadAddresses();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved addresses are unavailable on this device.')));
+      return;
+    }
+    if (!mounted) return;
+    SavedAddress? selectedAddress;
+    bool saveNewAddress = true;
     final submitted = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => StatefulBuilder(builder: (dialogContext, updateDialog) => AlertDialog(
         title: const Text('Send order enquiry'),
         content: Form(
           key: form,
           child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Text('Your details will be included in a WhatsApp message. Confirm the final price and delivery with Easy Mandi.'),
             const SizedBox(height: 16),
+            if (savedAddresses.isNotEmpty) DropdownButtonFormField<int?>(
+              value: selectedAddress?.id,
+              decoration: const InputDecoration(labelText: 'Delivery address'),
+              items: [const DropdownMenuItem<int?>(value: null, child: Text('Use a new address')),
+                ...savedAddresses.map((a) => DropdownMenuItem<int?>(value: a.id, child: Text('${a.house}, ${a.locality} • ${a.pin}', overflow: TextOverflow.ellipsis)))],
+              onChanged: (id) => updateDialog(() {
+                selectedAddress = id == null ? null : savedAddresses.firstWhere((a) => a.id == id);
+                final a = selectedAddress;
+                name.text = a?.name ?? ''; phone.text = a?.phone ?? '';
+                house.text = a?.house ?? ''; locality.text = a?.locality ?? '';
+                landmark.text = a?.landmark ?? ''; pin.text = a?.pin ?? '';
+              }),
+            ),
+            if (savedAddresses.isNotEmpty) const SizedBox(height: 10),
             TextFormField(controller: name, decoration: const InputDecoration(labelText: 'Your name'), textCapitalization: TextCapitalization.words, validator: (v) => v == null || v.trim().isEmpty ? 'Enter your name' : null),
             const SizedBox(height: 10),
             TextFormField(
@@ -180,15 +208,45 @@ class _StorePageState extends State<StorePage> {
             ),
             const SizedBox(height: 10),
             Text('Delivery city: $city, $state', style: Theme.of(dialogContext).textTheme.bodySmall),
+            if (selectedAddress == null) CheckboxListTile(
+              contentPadding: EdgeInsets.zero, title: const Text('Save this address on this device'),
+              value: saveNewAddress, onChanged: (value) => updateDialog(() => saveNewAddress = value ?? false),
+            ),
+            if (selectedAddress != null) TextButton.icon(
+              onPressed: () async {
+                await LocalStore.instance.deleteAddress(selectedAddress!.id!);
+                if (!dialogContext.mounted) return;
+                updateDialog(() {
+                  savedAddresses.removeWhere((a) => a.id == selectedAddress!.id);
+                  selectedAddress = null;
+                  name.clear(); phone.clear(); house.clear(); locality.clear(); landmark.clear(); pin.clear();
+                });
+              }, icon: const Icon(Icons.delete_outline), label: const Text('Delete saved address'),
+            ),
           ])),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
           FilledButton(onPressed: () { if (form.currentState!.validate()) Navigator.pop(dialogContext, true); }, child: const Text('Open WhatsApp')),
         ],
-      ),
+      )),
     );
     if (submitted != true || !mounted) return;
+    if (saveNewAddress && selectedAddress == null) {
+      try {
+        await LocalStore.instance.saveAddress(SavedAddress(name: name.text.trim(), phone: phone.text.trim(),
+          house: house.text.trim(), locality: locality.text.trim(), landmark: landmark.text.trim(), pin: pin.text.trim()));
+      } catch (_) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address could not be saved; the enquiry can still be sent.')));
+      }
+    } else if (selectedAddress != null) {
+      try {
+        await LocalStore.instance.saveAddress(SavedAddress(id: selectedAddress!.id, name: name.text.trim(), phone: phone.text.trim(),
+          house: house.text.trim(), locality: locality.text.trim(), landmark: landmark.text.trim(), pin: pin.text.trim()));
+      } catch (_) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address changes could not be saved.')));
+      }
+    }
     final lines = products.where((p) => cart.containsKey(p.id)).map((p) => '• ${p.name} (${p.unit}) × ${cart[p.id]} — ${money(p.price * cart[p.id]!)}').join('\n');
     final address = [house.text.trim(), locality.text.trim(), if (landmark.text.trim().isNotEmpty) 'Near ${landmark.text.trim()}', '$city, $state - ${pin.text.trim()}'].join(', ');
     final body = 'Hello Easy Mandi, I would like to enquire about this order:\n\n$lines\n\nSubtotal: ${money(subtotal)}\nDelivery: ${fee == 0 ? 'Free' : money(fee)}\nEstimated total: ${money(subtotal + fee)}\n\nName: ${name.text.trim()}\nMobile: $countryCode ${phone.text.trim()}\nAddress: $address\n\nPlease confirm availability, final price and delivery time.';
