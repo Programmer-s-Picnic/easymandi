@@ -1,0 +1,28 @@
+name: Build Easy Mandi APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Create Android project
+        run: flutter create --platforms=android --org in.easymandi .
+      - name: Enable network access and app name
+        run: |
+          sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/><application/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/android:label="easy_mandi"/android:label="Easy Mandi"/' android/app/src/main/AndroidManifest.xml
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: easy-mandi-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
