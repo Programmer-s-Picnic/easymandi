@@ -139,5 +139,14 @@
       "emoji": "🧄",
       "available": true
     }
-  ]
+  ],
+  "checkout": {
+    "countryCode": "+91",
+    "mobilePattern": "^[6-9][0-9]{9}$",
+    "mobileExample": "9876543210",
+    "pinPattern": "^[1-9][0-9]{5}$",
+    "pinExample": "221005",
+    "state": "Uttar Pradesh",
+    "addressExample": "House 12, Lanka, Varanasi, Uttar Pradesh 221005"
+  }
 }

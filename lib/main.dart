@@ -59,6 +59,7 @@ class StorePage extends StatefulWidget {
 class _StorePageState extends State<StorePage> {
   List<Product> products = [];
   Map<String, dynamic> store = {};
+  Map<String, dynamic> checkoutRules = {};
   List<String> categories = ['All'];
   final Map<String, int> cart = {};
   String category = 'All', query = '', message = '';
@@ -97,6 +98,7 @@ class _StorePageState extends State<StorePage> {
       setState(() {
         products = parsed;
         store = data['store'] as Map<String, dynamic>;
+        checkoutRules = data['checkout'] as Map<String, dynamic>? ?? {};
         categories = (data['categories'] as List).cast<String>();
         cart.clear();
         for (final e in saved.entries) {
@@ -134,7 +136,15 @@ class _StorePageState extends State<StorePage> {
     }
     final name = TextEditingController();
     final phone = TextEditingController();
-    final address = TextEditingController();
+    final house = TextEditingController();
+    final locality = TextEditingController();
+    final landmark = TextEditingController();
+    final pin = TextEditingController();
+    final countryCode = checkoutRules['countryCode'] as String? ?? '+91';
+    final mobilePattern = RegExp(checkoutRules['mobilePattern'] as String? ?? r'^[6-9][0-9]{9}$');
+    final pinPattern = RegExp(checkoutRules['pinPattern'] as String? ?? r'^[1-9][0-9]{5}$');
+    final city = store['city'] as String? ?? 'Varanasi';
+    final state = checkoutRules['state'] as String? ?? 'Uttar Pradesh';
     final form = GlobalKey<FormState>();
     final submitted = await showDialog<bool>(
       context: context,
@@ -147,9 +157,29 @@ class _StorePageState extends State<StorePage> {
             const SizedBox(height: 16),
             TextFormField(controller: name, decoration: const InputDecoration(labelText: 'Your name'), textCapitalization: TextCapitalization.words, validator: (v) => v == null || v.trim().isEmpty ? 'Enter your name' : null),
             const SizedBox(height: 10),
-            TextFormField(controller: phone, decoration: const InputDecoration(labelText: 'Mobile number'), keyboardType: TextInputType.phone, validator: (v) => RegExp(r'^[0-9]{10}$').hasMatch(v?.trim() ?? '') ? null : 'Enter a 10-digit number'),
+            TextFormField(
+              controller: phone,
+              decoration: InputDecoration(labelText: 'Mobile number', prefixText: '$countryCode ', hintText: checkoutRules['mobileExample'] as String? ?? '9876543210', helperText: '10 digits, starting with 6, 7, 8 or 9'),
+              keyboardType: TextInputType.phone,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
+              validator: (v) => mobilePattern.hasMatch(v?.trim() ?? '') ? null : 'Enter a valid 10-digit Indian mobile number',
+            ),
             const SizedBox(height: 10),
-            TextFormField(controller: address, decoration: const InputDecoration(labelText: 'Delivery address', alignLabelWithHint: true), maxLines: 2, validator: (v) => v == null || v.trim().length < 10 ? 'Enter your full address' : null),
+            TextFormField(controller: house, decoration: const InputDecoration(labelText: 'House / flat / building', hintText: 'House 12'), textCapitalization: TextCapitalization.words, validator: (v) => (v?.trim().length ?? 0) >= 2 ? null : 'Enter a house or building number/name'),
+            const SizedBox(height: 10),
+            TextFormField(controller: locality, decoration: const InputDecoration(labelText: 'Street / locality', hintText: 'Lanka'), textCapitalization: TextCapitalization.words, validator: (v) => (v?.trim().length ?? 0) >= 5 ? null : 'Enter the street or locality (at least 5 characters)'),
+            const SizedBox(height: 10),
+            TextFormField(controller: landmark, decoration: const InputDecoration(labelText: 'Landmark (optional)'), textCapitalization: TextCapitalization.words),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: pin,
+              decoration: InputDecoration(labelText: 'PIN code', hintText: checkoutRules['pinExample'] as String? ?? '221005', helperText: '6-digit Indian PIN code'),
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
+              validator: (v) => pinPattern.hasMatch(v?.trim() ?? '') ? null : 'Enter a valid 6-digit PIN code',
+            ),
+            const SizedBox(height: 10),
+            Text('Delivery city: $city, $state', style: Theme.of(dialogContext).textTheme.bodySmall),
           ])),
         ),
         actions: [
@@ -160,7 +190,8 @@ class _StorePageState extends State<StorePage> {
     );
     if (submitted != true || !mounted) return;
     final lines = products.where((p) => cart.containsKey(p.id)).map((p) => '• ${p.name} (${p.unit}) × ${cart[p.id]} — ${money(p.price * cart[p.id]!)}').join('\n');
-    final body = 'Hello Easy Mandi, I would like to enquire about this order:\n\n$lines\n\nSubtotal: ${money(subtotal)}\nDelivery: ${fee == 0 ? 'Free' : money(fee)}\nEstimated total: ${money(subtotal + fee)}\n\nName: ${name.text.trim()}\nMobile: ${phone.text.trim()}\nAddress: ${address.text.trim()}\n\nPlease confirm availability, final price and delivery time.';
+    final address = [house.text.trim(), locality.text.trim(), if (landmark.text.trim().isNotEmpty) 'Near ${landmark.text.trim()}', '$city, $state - ${pin.text.trim()}'].join(', ');
+    final body = 'Hello Easy Mandi, I would like to enquire about this order:\n\n$lines\n\nSubtotal: ${money(subtotal)}\nDelivery: ${fee == 0 ? 'Free' : money(fee)}\nEstimated total: ${money(subtotal + fee)}\n\nName: ${name.text.trim()}\nMobile: $countryCode ${phone.text.trim()}\nAddress: $address\n\nPlease confirm availability, final price and delivery time.';
     final support = (store['supportPhone'] as String? ?? '').replaceAll(RegExp(r'\D'), '');
     final uri = Uri.parse('https://wa.me/$support?text=${Uri.encodeComponent(body)}');
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
