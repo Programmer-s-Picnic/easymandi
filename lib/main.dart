@@ -103,8 +103,8 @@ class _StorePageState extends State<StorePage> {
         categories = (data['categories'] as List).cast<String>();
         cart.clear();
         for (final e in saved.entries) {
-          if (parsed.any((p) => p.id == e.key && p.available) && e.value is int && (e.value as int) > 0) {
-            cart[e.key] = (e.value as int).clamp(1, 99);
+          if (parsed.any((p) => p.id == e.key && p.available) && e.value > 0) {
+            cart[e.key] = e.value.clamp(1, 99);
           }
         }
         usingOffline = offline;
@@ -170,7 +170,8 @@ class _StorePageState extends State<StorePage> {
             const Text('Your details will be included in a WhatsApp message. Confirm the final price and delivery with Easy Mandi.'),
             const SizedBox(height: 16),
             if (savedAddresses.isNotEmpty) DropdownButtonFormField<int?>(
-              value: selectedAddress?.id,
+              key: ValueKey(selectedAddress?.id),
+              initialValue: selectedAddress?.id,
               decoration: const InputDecoration(labelText: 'Delivery address'),
               items: [const DropdownMenuItem<int?>(value: null, child: Text('Use a new address')),
                 ...savedAddresses.map((a) => DropdownMenuItem<int?>(value: a.id, child: Text('${a.house}, ${a.locality} • ${a.pin}', overflow: TextOverflow.ellipsis)))],
