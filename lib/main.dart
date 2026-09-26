@@ -1,0 +1,253 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+const catalogUrl =
+    'https://raw.githubusercontent.com/Programmer-s-Picnic/easymandidata/main/catalog/products.json';
+const forest = Color(0xFF176B46);
+const pale = Color(0xFFF4F8F3);
+
+void main() => runApp(const EasyMandiApp());
+
+class Product {
+  Product(Map<String, dynamic> json)
+      : id = json['id'] as String,
+        name = json['name'] as String,
+        hindi = json['hindi'] as String? ?? '',
+        category = json['category'] as String,
+        unit = json['unit'] as String,
+        price = (json['price'] as num).toInt(),
+        description = json['description'] as String? ?? '',
+        emoji = json['emoji'] as String? ?? '🥬',
+        available = json['available'] as bool? ?? true;
+  final String id, name, hindi, category, unit, description, emoji;
+  final int price;
+  final bool available;
+}
+
+class EasyMandiApp extends StatelessWidget {
+  const EasyMandiApp({super.key});
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+        title: 'Easy Mandi',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(seedColor: forest, surface: pale),
+          scaffoldBackgroundColor: pale,
+          appBarTheme: const AppBarTheme(backgroundColor: pale),
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          ),
+        ),
+        home: const StorePage(),
+      );
+}
+
+class StorePage extends StatefulWidget {
+  const StorePage({super.key});
+  @override
+  State<StorePage> createState() => _StorePageState();
+}
+
+class _StorePageState extends State<StorePage> {
+  List<Product> products = [];
+  Map<String, dynamic> store = {};
+  List<String> categories = ['All'];
+  final Map<String, int> cart = {};
+  String category = 'All', query = '', message = '';
+  bool loading = true, usingOffline = false;
+
+  @override
+  void initState() {
+    super.initState();
+    loadCatalog();
+  }
+
+  Future<void> loadCatalog() async {
+    if (mounted) setState(() => loading = true);
+    String? raw;
+    var offline = false;
+    try {
+      final client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
+      try {
+        final request = await client.getUrl(Uri.parse(catalogUrl));
+        final response = await request.close().timeout(const Duration(seconds: 8));
+        if (response.statusCode != 200) throw const HttpException('Catalog unavailable');
+        raw = await response.transform(utf8.decoder).join();
+      } finally {
+        client.close(force: true);
+      }
+    } catch (_) {
+      offline = true;
+      raw = await rootBundle.loadString('assets/products.json');
+    }
+    try {
+      final data = jsonDecode(raw) as Map<String, dynamic>;
+      final parsed = (data['products'] as List).map((e) => Product(e as Map<String, dynamic>)).toList();
+      final prefs = await SharedPreferences.getInstance();
+      final saved = jsonDecode(prefs.getString('cart') ?? '{}') as Map<String, dynamic>;
+      if (!mounted) return;
+      setState(() {
+        products = parsed;
+        store = data['store'] as Map<String, dynamic>;
+        categories = (data['categories'] as List).cast<String>();
+        cart.clear();
+        for (final e in saved.entries) {
+          if (parsed.any((p) => p.id == e.key && p.available) && e.value is int && (e.value as int) > 0) {
+            cart[e.key] = (e.value as int).clamp(1, 99);
+          }
+        }
+        usingOffline = offline;
+        loading = false;
+        message = '';
+      });
+    } catch (_) {
+      if (mounted) setState(() { loading = false; message = 'Could not load the catalog. Please try again.'; });
+    }
+  }
+
+  void changeQuantity(Product p, int difference) {
+    setState(() {
+      final next = ((cart[p.id] ?? 0) + difference).clamp(0, 99);
+      if (next == 0) { cart.remove(p.id); } else { cart[p.id] = next; }
+    });
+    SharedPreferences.getInstance().then((prefs) => prefs.setString('cart', jsonEncode(cart)));
+  }
+
+  int get count => cart.values.fold(0, (a, b) => a + b);
+  int get subtotal => products.fold(0, (sum, p) => sum + p.price * (cart[p.id] ?? 0));
+  int get fee => subtotal == 0 || subtotal >= (store['freeDeliveryAbove'] as num? ?? 499) ? 0 : (store['deliveryFee'] as num? ?? 30).toInt();
+  String money(num amount) => '₹${amount.toInt()}';
+
+  Future<void> checkout() async {
+    final minimum = (store['minimumOrder'] as num? ?? 99).toInt();
+    if (subtotal < minimum) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Minimum order is ${money(minimum)}. Add ${money(minimum - subtotal)} more.')));
+      return;
+    }
+    final name = TextEditingController();
+    final phone = TextEditingController();
+    final address = TextEditingController();
+    final form = GlobalKey<FormState>();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Send order enquiry'),
+        content: Form(
+          key: form,
+          child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('Your details will be included in a WhatsApp message. Confirm the final price and delivery with Easy Mandi.'),
+            const SizedBox(height: 16),
+            TextFormField(controller: name, decoration: const InputDecoration(labelText: 'Your name'), textCapitalization: TextCapitalization.words, validator: (v) => v == null || v.trim().isEmpty ? 'Enter your name' : null),
+            const SizedBox(height: 10),
+            TextFormField(controller: phone, decoration: const InputDecoration(labelText: 'Mobile number'), keyboardType: TextInputType.phone, validator: (v) => RegExp(r'^[0-9]{10}$').hasMatch(v?.trim() ?? '') ? null : 'Enter a 10-digit number'),
+            const SizedBox(height: 10),
+            TextFormField(controller: address, decoration: const InputDecoration(labelText: 'Delivery address', alignLabelWithHint: true), maxLines: 2, validator: (v) => v == null || v.trim().length < 10 ? 'Enter your full address' : null),
+          ])),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () { if (form.currentState!.validate()) Navigator.pop(dialogContext, true); }, child: const Text('Open WhatsApp')),
+        ],
+      ),
+    );
+    if (submitted != true || !mounted) return;
+    final lines = products.where((p) => cart.containsKey(p.id)).map((p) => '• ${p.name} (${p.unit}) × ${cart[p.id]} — ${money(p.price * cart[p.id]!)}').join('\n');
+    final body = 'Hello Easy Mandi, I would like to enquire about this order:\n\n$lines\n\nSubtotal: ${money(subtotal)}\nDelivery: ${fee == 0 ? 'Free' : money(fee)}\nEstimated total: ${money(subtotal + fee)}\n\nName: ${name.text.trim()}\nMobile: ${phone.text.trim()}\nAddress: ${address.text.trim()}\n\nPlease confirm availability, final price and delivery time.';
+    final support = (store['supportPhone'] as String? ?? '').replaceAll(RegExp(r'\D'), '');
+    final uri = Uri.parse('https://wa.me/$support?text=${Uri.encodeComponent(body)}');
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
+      await Clipboard.setData(ClipboardData(text: body));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('WhatsApp could not open. Order copied to clipboard.')));
+    }
+  }
+
+  void showCart() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => StatefulBuilder(builder: (context, updateSheet) {
+        void update(Product p, int delta) { changeQuantity(p, delta); updateSheet(() {}); }
+        final chosen = products.where((p) => cart.containsKey(p.id)).toList();
+        return SafeArea(child: Padding(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text('Your basket', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            if (chosen.isEmpty) const Padding(padding: EdgeInsets.symmetric(vertical: 32), child: Center(child: Text('Your basket is empty. Add some fresh vegetables!'))),
+            if (chosen.isNotEmpty) ...[
+              ConstrainedBox(constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .42), child: ListView.builder(shrinkWrap: true, itemCount: chosen.length, itemBuilder: (_, i) {
+                final p = chosen[i];
+                return ListTile(contentPadding: EdgeInsets.zero, leading: Text(p.emoji, style: const TextStyle(fontSize: 30)), title: Text(p.name), subtitle: Text('${money(p.price)} / ${p.unit}'), trailing: Row(mainAxisSize: MainAxisSize.min, children: [IconButton(tooltip: 'Remove one ${p.name}', onPressed: () => update(p, -1), icon: const Icon(Icons.remove_circle_outline)), Text('${cart[p.id]}'), IconButton(tooltip: 'Add one ${p.name}', onPressed: () => update(p, 1), icon: const Icon(Icons.add_circle_outline))]));
+              })),
+              const Divider(),
+              _totalRow('Subtotal', money(subtotal)),
+              _totalRow('Delivery', fee == 0 ? 'Free' : money(fee)),
+              const SizedBox(height: 6),
+              _totalRow('Estimated total', money(subtotal + fee), bold: true),
+              const SizedBox(height: 8),
+              Text('Free delivery from ${money(store['freeDeliveryAbove'] as num? ?? 499)} • Minimum order ${money(store['minimumOrder'] as num? ?? 99)}', style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 16),
+              FilledButton.icon(onPressed: () { Navigator.pop(sheetContext); checkout(); }, icon: const Icon(Icons.chat_bubble_outline), label: const Text('Send order enquiry')),
+            ],
+          ]),
+        ));
+      }),
+    );
+  }
+
+  Widget _totalRow(String label, String value, {bool bold = false}) => Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label, style: TextStyle(fontWeight: bold ? FontWeight.bold : null)), Text(value, style: TextStyle(fontWeight: bold ? FontWeight.bold : null))]));
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = products.where((p) => (category == 'All' || p.category == category) && '${p.name} ${p.hindi} ${p.category}'.toLowerCase().contains(query.toLowerCase())).toList();
+    return Scaffold(
+      appBar: AppBar(title: const Row(children: [Text('🥬 ', style: TextStyle(fontSize: 28)), Text('Easy Mandi', style: TextStyle(fontWeight: FontWeight.w800))]), actions: [IconButton(tooltip: 'Refresh catalog', onPressed: loadCatalog, icon: const Icon(Icons.refresh))]),
+      body: loading ? const Center(child: CircularProgressIndicator()) : message.isNotEmpty ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text(message), TextButton(onPressed: loadCatalog, child: const Text('Retry'))])) : CustomScrollView(slivers: [
+        SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.fromLTRB(18, 8, 18, 0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(width: double.infinity, padding: const EdgeInsets.all(22), decoration: BoxDecoration(color: forest, borderRadius: BorderRadius.circular(24)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('FRESH FROM THE MANDI', style: TextStyle(color: Color(0xFFBCEAD1), fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+            const SizedBox(height: 10),
+            const Text('Good food starts fresh.', style: TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 7),
+            Text('Vegetables for your everyday kitchen • ${store['city'] ?? 'Varanasi'}', style: const TextStyle(color: Colors.white70)),
+          ])),
+          const SizedBox(height: 16),
+          if (usingOffline) const Padding(padding: EdgeInsets.only(bottom: 12), child: Text('Showing saved catalog • Connect to refresh prices', style: TextStyle(color: Colors.deepOrange))),
+          TextField(onChanged: (v) => setState(() => query = v), decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search onions, potatoes, tomatoes...')),
+          const SizedBox(height: 14),
+          SizedBox(height: 44, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: categories.length, separatorBuilder: (_, __) => const SizedBox(width: 8), itemBuilder: (_, i) => ChoiceChip(label: Text(categories[i]), selected: category == categories[i], onSelected: (_) => setState(() => category = categories[i])))),
+          const SizedBox(height: 18),
+          Text('Shop fresh', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 5),
+          Text('${filtered.length} products • Indicative demo prices', style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 12),
+        ]))),
+        if (filtered.isEmpty) const SliverFillRemaining(child: Center(child: Text('No matching products. Try another search.'))),
+        SliverPadding(padding: const EdgeInsets.fromLTRB(18, 0, 18, 110), sliver: SliverLayoutBuilder(builder: (context, constraints) {
+          final columns = constraints.crossAxisExtent >= 700 ? 4 : constraints.crossAxisExtent >= 460 ? 3 : 2;
+          return SliverGrid.builder(itemCount: filtered.length, gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: columns, mainAxisSpacing: 12, crossAxisSpacing: 12, mainAxisExtent: 252), itemBuilder: (_, i) {
+            final p = filtered[i];
+            return Card(elevation: 0, color: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)), clipBehavior: Clip.antiAlias, child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: Container(width: double.infinity, decoration: BoxDecoration(color: const Color(0xFFEAF4E9), borderRadius: BorderRadius.circular(12)), child: Center(child: Text(p.emoji, style: const TextStyle(fontSize: 62))))),
+              const SizedBox(height: 8),
+              Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text('${p.hindi} • ${p.unit}', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
+              const Spacer(),
+              Row(children: [Expanded(child: Text(money(p.price), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: forest))), if (!p.available) const Text('Sold out') else if ((cart[p.id] ?? 0) == 0) IconButton.filled(tooltip: 'Add ${p.name}', onPressed: () => changeQuantity(p, 1), icon: const Icon(Icons.add)) else Row(mainAxisSize: MainAxisSize.min, children: [InkWell(onTap: () => changeQuantity(p, -1), child: const Icon(Icons.remove_circle_outline, size: 26)), Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: Text('${cart[p.id]}')), InkWell(onTap: () => changeQuantity(p, 1), child: const Icon(Icons.add_circle, color: forest, size: 26))])]),
+            ])));
+          });
+        })),
+      ]),
+      bottomNavigationBar: count == 0 ? null : SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(18, 8, 18, 12), child: FilledButton.icon(onPressed: showCart, icon: const Icon(Icons.shopping_basket_outlined), label: Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text('View basket • $count items • ${money(subtotal + fee)}'))))),
+    );
+  }
+}
