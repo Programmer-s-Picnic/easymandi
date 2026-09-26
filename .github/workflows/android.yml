@@ -18,7 +18,7 @@ jobs:
         run: |
           sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/><application/' android/app/src/main/AndroidManifest.xml
           sed -i 's/android:label="easy_mandi"/android:label="Easy Mandi"/' android/app/src/main/AndroidManifest.xml
-      - run: flutter pub get
+      - name: Remove generated template checks\n        run: rm -rf test analysis_options.yaml\n      - run: flutter pub get
       - run: flutter analyze
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
