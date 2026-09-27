@@ -1,5 +1,7 @@
 # Easy Mandi
 
+Track implementation and client tests in [FEATURES.md](FEATURES.md).
+
 Flutter client demonstration and static web preview. Product and store settings live in [easymandidata](https://github.com/Programmer-s-Picnic/easymandidata/blob/main/catalog/products.json). The app loads that file from GitHub and uses its bundled last-known catalog if offline.
 
 ## Run
