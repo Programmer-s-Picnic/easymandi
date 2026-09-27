@@ -375,7 +375,7 @@ class _StorePageState extends State<StorePage> {
                       onPressed: available ? () => changeQuantity(product!, 1) : null,
                       icon: const Icon(Icons.add_circle_outline)),
                   ]))),
-                ));
+                );
               },
             )),
             const SizedBox(height: 16),
