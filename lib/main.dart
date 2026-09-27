@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'account_page.dart';
+import 'auth_service.dart';
 import 'local_store.dart';
 
 const catalogUrl =
@@ -59,6 +61,7 @@ class StorePage extends StatefulWidget {
 class _StorePageState extends State<StorePage> {
   List<Product> products = [];
   List<RecentItem> recentItems = [];
+  AuthUser? signedInUser;
   Map<String, dynamic> store = {};
   Map<String, dynamic> checkoutRules = {};
   List<String> categories = ['All'];
@@ -71,6 +74,53 @@ class _StorePageState extends State<StorePage> {
   void initState() {
     super.initState();
     loadCatalog();
+    restoreAccount();
+  }
+
+  Future<void> restoreAccount() async {
+    try {
+      final account = await AuthService.instance.restore();
+      if (mounted) setState(() => signedInUser = account);
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not restore your account. Sign in again.')));
+    }
+  }
+
+  Future<void> openAccount() async {
+    if (signedInUser == null) {
+      final account = await Navigator.push<AuthUser>(context,
+        MaterialPageRoute(builder: (_) => const AccountPage()));
+      if (mounted && account != null) setState(() => signedInUser = account);
+      return;
+    }
+    final account = signedInUser!;
+    await showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
+      title: const Text('My account'),
+      content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
+        children: [Text(account.name), Text('+91 ${account.mobile}'),
+          if (account.email != null && account.email!.isNotEmpty) Text(account.email!),
+          const SizedBox(height: 12),
+          const Text('Signing out removes the basket, saved addresses and recent items from this device.')]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close')),
+        FilledButton(onPressed: () async {
+          Navigator.pop(dialogContext);
+          try {
+            await _cartWrite;
+            await LocalStore.instance.clearPersonalData();
+            final revoked = await AuthService.instance.logout();
+            if (!mounted) return;
+            setState(() { signedInUser = null; cart.clear(); recentItems = []; });
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(revoked
+              ? 'Signed out.' : 'Signed out on this device. Server session could not be revoked; reconnect to sign out everywhere.')));
+          } catch (_) {
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Could not clear account data. Please try again.')));
+          }
+        }, child: const Text('Sign out')),
+      ],
+    ));
   }
 
   Future<void> loadCatalog() async {
@@ -141,8 +191,12 @@ class _StorePageState extends State<StorePage> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Minimum order is ${money(minimum)}. Add ${money(minimum - subtotal)} more.')));
       return;
     }
-    final name = TextEditingController();
-    final phone = TextEditingController();
+    if (signedInUser == null) {
+      await openAccount();
+      if (!mounted || signedInUser == null) return;
+    }
+    final name = TextEditingController(text: signedInUser?.name ?? '');
+    final phone = TextEditingController(text: signedInUser?.mobile ?? '');
     final house = TextEditingController();
     final locality = TextEditingController();
     final landmark = TextEditingController();
@@ -334,7 +388,7 @@ class _StorePageState extends State<StorePage> {
   Widget build(BuildContext context) {
     final filtered = products.where((p) => (category == 'All' || p.category == category) && '${p.name} ${p.hindi} ${p.category}'.toLowerCase().contains(query.toLowerCase())).toList();
     return Scaffold(
-      appBar: AppBar(title: const Row(children: [Text('🥬 ', style: TextStyle(fontSize: 28)), Text('Easy Mandi', style: TextStyle(fontWeight: FontWeight.w800))]), actions: [IconButton(tooltip: 'About and developer', onPressed: showCredits, icon: const Icon(Icons.info_outline)), IconButton(tooltip: 'Refresh catalog', onPressed: loadCatalog, icon: const Icon(Icons.refresh))]),
+      appBar: AppBar(title: const Row(children: [Text('🥬 ', style: TextStyle(fontSize: 28)), Text('Easy Mandi', style: TextStyle(fontWeight: FontWeight.w800))]), actions: [IconButton(tooltip: signedInUser == null ? 'Register or sign in' : 'My account and sign out', onPressed: openAccount, icon: Icon(signedInUser == null ? Icons.person_outline : Icons.account_circle)), IconButton(tooltip: 'About and developer', onPressed: showCredits, icon: const Icon(Icons.info_outline)), IconButton(tooltip: 'Refresh catalog', onPressed: loadCatalog, icon: const Icon(Icons.refresh))]),
       body: loading ? const Center(child: CircularProgressIndicator()) : message.isNotEmpty ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text(message), TextButton(onPressed: loadCatalog, child: const Text('Retry'))])) : CustomScrollView(slivers: [
         SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.fromLTRB(18, 8, 18, 0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Container(width: double.infinity, padding: const EdgeInsets.all(22), decoration: BoxDecoration(color: forest, borderRadius: BorderRadius.circular(24)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

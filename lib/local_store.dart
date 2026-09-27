@@ -113,4 +113,12 @@ class LocalStore {
   Future<void> deleteAddress(int id) async {
     await (await database).delete('addresses', where: 'id = ?', whereArgs: [id]);
   }
+
+  Future<void> clearPersonalData() async {
+    await (await database).transaction((txn) async {
+      await txn.delete('cart_items');
+      await txn.delete('addresses');
+      await txn.delete('recent_items');
+    });
+  }
 }
