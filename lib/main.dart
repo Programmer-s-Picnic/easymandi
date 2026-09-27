@@ -371,13 +371,16 @@ class _StorePageState extends State<StorePage> {
     }
   }
 
-  void showCredits() => showAboutDialog(
+  void showCredits() => showDialog<void>(
     context: context,
-    applicationName: 'Easy Mandi',
-    children: [
-      const Text('Developed and maintained by Champak Roy'),
-      TextButton.icon(onPressed: openDeveloperSite, icon: const Icon(Icons.open_in_new), label: const Text('learnwithchampak.live')),
-    ],
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Easy Mandi'),
+      content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Developed and maintained by Champak Roy'),
+        TextButton.icon(onPressed: openDeveloperSite, icon: const Icon(Icons.open_in_new), label: const Text('learnwithchampak.live')),
+      ]),
+      actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Close'))],
+    ),
   );
 
   @override
