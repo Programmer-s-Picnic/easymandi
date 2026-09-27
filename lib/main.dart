@@ -58,6 +58,7 @@ class StorePage extends StatefulWidget {
 
 class _StorePageState extends State<StorePage> {
   List<Product> products = [];
+  List<RecentItem> recentItems = [];
   Map<String, dynamic> store = {};
   Map<String, dynamic> checkoutRules = {};
   List<String> categories = ['All'];
@@ -95,9 +96,11 @@ class _StorePageState extends State<StorePage> {
       final parsed = (data['products'] as List).map((e) => Product(e as Map<String, dynamic>)).toList();
       await _cartWrite;
       final saved = await LocalStore.instance.loadCart();
+      final recent = await LocalStore.instance.loadRecentItems();
       if (!mounted) return;
       setState(() {
         products = parsed;
+        recentItems = recent;
         store = data['store'] as Map<String, dynamic>;
         checkoutRules = data['checkout'] as Map<String, dynamic>? ?? {};
         categories = (data['categories'] as List).cast<String>();
@@ -253,7 +256,22 @@ class _StorePageState extends State<StorePage> {
     final body = 'Hello Easy Mandi, I would like to enquire about this order:\n\n$lines\n\nSubtotal: ${money(subtotal)}\nDelivery: ${fee == 0 ? 'Free' : money(fee)}\nEstimated total: ${money(subtotal + fee)}\n\nName: ${name.text.trim()}\nMobile: $countryCode ${phone.text.trim()}\nAddress: $address\n\nPlease confirm availability, final price and delivery time.';
     final support = (store['supportPhone'] as String? ?? '').replaceAll(RegExp(r'\D'), '');
     final uri = Uri.parse('https://wa.me/$support?text=${Uri.encodeComponent(body)}');
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (opened) {
+      try {
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await LocalStore.instance.recordRecentItems([
+          for (final p in products)
+            if (cart.containsKey(p.id))
+              RecentItem(productId: p.id, name: p.name, unit: p.unit, emoji: p.emoji,
+                quantity: cart[p.id]!, requestedAt: now),
+        ]);
+        final recent = await LocalStore.instance.loadRecentItems();
+        if (mounted) setState(() => recentItems = recent);
+      } catch (_) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save recently requested items.')));
+      }
+    } else if (mounted) {
       await Clipboard.setData(ClipboardData(text: body));
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('WhatsApp could not open. Order copied to clipboard.')));
     }
@@ -328,6 +346,40 @@ class _StorePageState extends State<StorePage> {
           ])),
           const SizedBox(height: 16),
           if (usingOffline) const Padding(padding: EdgeInsets.only(bottom: 12), child: Text('Showing saved catalog • Connect to refresh prices', style: TextStyle(color: Colors.deepOrange))),
+          if (recentItems.isNotEmpty) ...[
+            Text('Recently ordered items', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text('Saved when you open an order enquiry. Confirm the order in WhatsApp.', style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 8),
+            SizedBox(height: 88, child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: recentItems.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final item = recentItems[index];
+                Product? current;
+                for (final p in products) {
+                  if (p.id == item.productId) { current = p; break; }
+                }
+                final available = current != null && current.available;
+                final product = current;
+                return SizedBox(width: 200, child: Card(
+                  color: Colors.white, elevation: 0,
+                  child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
+                    Text(item.emoji, style: const TextStyle(fontSize: 29)),
+                    const SizedBox(width: 6),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(available ? '${money(product!.price)} / ${product.unit}' : 'Unavailable', style: Theme.of(context).textTheme.bodySmall),
+                    ])),
+                    IconButton(tooltip: available ? 'Add ${item.name} again' : '${item.name} unavailable',
+                      onPressed: available ? () => changeQuantity(product!, 1) : null,
+                      icon: const Icon(Icons.add_circle_outline)),
+                  ]))),
+                ));
+              },
+            )),
+            const SizedBox(height: 16),
+          ],
           TextField(onChanged: (v) => setState(() => query = v), decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search onions, potatoes, tomatoes...')),
           const SizedBox(height: 14),
           SizedBox(height: 44, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: categories.length, separatorBuilder: (_, __) => const SizedBox(width: 8), itemBuilder: (_, i) => ChoiceChip(label: Text(categories[i]), selected: category == categories[i], onSelected: (_) => setState(() => category = categories[i])))),
