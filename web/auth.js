@@ -82,6 +82,7 @@
     for (const key of Object.keys(cart)) delete cart[key];
     byId('orderForm').reset();
     render();
+    mode(false);
     refresh();
     byId('accountDialog').close();
   });
