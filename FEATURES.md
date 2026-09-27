@@ -19,7 +19,7 @@ Updated 27 September 2026. This tracks the **Flutter Android app**. The static w
 | F11 | Credit: About and storefront display Champak Roy; website link opens learnwithchampak.live. | [x] | [ ] |
 | F12 | Two Android APKs: ARM64 and 32-bit files at the published links install and launch on suitable devices. | [x] | [ ] |
 | F13 | Web preview: public JSON, search, categories, basket and validated enquiry work in a mobile browser. | [x] | [ ] |
-| F14 | Configure the actual Easy Mandi WhatsApp business number in the JSON catalog; verify the enquiry reaches that exact account. The current `supportPhone` is empty. | [ ] | [ ] |
+| F14 | Configure Easy Mandi WhatsApp number `+91 7398 564 033` in the public and offline JSON; verify an enquiry opens that exact account on a phone. | [x] | [ ] |
 | F15 | Confirm service area, vegetable prices, units, minimum order, delivery fee and free-delivery threshold with the client; replace illustrative data. | [ ] | [ ] |
 | F16 | Order confirmation: record a true order ID/status only after an acknowledgement from the seller or a future order backend. Do not treat opening WhatsApp as a completed order. | [ ] | [ ] |
 | F17 | Order history: show actual confirmed orders, item snapshots, totals and statuses; keep enquiries distinguishable. | [ ] | [ ] |
@@ -36,7 +36,8 @@ Updated 27 September 2026. This tracks the **Flutter Android app**. The static w
 - [x] Flutter analysis and split release APK build passed on [GitHub Actions run 36289253807](https://github.com/Programmer-s-Picnic/easymandi/actions/runs/36289253807).
 - [x] Both APKs were published to `easymandidata/releases` with SHA-256 checks; repository blob hashes matched the build artifact on 27 September 2026.
 - [ ] Android installation, update-over-old-install, offline flow, checkout and persistence tested on a physical phone.
-- [ ] Client supplies and approves actual WhatsApp number, prices, delivery rules and service area.
+- [x] WhatsApp recipient number supplied and added to the public and offline catalog: `+91 7398 564 033`.
+- [ ] Client approves actual prices, delivery rules and service area.
 
 ## Phone test record
 
