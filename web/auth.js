@@ -86,15 +86,6 @@
     refresh();
     byId('accountDialog').close();
   });
-  byId('orderForm').addEventListener('submit', event => {
-    if (user) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    byId('basket').close();
-    byId('accountError').textContent = 'Please sign in to send your enquiry.';
-    byId('accountDialog').showModal();
-  }, true);
-
   mode(false);
   if (token) request('me', {authorized: true}).then(result => {
     user = result.user;

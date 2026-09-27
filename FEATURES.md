@@ -30,7 +30,7 @@ Updated 27 September 2026. This tracks the **Flutter Android app**. The static w
 | F22 | Web and Android parity: decide which saved address, recent-item and order features the website needs, then verify each in a browser. | [ ] | [ ] |
 | F23 | Accessibility and device QA: text scaling, TalkBack labels, small screens, keyboard, offline errors and slow network. | [ ] | [ ] |
 | F24 | Release readiness: production application ID, versioning, durable signing key, upgrade over the prior install and checksum-verified public downloads. | [ ] | [ ] |
-| F25 | Customer accounts: register with name and Indian mobile, optionally email; log in with mobile/email and password; restore the session; log out and clear local personal data. Checkout requires sign-in. | [x] | [ ] |
+| F25 | Customer accounts: register with name and Indian mobile, optionally email; log in with mobile/email and password; restore the session; log out and clear local personal data. Guest WhatsApp enquiries remain possible. | [x] | [ ] |
 | F26 | Verify mobile ownership, password reset and admin roles separately before moving from a client demo to production customer accounts. | [ ] | [ ] |
 
 ## Gates already checked

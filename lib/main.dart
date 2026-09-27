@@ -191,10 +191,6 @@ class _StorePageState extends State<StorePage> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Minimum order is ${money(minimum)}. Add ${money(minimum - subtotal)} more.')));
       return;
     }
-    if (signedInUser == null) {
-      await openAccount();
-      if (!mounted || signedInUser == null) return;
-    }
     final name = TextEditingController(text: signedInUser?.name ?? '');
     final phone = TextEditingController(text: signedInUser?.mobile ?? '');
     final house = TextEditingController();
