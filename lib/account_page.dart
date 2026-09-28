@@ -16,12 +16,13 @@ class _AccountPageState extends State<AccountPage> {
   final _email = TextEditingController();
   final _login = TextEditingController();
   final _password = TextEditingController();
+  final _confirmPassword = TextEditingController();
   bool _register = false, _busy = false, _showPassword = false;
   String? _error;
 
   @override
   void dispose() {
-    _name.dispose(); _mobile.dispose(); _email.dispose(); _login.dispose(); _password.dispose();
+    _name.dispose(); _mobile.dispose(); _email.dispose(); _login.dispose(); _password.dispose(); _confirmPassword.dispose();
     super.dispose();
   }
 
@@ -31,7 +32,8 @@ class _AccountPageState extends State<AccountPage> {
     try {
       final user = _register
           ? await AuthService.instance.register(
-              name: _name.text, mobile: _mobile.text, email: _email.text, password: _password.text)
+              name: _name.text, mobile: _mobile.text, email: _email.text,
+              password: _password.text, passwordConfirmation: _confirmPassword.text)
           : await AuthService.instance.login(login: _login.text, password: _password.text);
       if (mounted) Navigator.pop(context, user);
     } on AuthException catch (error) {
@@ -80,6 +82,13 @@ class _AccountPageState extends State<AccountPage> {
                 onPressed: () => setState(() => _showPassword = !_showPassword),
                 icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility))),
             validator: (v) => (v?.length ?? 0) < (_register ? 8 : 1) ? 'Enter ${_register ? 'at least 8 characters' : 'your password'}' : null),
+          if (_register) ...[
+            const SizedBox(height: 12),
+            TextFormField(controller: _confirmPassword, obscureText: !_showPassword,
+              decoration: const InputDecoration(labelText: 'Confirm password'),
+              validator: (v) => v == null || v.isEmpty ? 'Confirm your password'
+                : v != _password.text ? 'Passwords do not match' : null),
+          ],
           if (_error != null) Padding(padding: const EdgeInsets.only(top: 12),
             child: Text(_error!, style: const TextStyle(color: Colors.red))),
           const SizedBox(height: 18),
@@ -87,6 +96,7 @@ class _AccountPageState extends State<AccountPage> {
             child: Padding(padding: const EdgeInsets.all(12), child: Text(_busy ? 'Please wait...' : _register ? 'Create account' : 'Sign in'))),
           TextButton(onPressed: _busy ? null : () {
             _form.currentState?.reset();
+            _password.clear(); _confirmPassword.clear();
             setState(() { _register = !_register; _error = null; });
           }, child: Text(_register ? 'Already have an account? Sign in' : 'New here? Create an account')),
           const SizedBox(height: 8),
