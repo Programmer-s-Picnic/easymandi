@@ -506,7 +506,7 @@ class _StorePageState extends State<StorePage> {
                     IconButton(tooltip: available ? 'Add ${item.name} again' : '${item.name} unavailable',
                       onPressed: available ? () => changeQuantity(product!, 1) : null,
                       icon: const Icon(Icons.add_circle_outline)),
-                  ]))));
+                  ])))),
                 );
               },
             )),
