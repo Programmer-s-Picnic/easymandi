@@ -124,6 +124,7 @@
     } finally { button.disabled = false; }
   });
   byId('logoutButton').addEventListener('click', async () => {
+    if (window.google?.accounts?.id) google.accounts.id.disableAutoSelect();
     try { await request('logout', {method: 'POST', authorized: true}); }
     catch { byId('status').textContent = 'Signed out on this browser; the server session may remain active until expiry.'; }
     token = null;
