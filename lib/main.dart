@@ -9,7 +9,7 @@ import 'auth_service.dart';
 import 'local_store.dart';
 
 const catalogUrl =
-    'https://cserver.learnwithchampak.live/easymandi/json/products.json';
+    'https://cserver.learnwithchampak.live/easymandi/api/catalog.php';
 const forest = Color(0xFF176B46);
 const pale = Color(0xFFF4F8F3);
 
