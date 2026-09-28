@@ -380,7 +380,7 @@ class _StorePageState extends State<StorePage> {
             if (chosen.isNotEmpty) ...[
               ConstrainedBox(constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .42), child: ListView.builder(shrinkWrap: true, itemCount: chosen.length, itemBuilder: (_, i) {
                 final p = chosen[i];
-                return ListTile(contentPadding: EdgeInsets.zero, leading: Text(p.emoji, style: const TextStyle(fontSize: 30)), title: Text(p.name), subtitle: Text('${money(p.price)} / ${p.unit}'), trailing: Row(mainAxisSize: MainAxisSize.min, children: [IconButton(tooltip: 'Remove one ${p.name}', onPressed: () => update(p, -1), icon: const Icon(Icons.remove_circle_outline)), Text('${cart[p.id]}'), IconButton(tooltip: 'Add one ${p.name}', onPressed: () => update(p, 1), icon: const Icon(Icons.add_circle_outline))]));
+                return ListTile(contentPadding: EdgeInsets.zero, leading: Text(p.emoji, style: const TextStyle(fontSize: 30)), title: Text(p.name), subtitle: Text('${money(p.price)} / ${p.unit}'), trailing: Row(mainAxisSize: MainAxisSize.min, children: [IconButton(tooltip: 'Remove one ${p.name}', onPressed: () => update(p, -1), icon: const Icon(Icons.remove_circle_outline)), Text('${cart[p.id]}'), IconButton(tooltip: 'Add one ${p.name}', onPressed: () => update(p, 1), icon: const Icon(Icons.add_circle_outline))]), onTap: () => showCartItem(p, () => updateSheet(() {})));
               })),
               const Divider(),
               _totalRow('Subtotal', money(subtotal)),
@@ -396,6 +396,52 @@ class _StorePageState extends State<StorePage> {
         ));
       }),
     );
+  }
+
+  void showCartItem(Product product, VoidCallback refreshCart) {
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (detailContext) => StatefulBuilder(builder: (detailContext, refreshDetail) {
+        final quantity = cart[product.id] ?? 0;
+        void adjust(int delta) {
+          changeQuantity(product, delta);
+          refreshDetail(() {});
+          refreshCart();
+          if ((cart[product.id] ?? 0) == 0) Navigator.of(detailContext).pop();
+        }
+        return Scaffold(
+          appBar: AppBar(title: Text(product.name)),
+          body: SafeArea(child: LayoutBuilder(builder: (context, bounds) => SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Center(child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 650),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Container(
+                  height: (bounds.maxHeight * .48).clamp(200.0, 460.0).toDouble(),
+                  decoration: BoxDecoration(color: const Color(0xFFEAF4E9), borderRadius: BorderRadius.circular(24)),
+                  child: Center(child: Text(product.emoji, style: const TextStyle(fontSize: 120))),
+                ),
+                const SizedBox(height: 24),
+                Text(product.name, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                if (product.hindi.isNotEmpty) Text(product.hindi, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 10),
+                Text('${money(product.price)} / ${product.unit}', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: forest, fontWeight: FontWeight.bold)),
+                if (product.description.isNotEmpty) ...[const SizedBox(height: 18), Text(product.description)],
+                const SizedBox(height: 24),
+                Row(children: [
+                  const Text('Quantity', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  IconButton.filledTonal(tooltip: 'Remove one ${product.name}', onPressed: () => adjust(-1), icon: const Icon(Icons.remove)),
+                  Padding(padding: const EdgeInsets.symmetric(horizontal: 18), child: Text('$quantity', style: const TextStyle(fontSize: 20))),
+                  IconButton.filledTonal(tooltip: 'Add one ${product.name}', onPressed: quantity >= 99 ? null : () => adjust(1), icon: const Icon(Icons.add)),
+                ]),
+                const SizedBox(height: 12),
+                Text('Item total: ${money(product.price * quantity)}', style: Theme.of(context).textTheme.titleMedium),
+              ]),
+            )),
+          ))),
+        );
+      }),
+    ));
   }
 
   Widget _totalRow(String label, String value, {bool bold = false}) => Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label, style: TextStyle(fontWeight: bold ? FontWeight.bold : null)), Text(value, style: TextStyle(fontWeight: bold ? FontWeight.bold : null))]));
