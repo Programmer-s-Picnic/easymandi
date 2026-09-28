@@ -53,7 +53,7 @@ class _AccountPageState extends State<AccountPage> {
       if (mounted) Navigator.pop(context, user);
     } on GoogleSignInException catch (error) {
       if (mounted) setState(() => _error = error.code == GoogleSignInExceptionCode.canceled
-        ? null : 'Google sign-in failed. Check Google configuration and try again.');
+        ? null : 'Google sign-in failed. Please try again.');
     } on AuthException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
@@ -164,8 +164,6 @@ class _AccountPageState extends State<AccountPage> {
             setState(() { _register = !_register; _error = null; });
           }, child: Text(_register ? 'Already have an account? Sign in' : 'New here? Create an account')),
           const SizedBox(height: 8),
-          const Text('Your account is stored on Easy Mandi’s server. Prices and orders in this demo still require confirmation.',
-            textAlign: TextAlign.center),
         ]),
       )),
     )),
