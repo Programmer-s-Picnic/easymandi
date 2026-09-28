@@ -97,10 +97,10 @@ class AuthService {
   }
 
   Future<AuthUser> register({required String name, required String mobile,
-      required String email, required String password}) async => _startSession(
+      required String email, required String password, required String passwordConfirmation}) async => _startSession(
         await _request('register', method: 'POST', body: {
           'name': name.trim(), 'mobile': mobile.trim(), 'email': email.trim(),
-          'password': password, 'password_confirmation': password,
+          'password': password, 'password_confirmation': passwordConfirmation,
         }),
       );
 
