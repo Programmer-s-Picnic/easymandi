@@ -2,6 +2,12 @@ name: Build Easy Mandi APK
 on:
   push:
     branches: [main]
+    paths:
+      - 'lib/**'
+      - 'assets/**'
+      - 'pubspec.yaml'
+      - 'tool/**'
+      - '.github/workflows/android.yml'
   workflow_dispatch:
 concurrency:
   group: easy-mandi-android
