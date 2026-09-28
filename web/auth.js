@@ -42,6 +42,8 @@
       byId('accountForm').elements[name].required = register ? name !== 'login' : name === 'login';
     }
     byId('accountForm').elements.password.autocomplete = register ? 'new-password' : 'current-password';
+    byId('confirmPasswordField').hidden = !register;
+    byId('accountForm').elements.password_confirmation.required = register;
     byId('accountSubmit').textContent = register ? 'Create account' : 'Sign in';
     byId('accountSwitch').textContent = register ? 'Already registered? Sign in' : 'Create an account';
     byId('accountError').textContent = '';
@@ -56,10 +58,15 @@
     button.disabled = true;
     byId('accountError').textContent = '';
     const fields = new FormData(event.currentTarget);
+    if (registering && fields.get('password') !== fields.get('password_confirmation')) {
+      byId('accountError').textContent = 'Passwords do not match.';
+      button.disabled = false;
+      return;
+    }
     try {
       const result = await request(registering ? 'register' : 'login', {method: 'POST', payload: registering
         ? {name: fields.get('name'), mobile: fields.get('mobile'), email: fields.get('email'),
-          password: fields.get('password'), password_confirmation: fields.get('password')}
+          password: fields.get('password'), password_confirmation: fields.get('password_confirmation')}
         : {login: fields.get('login'), password: fields.get('password')}});
       token = result.token;
       sessionStorage.setItem(tokenKey, token);
