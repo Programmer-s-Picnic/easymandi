@@ -41,6 +41,8 @@ jobs:
           if [ ! -f "$HOME/.android/debug.keystore" ]; then
             keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
           fi
+      - name: Show Android signing SHA-1 for Google OAuth setup
+        run: keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | grep 'SHA1:'
       - run: flutter build apk --release --split-per-abi
       - uses: actions/upload-artifact@v4
         with:
