@@ -110,6 +110,17 @@ class AuthService {
         }),
       );
 
+  Future<String?> googleClientId() async {
+    final value = (await _request('google-config'))['clientId'];
+    return value is String && value.isNotEmpty ? value : null;
+  }
+
+  Future<AuthUser> googleLogin({required String idToken, String? mobile}) async => _startSession(
+        await _request('google', method: 'POST', body: {
+          'id_token': idToken, if (mobile != null) 'mobile': mobile.trim(),
+        }),
+      );
+
   Future<bool> logout() async {
     var revoked = false;
     try {
