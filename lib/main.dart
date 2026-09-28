@@ -68,7 +68,7 @@ class _StorePageState extends State<StorePage> {
   final Map<String, int> cart = {};
   Future<void> _cartWrite = Future.value();
   String category = 'All', query = '', message = '';
-  bool loading = true, usingOffline = false;
+  bool loading = true;
 
   @override
   void initState() {
@@ -109,11 +109,10 @@ class _StorePageState extends State<StorePage> {
           try {
             await _cartWrite;
             await LocalStore.instance.clearPersonalData();
-            final revoked = await AuthService.instance.logout();
+            await AuthService.instance.logout();
             if (!mounted) return;
             setState(() { signedInUser = null; cart.clear(); recentItems = []; });
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(revoked
-              ? 'Signed out.' : 'Signed out on this device. Server session could not be revoked; reconnect to sign out everywhere.')));
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signed out.')));
           } catch (_) {
             if (mounted) ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Could not clear account data. Please try again.')));
@@ -126,7 +125,6 @@ class _StorePageState extends State<StorePage> {
   Future<void> loadCatalog() async {
     if (mounted) setState(() => loading = true);
     String? raw;
-    var offline = false;
     try {
       final client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
       try {
@@ -138,7 +136,6 @@ class _StorePageState extends State<StorePage> {
         client.close(force: true);
       }
     } catch (_) {
-      offline = true;
       raw = await rootBundle.loadString('assets/products.json');
     }
     try {
@@ -160,7 +157,6 @@ class _StorePageState extends State<StorePage> {
             cart[e.key] = e.value.clamp(1, 99);
           }
         }
-        usingOffline = offline;
         loading = false;
         message = '';
       });
@@ -398,10 +394,8 @@ class _StorePageState extends State<StorePage> {
             Text('Vegetables for your everyday kitchen • ${store['city'] ?? 'Varanasi'}', style: const TextStyle(color: Colors.white70)),
           ])),
           const SizedBox(height: 16),
-          if (usingOffline) const Padding(padding: EdgeInsets.only(bottom: 12), child: Text('Showing saved catalog • Connect to refresh prices', style: TextStyle(color: Colors.deepOrange))),
           if (recentItems.isNotEmpty) ...[
             Text('Recently ordered items', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            Text('Saved when you open an order enquiry. Confirm the order in WhatsApp.', style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 8),
             SizedBox(height: 88, child: ListView.separated(
               scrollDirection: Axis.horizontal,
@@ -439,7 +433,7 @@ class _StorePageState extends State<StorePage> {
           const SizedBox(height: 18),
           Text('Shop fresh', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 5),
-          Text('${filtered.length} products • Indicative demo prices', style: Theme.of(context).textTheme.bodySmall),
+          Text('${filtered.length} products', style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 12),
         ]))),
         if (filtered.isEmpty) const SliverFillRemaining(child: Center(child: Text('No matching products. Try another search.'))),
