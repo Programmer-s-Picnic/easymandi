@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 const authApiBase = 'https://cserver.learnwithchampak.live/easymandi/api';
 
@@ -131,6 +132,7 @@ class AuthService {
     } on AuthException {
       // Remove the token from this device even if the server is unavailable.
     } finally {
+      try { await GoogleSignIn.instance.signOut(); } catch (_) { /* No Google session was active. */ }
       await _storage.delete(key: _key);
       _token = null;
       user = null;
