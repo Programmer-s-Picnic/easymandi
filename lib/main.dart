@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -67,6 +68,7 @@ class _StorePageState extends State<StorePage> {
   List<String> categories = ['All'];
   final Map<String, int> cart = {};
   Future<void> _cartWrite = Future.value();
+  String? _pendingOrderKey;
   String category = 'All', query = '', message = '';
   bool loading = true;
 
@@ -212,11 +214,11 @@ class _StorePageState extends State<StorePage> {
     final submitted = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(builder: (dialogContext, updateDialog) => AlertDialog(
-        title: const Text('Send order enquiry'),
+        title: const Text('Place order'),
         content: Form(
           key: form,
           child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Your details will be included in a WhatsApp message. Confirm the final price and delivery with Easy Mandi.'),
+            const Text('Your order will be saved for the Easy Mandi team. You can also send its reference by WhatsApp. Confirm final price and delivery before payment.'),
             const SizedBox(height: 16),
             if (savedAddresses.isNotEmpty) DropdownButtonFormField<int?>(
               key: ValueKey(selectedAddress?.id),
@@ -233,7 +235,7 @@ class _StorePageState extends State<StorePage> {
               }),
             ),
             if (savedAddresses.isNotEmpty) const SizedBox(height: 10),
-            TextFormField(controller: name, decoration: const InputDecoration(labelText: 'Your name'), textCapitalization: TextCapitalization.words, validator: (v) => v == null || v.trim().isEmpty ? 'Enter your name' : null),
+            TextFormField(controller: name, decoration: const InputDecoration(labelText: 'Your name'), textCapitalization: TextCapitalization.words, validator: (v) => v == null || v.trim().length < 2 ? 'Enter your name' : null),
             const SizedBox(height: 10),
             TextFormField(
               controller: phone,
@@ -277,7 +279,7 @@ class _StorePageState extends State<StorePage> {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () { if (form.currentState!.validate()) Navigator.pop(dialogContext, true); }, child: const Text('Open WhatsApp')),
+          FilledButton(onPressed: () { if (form.currentState!.validate()) Navigator.pop(dialogContext, true); }, child: const Text('Place order')),
         ],
       )),
     );
@@ -297,30 +299,68 @@ class _StorePageState extends State<StorePage> {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address changes could not be saved.')));
       }
     }
-    final lines = products.where((p) => cart.containsKey(p.id)).map((p) => '• ${p.name} (${p.unit}) × ${cart[p.id]} — ${money(p.price * cart[p.id]!)}').join('\n');
-    final address = [house.text.trim(), locality.text.trim(), if (landmark.text.trim().isNotEmpty) 'Near ${landmark.text.trim()}', '$city, $state - ${pin.text.trim()}'].join(', ');
-    final body = 'Hello Easy Mandi, I would like to enquire about this order:\n\n$lines\n\nSubtotal: ${money(subtotal)}\nDelivery: ${fee == 0 ? 'Free' : money(fee)}\nEstimated total: ${money(subtotal + fee)}\n\nName: ${name.text.trim()}\nMobile: $countryCode ${phone.text.trim()}\nAddress: $address\n\nPlease confirm availability, final price and delivery time.';
-    final support = (store['supportPhone'] as String? ?? '').replaceAll(RegExp(r'\D'), '');
+    final orderItems = [
+      for (final p in products)
+        if (cart.containsKey(p.id)) {'id': p.id, 'quantity': cart[p.id]!},
+    ];
+    _pendingOrderKey ??= List<int>.generate(16, (_) => Random.secure().nextInt(256))
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+    Map<String, dynamic> savedOrder;
+    try {
+      savedOrder = await AuthService.instance.createOrder({
+        'requestKey': _pendingOrderKey,
+        'source': 'android',
+        'name': name.text.trim(),
+        'mobile': phone.text.trim(),
+        'house': house.text.trim(),
+        'locality': locality.text.trim(),
+        'landmark': landmark.text.trim(),
+        'pin': pin.text.trim(),
+        'items': orderItems,
+      });
+      _pendingOrderKey = null;
+    } on AuthException catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      return;
+    }
+    if (!mounted) return;
+    final orderId = savedOrder['orderId'] as String;
+    final savedTotal = (savedOrder['total'] as num).toInt();
+    final lines = products.where((p) => cart.containsKey(p.id))
+        .map((p) => '• ${p.name} (${p.unit}) × ${cart[p.id]}').join('\\n');
+    final address = [house.text.trim(), locality.text.trim(),
+      if (landmark.text.trim().isNotEmpty) 'Near ${landmark.text.trim()}',
+      '$city, $state - ${pin.text.trim()}'].join(', ');
+    final body = 'Hello Easy Mandi, my order $orderId has been placed.\\n\\n$lines'
+        '\\n\\nTotal: ${money(savedTotal)}\\nName: ${name.text.trim()}'
+        '\\nMobile: $countryCode ${phone.text.trim()}\\nAddress: $address'
+        '\\n\\nPlease confirm availability and delivery time.';
+    try {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await LocalStore.instance.recordRecentItems([
+        for (final p in products)
+          if (cart.containsKey(p.id))
+            RecentItem(productId: p.id, name: p.name, unit: p.unit, emoji: p.emoji,
+              quantity: cart[p.id]!, requestedAt: now),
+      ]);
+      final recent = await LocalStore.instance.loadRecentItems();
+      if (mounted) setState(() => recentItems = recent);
+    } catch (_) {
+      // Server order is already saved; recent items remain optional device data.
+    }
+    final support = (store['supportPhone'] as String? ?? '').replaceAll(RegExp(r'\\D'), '');
     final uri = Uri.parse('https://wa.me/$support?text=${Uri.encodeComponent(body)}');
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (opened) {
-      try {
-        final now = DateTime.now().millisecondsSinceEpoch;
-        await LocalStore.instance.recordRecentItems([
-          for (final p in products)
-            if (cart.containsKey(p.id))
-              RecentItem(productId: p.id, name: p.name, unit: p.unit, emoji: p.emoji,
-                quantity: cart[p.id]!, requestedAt: now),
-        ]);
-        final recent = await LocalStore.instance.loadRecentItems();
-        if (mounted) setState(() => recentItems = recent);
-      } catch (_) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save recently requested items.')));
-      }
-    } else if (mounted) {
+    if (!opened) {
       await Clipboard.setData(ClipboardData(text: body));
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('WhatsApp could not open. Order copied to clipboard.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Order $orderId saved. WhatsApp could not open; reference copied.')));
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Order $orderId saved.')));
     }
+    for (final id in cart.keys.toList()) {
+      _cartWrite = _cartWrite.then((_) => LocalStore.instance.setQuantity(id, 0));
+    }
+    if (mounted) setState(cart.clear);
   }
 
   void showCart() {
