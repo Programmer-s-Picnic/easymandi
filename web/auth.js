@@ -6,6 +6,7 @@
   let token = sessionStorage.getItem(tokenKey);
   let user = null;
   let registering = false;
+  let googleCredential = null;
 
   async function request(path, {method = 'GET', payload = null, authorized = false} = {}) {
     const response = await fetch(`${api}/${path}.php`, {
@@ -25,6 +26,8 @@
     byId('accountProfile').hidden = !user;
     byId('accountForm').hidden = !!user;
     byId('accountSwitch').hidden = !!user;
+    byId('googleSignIn').hidden = !!user;
+    byId('googleComplete').hidden = !!user || !googleCredential || !registering;
     if (user) {
       byId('accountTitle').textContent = 'My account';
       byId('accountIdentity').textContent = `${user.name} · +91 ${user.mobile}${user.email ? ` · ${user.email}` : ''}`;
@@ -46,12 +49,53 @@
     byId('accountForm').elements.password_confirmation.required = register;
     byId('accountSubmit').textContent = register ? 'Create account' : 'Sign in';
     byId('accountSwitch').textContent = register ? 'Already registered? Sign in' : 'Create an account';
+    byId('googleComplete').hidden = !register || !googleCredential;
     byId('accountError').textContent = '';
   }
 
   byId('accountButton').addEventListener('click', () => { refresh(); byId('accountDialog').showModal(); });
   byId('accountClose').addEventListener('click', () => byId('accountDialog').close());
   byId('accountSwitch').addEventListener('click', () => mode(!registering));
+  request('google-config').then(({clientId}) => {
+    if (!clientId) return;
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.onload = () => {
+      google.accounts.id.initialize({client_id: clientId, callback: async ({credential}) => {
+        googleCredential = credential;
+        await completeGoogle();
+      }});
+      google.accounts.id.renderButton(byId('googleSignIn'), {theme: 'outline', size: 'large', text: 'continue_with'});
+    };
+    document.head.append(script);
+  }).catch(() => {});
+
+  async function completeGoogle() {
+    if (!googleCredential) return;
+    byId('accountError').textContent = '';
+    try {
+      const result = await request('google', {method: 'POST', payload: {
+        id_token: googleCredential, mobile: byId('accountForm').elements.mobile.value.trim(),
+      }});
+      token = result.token;
+      sessionStorage.setItem(tokenKey, token);
+      user = result.user;
+      googleCredential = null;
+      byId('googleComplete').hidden = true;
+      byId('accountForm').reset();
+      mode(false);
+      refresh();
+      byId('accountDialog').close();
+    } catch (error) {
+      if (/mobile number to complete/i.test(error.message)) {
+        mode(true);
+        byId('accountError').textContent = 'Enter your mobile number, then choose Complete Google sign-in.';
+        byId('googleComplete').hidden = false;
+      } else byId('accountError').textContent = error.message || 'Could not sign in with Google.';
+    }
+  }
+  byId('googleComplete').addEventListener('click', completeGoogle);
   byId('accountForm').addEventListener('submit', async event => {
     event.preventDefault();
     const button = byId('accountSubmit');
@@ -71,6 +115,7 @@
       token = result.token;
       sessionStorage.setItem(tokenKey, token);
       user = result.user;
+      googleCredential = null;
       event.currentTarget.reset();
       refresh();
       byId('accountDialog').close();
