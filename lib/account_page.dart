@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import 'auth_service.dart';
 
@@ -18,7 +19,65 @@ class _AccountPageState extends State<AccountPage> {
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
   bool _register = false, _busy = false, _showPassword = false;
+  String? _googleClientId;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    AuthService.instance.googleClientId().then((id) {
+      if (mounted) setState(() => _googleClientId = id);
+    }).catchError((Object _) {});
+  }
+
+  Future<void> _googleLogin() async {
+    final clientId = _googleClientId;
+    if (clientId == null) return;
+    setState(() { _busy = true; _error = null; });
+    try {
+      final google = GoogleSignIn.instance;
+      await google.initialize(serverClientId: clientId);
+      final account = await google.authenticate();
+      final idToken = account.authentication.idToken;
+      if (idToken == null) throw const AuthException('Google did not return a sign-in token.');
+      AuthUser user;
+      try {
+        user = await AuthService.instance.googleLogin(idToken: idToken);
+      } on AuthException catch (error) {
+        if (error.statusCode != 428) rethrow;
+        if (!mounted) return;
+        final mobile = await _askMobile();
+        if (mobile == null) return;
+        user = await AuthService.instance.googleLogin(idToken: idToken, mobile: mobile);
+      }
+      if (mounted) Navigator.pop(context, user);
+    } on GoogleSignInException catch (error) {
+      if (mounted) setState(() => _error = error.code == GoogleSignInExceptionCode.canceled
+        ? null : 'Google sign-in failed. Check Google configuration and try again.');
+    } on AuthException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'Google sign-in unavailable. Please try again.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<String?> _askMobile() async {
+    final mobile = TextEditingController();
+    try {
+      return await showDialog<String>(context: context, builder: (dialogContext) => AlertDialog(
+        title: const Text('Complete Google registration'),
+        content: TextField(controller: mobile, keyboardType: TextInputType.phone,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
+          decoration: const InputDecoration(labelText: 'Mobile number', prefixText: '+91 ')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, mobile.text), child: const Text('Continue')),
+        ],
+      ));
+    } finally { mobile.dispose(); }
+  }
 
   @override
   void dispose() {
@@ -94,6 +153,11 @@ class _AccountPageState extends State<AccountPage> {
           const SizedBox(height: 18),
           FilledButton(onPressed: _busy ? null : _submit,
             child: Padding(padding: const EdgeInsets.all(12), child: Text(_busy ? 'Please wait...' : _register ? 'Create account' : 'Sign in'))),
+          if (_googleClientId != null) ...[
+            const SizedBox(height: 12),
+            OutlinedButton(onPressed: _busy ? null : _googleLogin,
+              child: const Text('Continue with Google')),
+          ],
           TextButton(onPressed: _busy ? null : () {
             _form.currentState?.reset();
             _password.clear(); _confirmPassword.clear();
