@@ -380,7 +380,7 @@ class _StorePageState extends State<StorePage> {
             if (chosen.isNotEmpty) ...[
               ConstrainedBox(constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .42), child: ListView.builder(shrinkWrap: true, itemCount: chosen.length, itemBuilder: (_, i) {
                 final p = chosen[i];
-                return ListTile(contentPadding: EdgeInsets.zero, leading: Text(p.emoji, style: const TextStyle(fontSize: 30)), title: Text(p.name), subtitle: Text('${money(p.price)} / ${p.unit} · Tap for details'), trailing: Row(mainAxisSize: MainAxisSize.min, children: [IconButton(tooltip: 'Remove one ${p.name}', onPressed: () => update(p, -1), icon: const Icon(Icons.remove_circle_outline)), Text('${cart[p.id]}'), IconButton(tooltip: 'Add one ${p.name}', onPressed: () => update(p, 1), icon: const Icon(Icons.add_circle_outline))]), onTap: () => showCartItem(p, () => updateSheet(() {})));
+                return ListTile(contentPadding: EdgeInsets.zero, leading: Text(p.emoji, style: const TextStyle(fontSize: 30)), title: Text(p.name), subtitle: Text('${money(p.price)} / ${p.unit} · Tap for details'), trailing: Row(mainAxisSize: MainAxisSize.min, children: [IconButton(tooltip: 'Remove one ${p.name}', onPressed: () => update(p, -1), icon: const Icon(Icons.remove_circle_outline)), Text('${cart[p.id]}'), IconButton(tooltip: 'Add one ${p.name}', onPressed: () => update(p, 1), icon: const Icon(Icons.add_circle_outline))]), onTap: () => showProductDetail(p, refreshCart: () => updateSheet(() {})));
               })),
               const Divider(),
               _totalRow('Subtotal', money(subtotal)),
@@ -398,15 +398,14 @@ class _StorePageState extends State<StorePage> {
     );
   }
 
-  void showCartItem(Product product, VoidCallback refreshCart) {
+  void showProductDetail(Product product, {VoidCallback? refreshCart}) {
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (detailContext) => StatefulBuilder(builder: (detailContext, refreshDetail) {
         final quantity = cart[product.id] ?? 0;
         void adjust(int delta) {
           changeQuantity(product, delta);
           refreshDetail(() {});
-          refreshCart();
-          if ((cart[product.id] ?? 0) == 0) Navigator.of(detailContext).pop();
+          refreshCart?.call();
         }
         return Scaffold(
           appBar: AppBar(title: Text(product.name)),
@@ -430,9 +429,9 @@ class _StorePageState extends State<StorePage> {
                 Row(children: [
                   const Text('Quantity', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const Spacer(),
-                  IconButton.filledTonal(tooltip: 'Remove one ${product.name}', onPressed: () => adjust(-1), icon: const Icon(Icons.remove)),
+                  IconButton.filledTonal(tooltip: 'Remove one ${product.name}', onPressed: quantity == 0 ? null : () => adjust(-1), icon: const Icon(Icons.remove)),
                   Padding(padding: const EdgeInsets.symmetric(horizontal: 18), child: Text('$quantity', style: const TextStyle(fontSize: 20))),
-                  IconButton.filledTonal(tooltip: 'Add one ${product.name}', onPressed: quantity >= 99 ? null : () => adjust(1), icon: const Icon(Icons.add)),
+                  IconButton.filledTonal(tooltip: 'Add one ${product.name}', onPressed: !product.available || quantity >= 99 ? null : () => adjust(1), icon: const Icon(Icons.add)),
                 ]),
                 const SizedBox(height: 12),
                 Text('Item total: ${money(product.price * quantity)}', style: Theme.of(context).textTheme.titleMedium),
@@ -497,7 +496,7 @@ class _StorePageState extends State<StorePage> {
                 final product = current;
                 return SizedBox(width: 200, child: Card(
                   color: Colors.white, elevation: 0,
-                  child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
+                  child: InkWell(onTap: product == null ? null : () => showProductDetail(product), child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
                     Text(item.emoji, style: const TextStyle(fontSize: 29)),
                     const SizedBox(width: 6),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -507,7 +506,7 @@ class _StorePageState extends State<StorePage> {
                     IconButton(tooltip: available ? 'Add ${item.name} again' : '${item.name} unavailable',
                       onPressed: available ? () => changeQuantity(product!, 1) : null,
                       icon: const Icon(Icons.add_circle_outline)),
-                  ]))),
+                  ]))));
                 );
               },
             )),
@@ -527,14 +526,14 @@ class _StorePageState extends State<StorePage> {
           final columns = constraints.crossAxisExtent >= 700 ? 4 : constraints.crossAxisExtent >= 460 ? 3 : 2;
           return SliverGrid.builder(itemCount: filtered.length, gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: columns, mainAxisSpacing: 12, crossAxisSpacing: 12, mainAxisExtent: 252), itemBuilder: (_, i) {
             final p = filtered[i];
-            return Card(elevation: 0, color: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)), clipBehavior: Clip.antiAlias, child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            return Card(elevation: 0, color: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)), clipBehavior: Clip.antiAlias, child: InkWell(onTap: () => showProductDetail(p), child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(child: Container(width: double.infinity, decoration: BoxDecoration(color: const Color(0xFFEAF4E9), borderRadius: BorderRadius.circular(12)), child: Center(child: Text(p.emoji, style: const TextStyle(fontSize: 62))))),
               const SizedBox(height: 8),
               Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               Text('${p.hindi} • ${p.unit}', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
               const Spacer(),
               Row(children: [Expanded(child: Text(money(p.price), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: forest))), if (!p.available) const Text('Sold out') else if ((cart[p.id] ?? 0) == 0) IconButton.filled(tooltip: 'Add ${p.name}', onPressed: () => changeQuantity(p, 1), icon: const Icon(Icons.add)) else Row(mainAxisSize: MainAxisSize.min, children: [InkWell(onTap: () => changeQuantity(p, -1), child: const Icon(Icons.remove_circle_outline, size: 26)), Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: Text('${cart[p.id]}')), InkWell(onTap: () => changeQuantity(p, 1), child: const Icon(Icons.add_circle, color: forest, size: 26))])]),
-            ])));
+            ]))));
           });
         })),
         SliverToBoxAdapter(child: Padding(
