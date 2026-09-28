@@ -122,6 +122,9 @@ class AuthService {
         }),
       );
 
+  Future<Map<String, dynamic>> createOrder(Map<String, Object?> order) =>
+      _request('order-create', method: 'POST', body: order);
+
   Future<bool> logout() async {
     var revoked = false;
     try {
