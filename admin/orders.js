@@ -52,6 +52,13 @@
       customer.textContent = order.customer_name + ' · +91 ' + order.mobile;
       const address = document.createElement('p');
       address.textContent = [order.house, order.locality, order.landmark, order.city + ', ' + order.state + ' ' + order.pin].filter(Boolean).join(', ');
+      const map = document.createElement('a');
+      if (order.location_lat != null && order.location_lng != null) {
+        map.href = 'https://www.google.com/maps/search/?api=1&query=' +
+          encodeURIComponent(order.location_lat + ',' + order.location_lng);
+        map.target = '_blank'; map.rel = 'noopener noreferrer';
+        map.textContent = 'Open customer location on map';
+      }
       const items = document.createElement('p');
       items.textContent = itemText(order);
       const totals = document.createElement('p');
@@ -86,7 +93,7 @@
         }
       };
       row.append(select, save);
-      card.append(title, date, customer, address, items, totals, row);
+      card.append(title, date, customer, address, map, items, totals, row);
       root.append(card);
     }
   }
