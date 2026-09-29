@@ -125,6 +125,28 @@ class AuthService {
   Future<Map<String, dynamic>> createOrder(Map<String, Object?> order) =>
       _request('order-create', method: 'POST', body: order);
 
+  Future<Map<String, dynamic>> deliveryRequest({int? orderId}) async {
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
+    try {
+      final request = await client.openUrl(orderId == null ? 'GET' : 'POST',
+        Uri.parse('https://cserver.learnwithchampak.live/delivery/api/?action=customer'));
+      if (_token == null) throw const AuthException('Please sign in.');
+      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_token');
+      if (orderId != null) {
+        request.headers.contentType = ContentType.json;
+        request.write(jsonEncode({'id': orderId}));
+      }
+      final response = await request.close().timeout(const Duration(seconds: 15));
+      final data = jsonDecode(await response.transform(utf8.decoder).join()) as Map<String, dynamic>;
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw AuthException(data['error'] as String? ?? 'Could not load delivery.', response.statusCode);
+      }
+      return data;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   Future<bool> logout() async {
     var revoked = false;
     try {
