@@ -25,7 +25,7 @@ jobs:
         run: flutter create --platforms=android --org in.easymandi .
       - name: Enable network access and app name
         run: |
-          sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/><application/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"\/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"\/><application/' android/app/src/main/AndroidManifest.xml
           sed -i 's/android:label="easy_mandi"/android:label="Easy Mandi"/' android/app/src/main/AndroidManifest.xml
           sed -i 's/<application/<application android:allowBackup="false"/' android/app/src/main/AndroidManifest.xml
       - name: Create Easy Mandi launcher icon
