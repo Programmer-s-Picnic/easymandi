@@ -10,7 +10,6 @@ class _DeliveryPageState extends State<DeliveryPage> {
   List<dynamic> orders = [], notifications = [];
   bool busy = true;
   String? error;
-  final Map<int,String> codes = {};
 
   @override void initState() { super.initState(); refresh(); }
   Future<void> refresh() async {
@@ -26,15 +25,6 @@ class _DeliveryPageState extends State<DeliveryPage> {
       if (mounted) setState(() => busy = false);
     }
   }
-  Future<void> issue(int id) async {
-    try {
-      final data = await AuthService.instance.deliveryRequest(orderId: id);
-      if (mounted) setState(() => codes[id] = data['code'] as String);
-      await refresh();
-    } on AuthException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
-    }
-  }
   @override Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('My deliveries'), actions: [
       IconButton(onPressed: refresh, icon: const Icon(Icons.refresh), tooltip: 'Refresh')
@@ -45,18 +35,14 @@ class _DeliveryPageState extends State<DeliveryPage> {
         if (orders.isEmpty) const ListTile(title: Text('No deliveries yet'), subtitle: Text('Your assigned Easy Mandi orders will appear here.')),
         for (final raw in orders) Builder(builder: (context) {
           final o = raw as Map<String,dynamic>;
-          final id = (o['id'] as num).toInt();
           final status = o['status'] as String? ?? '';
           return Card(child: Padding(padding: const EdgeInsets.all(16), child:
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Order ${o['external_order_id']}', style: Theme.of(context).textTheme.titleMedium),
               Text('Status: $status'),
               Text(o['address_text'] as String? ?? ''),
-              if (codes[id] != null) SelectableText('Handoff code: ${codes[id]}',
-                style: Theme.of(context).textTheme.headlineSmall),
               if (['assigned','picked_up','out_for_delivery'].contains(status))
-                FilledButton(onPressed: () => issue(id), child: const Text('Get handoff code')),
-              const Text('Give the code only after receiving your order. A new code invalidates the previous one.'),
+                const Text('The admin will send your handoff code. Give it to the delivery person only after receiving your order.'),
             ])));
         }),
         if (notifications.isNotEmpty) ...[
