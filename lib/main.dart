@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
 import 'account_page.dart';
 import 'auth_service.dart';
 import 'delivery_page.dart';
@@ -211,6 +212,7 @@ class _StorePageState extends State<StorePage> {
     }
     if (!mounted) return;
     SavedAddress? selectedAddress;
+    Position? deliveryPosition;
     bool saveNewAddress = true;
     final submitted = await showDialog<bool>(
       context: context,
@@ -260,6 +262,24 @@ class _StorePageState extends State<StorePage> {
               validator: (v) => pinPattern.hasMatch(v?.trim() ?? '') ? null : 'Enter a valid 6-digit PIN code',
             ),
             const SizedBox(height: 10),
+            OutlinedButton.icon(onPressed: () async {
+              try {
+                var permission = await Geolocator.checkPermission();
+                if (permission == LocationPermission.denied) permission = await Geolocator.requestPermission();
+                if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+                  throw Exception('Location permission denied');
+                }
+                final position = await Geolocator.getCurrentPosition(
+                  locationSettings: const LocationSettings(accuracy: LocationAccuracy.high,
+                    timeLimit: Duration(seconds: 15)));
+                updateDialog(() => deliveryPosition = position);
+              } catch (_) {
+                if (dialogContext.mounted) ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  const SnackBar(content: Text('Location unavailable. You can still use the written address.')));
+              }
+            }, icon: const Icon(Icons.my_location), label: Text(deliveryPosition == null
+              ? 'Share current location (optional)' : 'Location attached · update pin')),
+            if (deliveryPosition != null) Text('Map pin: ${deliveryPosition!.latitude.toStringAsFixed(5)}, ${deliveryPosition!.longitude.toStringAsFixed(5)}'),
             Text('Delivery city: $city, $state', style: Theme.of(dialogContext).textTheme.bodySmall),
             if (selectedAddress == null) CheckboxListTile(
               contentPadding: EdgeInsets.zero, title: const Text('Save this address on this device'),
@@ -317,6 +337,8 @@ class _StorePageState extends State<StorePage> {
         'locality': locality.text.trim(),
         'landmark': landmark.text.trim(),
         'pin': pin.text.trim(),
+        if (deliveryPosition != null) 'locationLat': deliveryPosition!.latitude,
+        if (deliveryPosition != null) 'locationLng': deliveryPosition!.longitude,
         'items': orderItems,
       });
       _pendingOrderKey = null;
