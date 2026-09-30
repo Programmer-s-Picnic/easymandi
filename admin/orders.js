@@ -26,7 +26,8 @@
   deliveryLabel.append(deliveryCaption, deliveryFilter);
   byId('ordersControls').insertBefore(deliveryLabel, byId('ordersCount'));
   byId('ordersFilter').previousElementSibling.textContent = 'Filter by order status';
-  deliveryFilter.onchange = () => { byId('ordersFilter').value = 'All'; render(); };
+  deliveryFilter.addEventListener('change', () => { byId('ordersFilter').value = 'All'; applyFilters(); });
+  deliveryFilter.addEventListener('input', () => { byId('ordersFilter').value = 'All'; applyFilters(); });
   const resetFilters = document.createElement('button');
   resetFilters.type = 'button';
   resetFilters.className = 'btn secondary';
@@ -60,23 +61,31 @@
   function itemText(order) {
     return order.items.map(item => item.product_name + ' (' + item.unit + ') × ' + item.quantity + ' — ' + money(item.line_total)).join(' · ');
   }
+  const normalized = value => String(value || '').trim().toLowerCase().replaceAll(' ', '_');
+  function applyFilters() {
+    const orderFilter = normalized(byId('ordersFilter').value);
+    const deliveryValue = normalized(deliveryFilter.value);
+    let shown = 0;
+    for (const card of byId('ordersList').querySelectorAll('[data-order-status]')) {
+      const matches = (orderFilter === 'all' || card.dataset.orderStatus === orderFilter) &&
+        (deliveryValue === 'all' || card.dataset.deliveryStatus === deliveryValue);
+      card.hidden = !matches;
+      if(matches)shown++;
+    }
+    byId('ordersCount').textContent = shown + ' of ' + orders.length + ' orders shown';
+    const empty = byId('ordersEmpty');
+    if(empty){empty.hidden=shown>0;empty.textContent=orders.length?'No orders match the selected status. Choose Show all orders to reset.':'No orders have been loaded.';}
+  }
   function render() {
     const root = byId('ordersList');
     root.replaceChildren();
-    const filter = byId('ordersFilter').value;
-    const visible = orders.filter(order => (filter === 'All' || order.status === filter) && (deliveryFilter.value === 'All' || deliveryStatus(order) === deliveryFilter.value));
-    const activeFilter = filter !== 'All' ? 'Order status: ' + filter : deliveryFilter.value !== 'All' ? 'Delivery status: ' + deliveryStatuses[deliveryFilter.value] : 'All statuses';
-    byId('ordersCount').textContent = visible.length + ' of ' + orders.length + ' loaded orders · ' + activeFilter;
-    if (!visible.length) {
-      const empty = document.createElement('p');
-      empty.className = 'hint';
-      empty.textContent = orders.length ? 'No loaded orders match ' + activeFilter.toLowerCase() + '. Choose another status or Show all orders.' : 'No orders have been loaded.';
-      root.append(empty);
-      return;
-    }
-    for (const order of visible) {
+    const empty=document.createElement('p');empty.id='ordersEmpty';empty.className='hint';root.append(empty);
+    for (const order of orders) {
       const card = document.createElement('article');
       card.className = 'product';
+      card.dataset.orderId=order.public_id;
+      card.dataset.orderStatus=normalized(order.status);
+      card.dataset.deliveryStatus=normalized(deliveryStatus(order));
       const title = document.createElement('h3');
       title.textContent = 'Order ' + order.public_id + ' · ' + money(order.total);
       const date = document.createElement('p');
@@ -136,6 +145,7 @@
       card.append(title, date, progress, customer, address, map, items, totals, row);
       root.append(card);
     }
+    applyFilters();
   }
   function lock() {
     inbox.stop();
@@ -170,7 +180,8 @@
   };
   byId('ordersRefresh').onclick = refresh;
   byId('ordersLock').onclick = () => { lock(); message('Orders locked.'); };
-  byId('ordersFilter').onchange = () => { deliveryFilter.value = 'All'; render(); };
+  byId('ordersFilter').addEventListener('change', () => { deliveryFilter.value = 'All'; applyFilters(); });
+  byId('ordersFilter').addEventListener('input', () => { deliveryFilter.value = 'All'; applyFilters(); });
   setInterval(() => { if (password && !document.hidden) refresh(); }, 300000);
   document.addEventListener('visibilitychange', () => { if (password && !document.hidden) refresh(); });
 })();

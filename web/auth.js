@@ -23,9 +23,24 @@
 
   const notificationRoot=document.createElement('section');
   byId('accountProfile').append(notificationRoot);
+  async function deliveryNotifications(id, mark=false) {
+    const response=await fetch('https://cserver.learnwithchampak.live/delivery/api/?action=notifications&audience=customer',{
+      method:mark?'POST':'GET',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+      ...(mark?{body:JSON.stringify({id})}:{})
+    });
+    const data=await response.json();if(!response.ok)throw Error(data.error||'Could not load delivery notifications.');return data;
+  }
   const inbox=new NotificationInbox(notificationRoot,
-    ()=>request('notifications',{authorized:true}),
-    id=>request('notifications',{method:'POST',authorized:true,payload:{id}}));
+    async()=>{
+      const [order,delivery]=await Promise.all([request('notifications',{authorized:true}),deliveryNotifications()]);
+      const notifications=[...order.notifications.map(n=>({...n,audience:'order'})),...delivery.notifications.map(n=>({...n,audience:'delivery'}))]
+        .sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+      return {notifications,unreadCount:Number(order.unreadCount)+Number(delivery.unreadCount)};
+    },
+    async(id,n)=>{
+      if(id===null||n?.audience==='order')await request('notifications',{method:'POST',authorized:true,payload:{id}});
+      if(id===null||n?.audience==='delivery')await deliveryNotifications(id,true);
+    });
   function refresh() {
     inbox.active=!!user;if(user)inbox.refresh().catch(()=>{});else inbox.stop();
     byId('accountButton').textContent = user ? `Hi, ${user.name}` : 'Sign in';

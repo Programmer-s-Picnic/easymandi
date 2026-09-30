@@ -39,6 +39,8 @@ class EasyMandiApp extends StatelessWidget {
   const EasyMandiApp({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
+        navigatorKey: notificationNavigator,
+        builder: notificationOverlay,
         title: 'Easy Mandi',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
@@ -82,6 +84,11 @@ class _StorePageState extends State<StorePage> {
   @override
   void initState() {
     super.initState();
+    notificationMark=(n) async {
+      if(n==null || n['_audience']=='order')await AuthService.instance.orderNotifications(markAll:n==null,id:n==null?null:(n['id'] as num).toInt());
+      if(n==null || n['_audience']=='delivery')await AuthService.instance.deliveryRequest(markAll:n==null,orderId:n==null?null:(n['order_id'] as num).toInt());
+      await checkNotifications();
+    };
     loadCatalog();
     restoreAccount();
     notificationTimer=Timer.periodic(const Duration(minutes:5),(_)=>checkNotifications());
@@ -91,7 +98,7 @@ class _StorePageState extends State<StorePage> {
   void dispose(){notificationTimer?.cancel();super.dispose();}
   Future<void> checkNotifications() async {
     final account=AuthService.instance.user;
-    if(account==null){shownNotifications.clear();notificationUserId=null;return;}
+    if(account==null){notificationFeed.value=[];shownNotifications.clear();notificationUserId=null;return;}
     if(checkingNotifications || WidgetsBinding.instance.lifecycleState!=AppLifecycleState.resumed)return;
     checkingNotifications=true;
     if(notificationUserId!=account.id){shownNotifications.clear();notificationUserId=account.id;}
@@ -100,13 +107,17 @@ class _StorePageState extends State<StorePage> {
       final deliveries=await AuthService.instance.deliveryRequest();
       if(!mounted || AuthService.instance.user?.id!=account.id)return;
       final fresh=<String>[];
+      final feed=<Map<String,dynamic>>[];
       for(final entry in {'order':orders,'delivery':deliveries}.entries){
         for(final raw in entry.value['notifications'] as List<dynamic>? ?? []){
+          feed.add({...Map<String,dynamic>.from(raw as Map),'_audience':entry.key});
           final key='${entry.key}:${raw['id']}';
           if(raw['read_at']==null && !shownNotifications.contains(key))fresh.add(raw['message'] as String? ?? 'Order update');
           shownNotifications.add(key);
         }
       }
+      feed.sort((a,b)=>String(b['created_at']).compareTo(String(a['created_at'])));
+      notificationFeed.value=feed;
       if(fresh.isNotEmpty)ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         duration:const Duration(seconds:20),content:Text('${fresh.length} new notification(s): ${fresh.first}')));
     }catch(_){/* Retry automatically at the next check without a password prompt. */}
@@ -147,7 +158,7 @@ class _StorePageState extends State<StorePage> {
             await LocalStore.instance.clearPersonalData();
             await AuthService.instance.logout();
             if (!mounted) return;
-            setState(() { signedInUser = null; cart.clear(); recentItems = []; });
+            setState(() { signedInUser = null; notificationFeed.value=[]; cart.clear(); recentItems = []; });
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signed out.')));
           } catch (_) {
             if (mounted) ScaffoldMessenger.of(context).showSnackBar(
@@ -599,4 +610,41 @@ class _StorePageState extends State<StorePage> {
       bottomNavigationBar: count == 0 ? null : SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(18, 8, 18, 12), child: FilledButton.icon(onPressed: showCart, icon: const Icon(Icons.shopping_basket_outlined), label: Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text('View basket • $count items • ${money(subtotal + fee)}'))))),
     );
   }
+}
+
+final notificationNavigator = GlobalKey<NavigatorState>();
+final notificationFeed = ValueNotifier<List<Map<String,dynamic>>>([]);
+Future<void> Function(Map<String,dynamic>?)? notificationMark;
+Widget notificationOverlay(BuildContext context, Widget? child) => Stack(children:[
+  if(child!=null)child,
+  Positioned(left:12,right:12,bottom:82,child:SafeArea(child:Material(
+    elevation:8,borderRadius:BorderRadius.circular(14),color:const Color(0xFFE8F2FC),
+    child:ValueListenableBuilder<List<Map<String,dynamic>>>(valueListenable:notificationFeed,builder:(context,items,_) {
+      final unread=items.where((n)=>n['read_at']==null).length;
+      final latest=items.isEmpty?'No notifications yet.':(items.first['message'] as String? ?? 'Update');
+      return Padding(padding:const EdgeInsets.all(12),child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Row(children:[Expanded(child:Text('Notifications · $unread unread',style:const TextStyle(fontWeight:FontWeight.bold))),
+          TextButton(onPressed:showNotificationModal,child:const Text('View all'))]),
+        Text(latest,maxLines:2,overflow:TextOverflow.ellipsis)
+      ]));
+    }))))
+]);
+Future<void> showNotificationModal() async {
+  final context=notificationNavigator.currentContext;
+  if(context==null)return;
+  await showDialog<void>(context:context,builder:(dialogContext)=>AlertDialog(
+    title:const Text('Notifications'),
+    content:SizedBox(width:520,height:350,child:ValueListenableBuilder<List<Map<String,dynamic>>>(
+      valueListenable:notificationFeed,builder:(context,items,_)=>items.isEmpty?const Center(child:Text('No notifications yet.')):
+        ListView(children:[for(final n in items)ListTile(
+          leading:Icon(n['read_at']==null?Icons.notifications_active:Icons.notifications_none),
+          title:Text(n['message'] as String? ?? 'Update'),subtitle:Text(n['created_at'] as String? ?? ''),
+          trailing:n['read_at']==null?IconButton(tooltip:'Mark as read',icon:const Icon(Icons.done),onPressed:()async{
+            try{await notificationMark?.call(n);}catch(_){if(dialogContext.mounted)ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content:Text('Could not mark as read. Please retry.')));}
+          }):null
+        )])
+    )),
+    actions:[TextButton(onPressed:()async{try{await notificationMark?.call(null);}catch(_){if(dialogContext.mounted)ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content:Text('Could not mark as read. Please retry.')));}},child:const Text('Mark all as read')),
+      TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('Close'))]
+  ));
 }
