@@ -5,7 +5,7 @@
   let password = null;
   let orders = [];
   const notificationRoot=document.createElement('section');
-  byId('ordersList').before(notificationRoot);
+  byId('ordersList').after(notificationRoot);
   const inbox=new NotificationInbox(notificationRoot,
     ()=>request('notifications?audience=admin'),
     id=>request('notifications?audience=admin',{id}),
@@ -26,7 +26,17 @@
   deliveryLabel.append(deliveryCaption, deliveryFilter);
   byId('ordersControls').insertBefore(deliveryLabel, byId('ordersCount'));
   byId('ordersFilter').previousElementSibling.textContent = 'Filter by order status';
-  deliveryFilter.onchange = render;
+  deliveryFilter.onchange = () => { byId('ordersFilter').value = 'All'; render(); };
+  const resetFilters = document.createElement('button');
+  resetFilters.type = 'button';
+  resetFilters.className = 'btn secondary';
+  resetFilters.textContent = 'Show all orders';
+  resetFilters.onclick = () => { byId('ordersFilter').value = 'All'; deliveryFilter.value = 'All'; render(); };
+  byId('ordersControls').append(resetFilters);
+  const filterHelp = document.createElement('p');
+  filterHelp.className = 'hint';
+  filterHelp.textContent = 'Choose an order status or a delivery status. Changing one resets the other to All.';
+  byId('ordersControls').append(filterHelp);
   const deliveryStatus = order => order.delivery_status || 'not_created';
   const money = value => '₹' + Number(value).toFixed(2);
   const message = (value, error = false) => {
@@ -55,11 +65,12 @@
     root.replaceChildren();
     const filter = byId('ordersFilter').value;
     const visible = orders.filter(order => (filter === 'All' || order.status === filter) && (deliveryFilter.value === 'All' || deliveryStatus(order) === deliveryFilter.value));
-    byId('ordersCount').textContent = visible.length + ' orders shown';
+    const activeFilter = filter !== 'All' ? 'Order status: ' + filter : deliveryFilter.value !== 'All' ? 'Delivery status: ' + deliveryStatuses[deliveryFilter.value] : 'All statuses';
+    byId('ordersCount').textContent = visible.length + ' of ' + orders.length + ' loaded orders · ' + activeFilter;
     if (!visible.length) {
       const empty = document.createElement('p');
       empty.className = 'hint';
-      empty.textContent = 'No orders in this view.';
+      empty.textContent = orders.length ? 'No loaded orders match ' + activeFilter.toLowerCase() + '. Choose another status or Show all orders.' : 'No orders have been loaded.';
       root.append(empty);
       return;
     }
@@ -159,7 +170,7 @@
   };
   byId('ordersRefresh').onclick = refresh;
   byId('ordersLock').onclick = () => { lock(); message('Orders locked.'); };
-  byId('ordersFilter').onchange = render;
+  byId('ordersFilter').onchange = () => { deliveryFilter.value = 'All'; render(); };
   setInterval(() => { if (password && !document.hidden) refresh(); }, 300000);
   document.addEventListener('visibilitychange', () => { if (password && !document.hidden) refresh(); });
 })();
