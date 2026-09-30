@@ -1,18 +1,340 @@
 'use strict';
 const SOURCE='https://cserver.learnwithchampak.live/easymandi/api/catalog.php';
-const KEY='easy-mandi-admin-draft-v1';let data=null,version=localStorage.getItem(KEY+'-version');
+const KEY='easy-mandi-admin-draft-v1';
+let data=null,version=localStorage.getItem(KEY+'-version');
 const $=id=>document.getElementById(id);
-async function hashCatalog(raw){const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw));return Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('')}
-const notify=(message,type='good')=>{$('message').className=type;$('message').textContent=message};
-const field=(label,value,onchange,options={})=>{const wrap=document.createElement('label');wrap.className='field'+(options.wide?' wide':'');const name=document.createElement('span');name.textContent=label;const input=document.createElement(options.multiline?'textarea':options.choices?'select':'input');if(options.choices){for(const item of options.choices){const option=document.createElement('option');option.value=item;option.textContent=item;input.append(option)}}else if(!options.multiline){input.type=options.type||'text';if(options.type==='number'){input.min='0';input.step=options.step||'0.01'}}input.value=value??'';input.addEventListener('change',()=>onchange(options.type==='number'?Number(input.value):input.value));wrap.append(name,input);return wrap};
-function persist(){localStorage.setItem(KEY,JSON.stringify(data));renderSummary()}
-function renderSummary(){if(!data)return;$('summary').replaceChildren();for(const [label,value] of [['Products',data.products.length],['Available',data.products.filter(p=>p.available).length],['Categories',data.categories.length-1]]){const card=document.createElement('div');const title=document.createElement('span');title.textContent=label;const strong=document.createElement('strong');strong.textContent=value;card.append(title,strong);$('summary').append(card)}}
-function renderStore(){const root=$('store');root.replaceChildren();for(const [label,key,opts] of [['Store name','name'],['Tagline','tagline'],['City','city'],['Support WhatsApp number','supportPhone'],['Delivery fee (₹)','deliveryFee',{type:'number'}],['Free delivery above (₹)','freeDeliveryAbove',{type:'number'}],['Minimum order (₹)','minimumOrder',{type:'number'}],['Delivery note','deliveryNote',{multiline:true,wide:true}]])root.append(field(label,data.store[key],value=>{data.store[key]=value;persist()},opts||{}))}
-function renderProducts(){const root=$('products');root.replaceChildren();const query=$('filter').value.trim().toLocaleLowerCase();for(const p of data.products){if(!(p.name+' '+p.hindi+' '+p.id).toLocaleLowerCase().includes(query))continue;const card=document.createElement('article');card.className='product';const head=document.createElement('div');head.className='producthead';const title=document.createElement('h3');title.textContent=(p.emoji||'🥬')+' '+(p.name||'New product');const remove=document.createElement('button');remove.className='btn danger';remove.textContent='Remove';remove.onclick=()=>{if(!confirm('Remove '+(p.name||p.id)+' from this draft?'))return;data.products=data.products.filter(item=>item!==p);persist();renderProducts()};head.append(title,remove);const grid=document.createElement('div');grid.className='grid';for(const [label,key,opts] of [['ID','id'],['English name','name'],['Hindi name','hindi'],['Category','category',{choices:data.categories.filter(x=>x!=='All')}],['Unit','unit'],['Price (₹)','price',{type:'number'}],['Emoji','emoji'],['Description','description',{wide:true}]])grid.append(field(label,p[key],value=>{p[key]=value;persist();if(key==='name'||key==='emoji')title.textContent=(p.emoji||'🥬')+' '+(p.name||'New product')},opts||{}));const available=document.createElement('label');available.className='row';const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=!!p.available;checkbox.onchange=()=>{p.available=checkbox.checked;persist()};available.append(checkbox,document.createTextNode('Available to order'));card.append(head,grid,available);root.append(card)}if(!root.children.length)root.textContent='No matching products.'}
-function renderCategories(){const root=$('categories');root.replaceChildren();for(const category of data.categories.filter(name=>name!=='All')){const row=document.createElement('div');row.className='row category-row';const input=document.createElement('input');input.value=category;input.maxLength=80;input.setAttribute('aria-label','Rename '+category);input.style.maxWidth='340px';const count=document.createElement('span');count.className='hint';count.textContent=data.products.filter(p=>p.category===category).length+' products';const rename=document.createElement('button');rename.className='btn secondary';rename.type='button';rename.textContent='Rename';rename.onclick=()=>{const next=input.value.trim();if(!next||next==='All'||next.length>80||data.categories.some(name=>name!==category&&name.toLowerCase()===next.toLowerCase())){notify('Enter a unique category name (up to 80 characters).','error');input.value=category;return}data.categories[data.categories.indexOf(category)]=next;for(const p of data.products)if(p.category===category)p.category=next;persist();renderCategories();renderProducts();notify('Category renamed in the draft. Save to server to publish.')};const remove=document.createElement('button');remove.className='btn danger';remove.type='button';remove.textContent='Delete';remove.disabled=data.products.some(p=>p.category===category);remove.title=remove.disabled?'Move or delete the products first':'Delete category';remove.onclick=()=>{if(!confirm('Delete '+category+' from this draft?'))return;data.categories=data.categories.filter(name=>name!==category);persist();renderCategories();renderProducts();notify('Category deleted from the draft. Save to server to publish.')};row.append(input,count,rename,remove);root.append(row)}}
-function render(){renderSummary();renderStore();renderCategories();renderProducts()}
-function validate(){const errors=[];if(!data||!Array.isArray(data.products)||!data.store||!Array.isArray(data.categories)){notify('Catalog structure is invalid.','error');return false}if(!data.store.name?.trim())errors.push('Store name is required');if(data.categories[0]!=='All'||data.categories.length>30||data.categories.some((name,i)=>typeof name!=='string'||!name.trim()||name.length>80||data.categories.findIndex(v=>v.toLowerCase()===name.toLowerCase())!==i))errors.push('Categories must be unique, nonempty, and start with All');if(!/^\+?[0-9 ()-]{10,20}$/.test(data.store.supportPhone||''))errors.push('Enter a valid support number');for(const key of ['deliveryFee','freeDeliveryAbove','minimumOrder'])if(!Number.isFinite(data.store[key])||data.store[key]<0)errors.push(key+' must be zero or greater');const ids=new Set();for(const [i,p] of data.products.entries()){const prefix='Product '+(i+1)+': ';if(!/^[a-z0-9_-]+$/.test(p.id||''))errors.push(prefix+'ID must use lowercase letters, numbers, _ or -');if(ids.has(p.id))errors.push(prefix+'duplicate ID');ids.add(p.id);if(!p.name?.trim()||!p.unit?.trim())errors.push(prefix+'name and unit are required');if(!data.categories.includes(p.category)||p.category==='All')errors.push(prefix+'select a category');if(!Number.isFinite(p.price)||p.price<0)errors.push(prefix+'price must be zero or greater')}if(errors.length){notify(errors.slice(0,8).join(' · ')+(errors.length>8?' · More errors remain.':''),'error');return false}notify('Catalog is valid. Choose Save to server to publish.');return true}
-async function load(){if(localStorage.getItem(KEY)&&!confirm('Discard the local draft and reload the published catalog?'))return;notify('Loading published catalog…');try{let response=await AppHttp.fetch(SOURCE+'?t='+Date.now(),{cache:'no-store'});if(!response.ok)response=await AppHttp.fetch('https://raw.githubusercontent.com/Programmer-s-Picnic/easymandidata/main/catalog/products.json?t='+Date.now(),{cache:'no-store'});if(!response.ok)throw Error();const raw=await response.text();const next=JSON.parse(raw);if(!Array.isArray(next.products)||!next.store||!Array.isArray(next.categories))throw Error();data=next;version=response.url.startsWith('https://cserver.learnwithchampak.live/')?((response.headers.get('ETag')||'').replaceAll('"','')||await hashCatalog(raw)):null;localStorage.setItem(KEY+'-version',version||'');persist();render();notify(version?'Published catalog loaded from cserver.':'Backup catalog loaded. Saving needs a live cserver connection.');}catch{notify('Could not load the catalog. Check your connection and retry.','error')}}
-function exportFile(){if(!validate())return;const blob=new Blob([JSON.stringify(data,null,2)+'\n'],{type:'application/json'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='products.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-async function saveToServer(password){if(!validate())return;const button=$('adminSubmit');button.disabled=true;try{if(!window.AdminSession.token)await window.AdminSession.login(password);if(!version){let current;try{current=await AppHttp.fetch(SOURCE+'?t='+Date.now(),{cache:'no-store'})}catch{throw Error('Could not reach cserver. Your draft is saved in this browser; try again when the connection is available.')}if(!current.ok)throw Error('Cserver catalog is unavailable. Your draft is saved in this browser.');const currentRaw=await current.text();version=(current.headers.get('ETag')||'').replaceAll('"','')||await hashCatalog(currentRaw);localStorage.setItem(KEY+'-version',version)}const response=await AppHttp.fetch('https://cserver.learnwithchampak.live/easymandi/api/admin-catalog-save.php',{method:'POST',headers:{'Content-Type':'application/json',...window.AdminSession.headers()},body:JSON.stringify({version,catalog:data})});let result;try{result=await response.json()}catch{throw Error('The server did not return a valid response.')}if(!response.ok){if(response.status===401)window.AdminSession.clear();if(response.status===409){throw Error('The published catalog changed. Your draft is preserved. Export your draft, reload the published catalog and review your changes before saving.')}throw Error(result.error||'Could not save catalog.')}version=result.version;localStorage.setItem(KEY+'-version',version);$('adminDialog').close();notify('Saved to cserver. The customer website and app will load these catalog changes.')}catch(error){notify(error.message||'Could not save catalog.','error')}finally{$('adminPassword').value='';button.disabled=false}}$('saveTop').onclick=$('saveBottom').onclick=()=>{if(validate()){if(window.AdminSession.token)saveToServer();else $('adminDialog').showModal()}};$('adminCancel').onclick=()=>$('adminDialog').close();$('adminForm').onsubmit=e=>{e.preventDefault();saveToServer($('adminPassword').value)};$('reload').onclick=load;$('validate').onclick=validate;$('export').onclick=exportFile;$('exportBottom').onclick=exportFile;$('filter').oninput=renderProducts;$('addCategory').onclick=()=>{if(!data){notify('Load the catalog first.','error');return}const name=$('newCategory').value.trim();if(!name||name.length>80||data.categories.some(v=>v.toLowerCase()===name.toLowerCase())||data.categories.length>=30){notify('Enter a unique category name (up to 80 characters; maximum 30 categories).','error');return}data.categories.push(name);$('newCategory').value='';persist();renderCategories();renderProducts();notify('Category added to the draft. Save to server to publish.')};$('newCategory').onkeydown=e=>{if(e.key==='Enter'){$('addCategory').click()}};$('add').onclick=()=>{const id='new_product_'+Date.now();data.products.push({id,name:'New product',hindi:'',category:data.categories.find(x=>x!=='All')||'Vegetables',unit:'1 kg',price:0,description:'',emoji:'🥬',available:false});persist();$('filter').value='';renderProducts();document.querySelector('.product:last-child')?.scrollIntoView({behavior:'smooth'})};
-try{const draft=JSON.parse(localStorage.getItem(KEY));if(draft&&Array.isArray(draft.products)&&draft.store&&Array.isArray(draft.categories)){data=draft;render();notify('Local draft restored. Reload published catalog to discard it.')}else load()}catch{load()}
+async function hashCatalog(raw){
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw));
+  return Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('')
+}
+const notify=(message,type='good')=>{
+  $('message').className=type;
+  $('message').textContent=message
+};
+const field=(label,value,onchange,options={
+})=>{
+  const wrap=document.createElement('label');
+  wrap.className='field'+(options.wide?' wide':'');
+  const name=document.createElement('span');
+  name.textContent=label;
+  const input=document.createElement(options.multiline?'textarea':options.choices?'select':'input');
+  if(options.choices){
+    for(const item of options.choices){
+      const option=document.createElement('option');
+      option.value=item;
+      option.textContent=item;
+      input.append(option)
+    }
+  }else if(!options.multiline){
+    input.type=options.type||'text';
+    if(options.type==='number'){
+      input.min='0';
+      input.step=options.step||'0.01'
+    }
+  }input.value=value??'';
+  input.addEventListener('change',()=>onchange(options.type==='number'?Number(input.value):input.value));
+  wrap.append(name,input);
+  return wrap
+};
+function persist(){
+  localStorage.setItem(KEY,JSON.stringify(data));
+  renderSummary()
+}
+function renderSummary(){
+  if(!data)return;
+  $('summary').replaceChildren();
+  for(const [label,value] of [['Products',data.products.length],['Available',data.products.filter(p=>p.available).length],['Categories',data.categories.length-1]]){
+    const card=document.createElement('div');
+    const title=document.createElement('span');
+    title.textContent=label;
+    const strong=document.createElement('strong');
+    strong.textContent=value;
+    card.append(title,strong);
+    $('summary').append(card)
+  }
+}
+function renderStore(){
+  const root=$('store');
+  root.replaceChildren();
+  for(const [label,key,opts] of [['Store name','name'],['Tagline','tagline'],['City','city'],['Support WhatsApp number','supportPhone'],['Delivery fee (₹)','deliveryFee',{
+    type:'number'
+  }],['Free delivery above (₹)','freeDeliveryAbove',{
+    type:'number'
+  }],['Minimum order (₹)','minimumOrder',{
+    type:'number'
+  }],['Delivery note','deliveryNote',{
+    multiline:true,wide:true
+  }]])root.append(field(label,data.store[key],value=>{
+    data.store[key]=value;
+    persist()
+  },opts||{
+  }))
+}
+function renderProducts(){
+  const root=$('products');
+  root.replaceChildren();
+  const query=$('filter').value.trim().toLocaleLowerCase();
+  for(const p of data.products){
+    if(!(p.name+' '+p.hindi+' '+p.id).toLocaleLowerCase().includes(query))continue;
+    const card=document.createElement('article');
+    card.className='product';
+    const head=document.createElement('div');
+    head.className='producthead';
+    const title=document.createElement('h3');
+    title.textContent=(p.emoji||'🥬')+' '+(p.name||'New product');
+    const remove=document.createElement('button');
+    remove.className='btn danger';
+    remove.textContent='Remove';
+    remove.onclick=()=>{
+      if(!confirm('Remove '+(p.name||p.id)+' from this draft?'))return;
+      data.products=data.products.filter(item=>item!==p);
+      persist();
+      renderProducts()
+    };
+    head.append(title,remove);
+    const grid=document.createElement('div');
+    grid.className='grid';
+    for(const [label,key,opts] of [['ID','id'],['English name','name'],['Hindi name','hindi'],['Category','category',{
+      choices:data.categories.filter(x=>x!=='All')
+    }],['Unit','unit'],['Price (₹)','price',{
+      type:'number'
+    }],['Emoji','emoji'],['Description','description',{
+      wide:true
+    }]])grid.append(field(label,p[key],value=>{
+      p[key]=value;
+      persist();
+      if(key==='name'||key==='emoji')title.textContent=(p.emoji||'🥬')+' '+(p.name||'New product')
+    },opts||{
+    }));
+    const available=document.createElement('label');
+    available.className='row';
+    const checkbox=document.createElement('input');
+    checkbox.type='checkbox';
+    checkbox.checked=!!p.available;
+    checkbox.onchange=()=>{
+      p.available=checkbox.checked;
+      persist()
+    };
+    available.append(checkbox,document.createTextNode('Available to order'));
+    card.append(head,grid,available);
+    root.append(card)
+  }if(!root.children.length)root.textContent='No matching products.'
+}
+function renderCategories(){
+  const root=$('categories');
+  root.replaceChildren();
+  for(const category of data.categories.filter(name=>name!=='All')){
+    const row=document.createElement('div');
+    row.className='row category-row';
+    const input=document.createElement('input');
+    input.value=category;
+    input.maxLength=80;
+    input.setAttribute('aria-label','Rename '+category);
+    input.style.maxWidth='340px';
+    const count=document.createElement('span');
+    count.className='hint';
+    count.textContent=data.products.filter(p=>p.category===category).length+' products';
+    const rename=document.createElement('button');
+    rename.className='btn secondary';
+    rename.type='button';
+    rename.textContent='Rename';
+    rename.onclick=()=>{
+      const next=input.value.trim();
+      if(!next||next==='All'||next.length>80||data.categories.some(name=>name!==category&&name.toLowerCase()===next.toLowerCase())){
+        notify('Enter a unique category name (up to 80 characters).','error');
+        input.value=category;
+        return
+      }data.categories[data.categories.indexOf(category)]=next;
+      for(const p of data.products)if(p.category===category)p.category=next;
+      persist();
+      renderCategories();
+      renderProducts();
+      notify('Category renamed in the draft. Save to server to publish.')
+    };
+    const remove=document.createElement('button');
+    remove.className='btn danger';
+    remove.type='button';
+    remove.textContent='Delete';
+    remove.disabled=data.products.some(p=>p.category===category);
+    remove.title=remove.disabled?'Move or delete the products first':'Delete category';
+    remove.onclick=()=>{
+      if(!confirm('Delete '+category+' from this draft?'))return;
+      data.categories=data.categories.filter(name=>name!==category);
+      persist();
+      renderCategories();
+      renderProducts();
+      notify('Category deleted from the draft. Save to server to publish.')
+    };
+    row.append(input,count,rename,remove);
+    root.append(row)
+  }
+}
+function render(){
+  renderSummary();
+  renderStore();
+  renderCategories();
+  renderProducts()
+}
+function validate(){
+  const errors=[];
+  if(!data||!Array.isArray(data.products)||!data.store||!Array.isArray(data.categories)){
+    notify('Catalog structure is invalid.','error');
+    return false
+  }if(!data.store.name?.trim())errors.push('Store name is required');
+  if(data.categories[0]!=='All'||data.categories.length>30||data.categories.some((name,i)=>typeof name!=='string'||!name.trim()||name.length>80||data.categories.findIndex(v=>v.toLowerCase()===name.toLowerCase())!==i))errors.push('Categories must be unique, nonempty, and start with All');
+  if(!/^\+?[0-9 ()-]{10,20}$/.test(data.store.supportPhone||''))errors.push('Enter a valid support number');
+  for(const key of ['deliveryFee','freeDeliveryAbove','minimumOrder'])if(!Number.isFinite(data.store[key])||data.store[key]<0)errors.push(key+' must be zero or greater');
+  const ids=new Set();
+  for(const [i,p] of data.products.entries()){
+    const prefix='Product '+(i+1)+': ';
+    if(!/^[a-z0-9_-]+$/.test(p.id||''))errors.push(prefix+'ID must use lowercase letters, numbers, _ or -');
+    if(ids.has(p.id))errors.push(prefix+'duplicate ID');
+    ids.add(p.id);
+    if(!p.name?.trim()||!p.unit?.trim())errors.push(prefix+'name and unit are required');
+    if(!data.categories.includes(p.category)||p.category==='All')errors.push(prefix+'select a category');
+    if(!Number.isFinite(p.price)||p.price<0)errors.push(prefix+'price must be zero or greater')
+  }if(errors.length){
+    notify(errors.slice(0,8).join(' · ')+(errors.length>8?' · More errors remain.':''),'error');
+    return false
+  }notify('Catalog is valid. Choose Save to server to publish.');
+  return true
+}
+async function load(){
+  if(localStorage.getItem(KEY)&&!confirm('Discard the local draft and reload the published catalog?'))return;
+  notify('Loading published catalog…');
+  try{
+    let response=await AppHttp.fetch(SOURCE+'?t='+Date.now(),{
+      cache:'no-store'
+    });
+    if(!response.ok)response=await AppHttp.fetch('https://raw.githubusercontent.com/Programmer-s-Picnic/easymandidata/main/catalog/products.json?t='+Date.now(),{
+      cache:'no-store'
+    });
+    if(!response.ok)throw Error();
+    const raw=await response.text();
+    const next=JSON.parse(raw);
+    if(!Array.isArray(next.products)||!next.store||!Array.isArray(next.categories))throw Error();
+    data=next;
+    version=response.url.startsWith('https://cserver.learnwithchampak.live/')?((response.headers.get('ETag')||'').replaceAll('"','')||await hashCatalog(raw)):null;
+    localStorage.setItem(KEY+'-version',version||'');
+    persist();
+    render();
+    notify(version?'Published catalog loaded from cserver.':'Backup catalog loaded. Saving needs a live cserver connection.');
+  }catch{
+    notify('Could not load the catalog. Check your connection and retry.','error')
+  }
+}
+function exportFile(){
+  if(!validate())return;
+  const blob=new Blob([JSON.stringify(data,null,2)+'\n'],{
+    type:'application/json'
+  });
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download='products.json';
+  link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000)
+}
+async function saveToServer(password){
+  if(!validate())return;
+  const button=$('adminSubmit');
+  button.disabled=true;
+  try{
+    if(!window.AdminSession.token)await window.AdminSession.login(password);
+    if(!version){
+      let current;
+      try{
+        current=await AppHttp.fetch(SOURCE+'?t='+Date.now(),{
+          cache:'no-store'
+        })
+      }catch{
+        throw Error('Could not reach cserver. Your draft is saved in this browser; try again when the connection is available.')
+      }if(!current.ok)throw Error('Cserver catalog is unavailable. Your draft is saved in this browser.');
+      const currentRaw=await current.text();
+      version=(current.headers.get('ETag')||'').replaceAll('"','')||await hashCatalog(currentRaw);
+      localStorage.setItem(KEY+'-version',version)
+    }const response=await AppHttp.fetch('https://cserver.learnwithchampak.live/easymandi/api/admin-catalog-save.php',{
+      method:'POST',headers:{
+        'Content-Type':'application/json',...window.AdminSession.headers()
+      },body:JSON.stringify({
+        version,catalog:data
+      })
+    });
+    let result;
+    try{
+      result=await response.json()
+    }catch{
+      throw Error('The server did not return a valid response.')
+    }if(!response.ok){
+      if(response.status===401)window.AdminSession.clear();
+      if(response.status===409){
+        throw Error('The published catalog changed. Your draft is preserved. Export your draft, reload the published catalog and review your changes before saving.')
+      }throw Error(result.error||'Could not save catalog.')
+    }version=result.version;
+    localStorage.setItem(KEY+'-version',version);
+    $('adminDialog').close();
+    notify('Saved to cserver. The customer website and app will load these catalog changes.')
+  }catch(error){
+    notify(error.message||'Could not save catalog.','error')
+  }finally{
+    $('adminPassword').value='';
+    button.disabled=false
+  }
+}$('saveTop').onclick=$('saveBottom').onclick=()=>{
+  if(validate()){
+    if(window.AdminSession.token)saveToServer();
+    else $('adminDialog').showModal()
+  }
+};
+$('adminCancel').onclick=()=>$('adminDialog').close();
+$('adminForm').onsubmit=e=>{
+  e.preventDefault();
+  saveToServer($('adminPassword').value)
+};
+$('reload').onclick=load;
+$('validate').onclick=validate;
+$('export').onclick=exportFile;
+$('exportBottom').onclick=exportFile;
+$('filter').oninput=renderProducts;
+$('addCategory').onclick=()=>{
+  if(!data){
+    notify('Load the catalog first.','error');
+    return
+  }const name=$('newCategory').value.trim();
+  if(!name||name.length>80||data.categories.some(v=>v.toLowerCase()===name.toLowerCase())||data.categories.length>=30){
+    notify('Enter a unique category name (up to 80 characters; maximum 30 categories).','error');
+    return
+  }data.categories.push(name);
+  $('newCategory').value='';
+  persist();
+  renderCategories();
+  renderProducts();
+  notify('Category added to the draft. Save to server to publish.')
+};
+$('newCategory').onkeydown=e=>{
+  if(e.key==='Enter'){
+    $('addCategory').click()
+  }
+};
+$('add').onclick=()=>{
+  const id='new_product_'+Date.now();
+  data.products.push({
+    id,name:'New product',hindi:'',category:data.categories.find(x=>x!=='All')||'Vegetables',unit:'1 kg',price:0,description:'',emoji:'🥬',available:false
+  });
+  persist();
+  $('filter').value='';
+  renderProducts();
+  document.querySelector('.product:last-child')?.scrollIntoView({
+    behavior:'smooth'
+  })
+};
+try{
+  const draft=JSON.parse(localStorage.getItem(KEY));
+  if(draft&&Array.isArray(draft.products)&&draft.store&&Array.isArray(draft.categories)){
+    data=draft;
+    render();
+    notify('Local draft restored. Reload published catalog to discard it.')
+  }else load()
+}catch{
+  load()
+}
