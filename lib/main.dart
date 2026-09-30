@@ -116,7 +116,7 @@ class _StorePageState extends State<StorePage> {
           shownNotifications.add(key);
         }
       }
-      feed.sort((a,b)=>String(b['created_at']).compareTo(String(a['created_at'])));
+      feed.sort((a,b)=>(b['created_at']?.toString() ?? '').compareTo(a['created_at']?.toString() ?? ''));
       notificationFeed.value=feed;
       if(fresh.isNotEmpty)ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         duration:const Duration(seconds:20),content:Text('${fresh.length} new notification(s): ${fresh.first}')));
