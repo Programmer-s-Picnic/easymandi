@@ -2,7 +2,7 @@
   'use strict';
   const api = 'https://cserver.learnwithchampak.live/easymandi/api/';
   const byId = id => document.getElementById(id);
-  let password = null;
+  const session=window.AdminSession;
   let orders = [];
   const notificationRoot=document.createElement('section');
   byId('ordersList').after(notificationRoot);
@@ -47,7 +47,7 @@
   async function request(path, payload = {}) {
     const response = await fetch(api + (path.startsWith('notifications?')?'notifications.php?audience=admin':path+'.php'), {
       method: 'POST', cache: 'no-store',
-      headers: {'Content-Type': 'application/json', 'X-Admin-Password': password},
+      headers: {'Content-Type': 'application/json', ...session.headers()},
       body: JSON.stringify(payload)
     });
     let result;
@@ -149,21 +149,25 @@
   }
   function lock() {
     inbox.stop();
-    password = null;
+    if(session.token)session.clear();
     orders = [];
     byId('ordersPassword').value = '';
+    byId('ordersPassword').parentElement.hidden=false;byId('ordersUnlock').hidden=false;
     byId('ordersRefresh').hidden = true;
     byId('ordersLock').hidden = true;
     byId('ordersControls').hidden = true;
     byId('ordersList').replaceChildren();
   }
   async function refresh() {
-    if (!password) return;
+    if (!session.token) return;
     message('Loading orders…');
     try {
+      const token=session.token;
       const result = await request('admin-orders');
+      if(!token||session.token!==token)return;
       orders = result.orders;
       inbox.active=true;
+      byId('ordersPassword').parentElement.hidden=true;byId('ordersUnlock').hidden=true;
       byId('ordersControls').hidden = false;
       byId('ordersRefresh').hidden = false;
       byId('ordersLock').hidden = false;
@@ -173,16 +177,18 @@
     } catch (error) { message(error.message, true); }
   }
   byId('ordersUnlock').onclick = async () => {
+    if(session.token){await refresh();return;}
     const input = byId('ordersPassword');
     if (!input.value) { message('Enter the admin password.', true); input.focus(); return; }
-    password = input.value;
-    input.value = '';
-    await refresh();
+    try { await session.login(input.value); input.value=''; await refresh(); } catch(error){input.value='';message(error.message,true);}
   };
+  window.addEventListener('admin-session-started',refresh);
+  window.addEventListener('admin-session-ended',()=>{lock();message('Admin session ended after 30 minutes. Enter the password again.');});
+  if(session.token)refresh();
   byId('ordersRefresh').onclick = refresh;
   byId('ordersLock').onclick = () => { lock(); message('Orders locked.'); };
   byId('ordersFilter').addEventListener('change', () => { deliveryFilter.value = 'All'; applyFilters(); });
   byId('ordersFilter').addEventListener('input', () => { deliveryFilter.value = 'All'; applyFilters(); });
-  setInterval(() => { if (password && !document.hidden) refresh(); }, 300000);
-  document.addEventListener('visibilitychange', () => { if (password && !document.hidden) refresh(); });
+  setInterval(() => { if (session.token && !document.hidden) refresh(); }, 300000);
+  document.addEventListener('visibilitychange', () => { if (session.token && !document.hidden) refresh(); });
 })();
