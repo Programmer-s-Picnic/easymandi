@@ -4,6 +4,13 @@
   const byId = id => document.getElementById(id);
   let password = null;
   let orders = [];
+  const notificationRoot=document.createElement('section');
+  byId('ordersList').before(notificationRoot);
+  const inbox=new NotificationInbox(notificationRoot,
+    ()=>request('notifications?audience=admin'),
+    id=>request('notifications?audience=admin',{id}),
+    n=>{byId('ordersFilter').value='All';render();const card=[...byId('ordersList').children].find(c=>c.textContent.includes(n.order_ref));card?.scrollIntoView({behavior:'smooth'});});
+
   const statuses = ['New', 'Confirmed', 'Preparing', 'Delivered', 'Cancelled'];
   const money = value => '₹' + Number(value).toFixed(2);
   const message = (value, error = false) => {
@@ -11,7 +18,7 @@
     byId('ordersMessage').className = error ? 'error' : 'hint';
   };
   async function request(path, payload = {}) {
-    const response = await fetch(api + path + '.php', {
+    const response = await fetch(api + (path.startsWith('notifications?')?'notifications.php?audience=admin':path+'.php'), {
       method: 'POST', cache: 'no-store',
       headers: {'Content-Type': 'application/json', 'X-Admin-Password': password},
       body: JSON.stringify(payload)
@@ -102,6 +109,7 @@
     }
   }
   function lock() {
+    inbox.stop();
     password = null;
     orders = [];
     byId('ordersPassword').value = '';
@@ -116,6 +124,7 @@
     try {
       const result = await request('admin-orders');
       orders = result.orders;
+      inbox.active=true;await inbox.refresh();
       byId('ordersControls').hidden = false;
       byId('ordersRefresh').hidden = false;
       byId('ordersLock').hidden = false;

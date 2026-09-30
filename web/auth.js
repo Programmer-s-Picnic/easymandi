@@ -21,7 +21,13 @@
     return result;
   }
 
+  const notificationRoot=document.createElement('section');
+  byId('accountProfile').append(notificationRoot);
+  const inbox=new NotificationInbox(notificationRoot,
+    ()=>request('notifications',{authorized:true}),
+    id=>request('notifications',{method:'POST',authorized:true,payload:{id}}));
   function refresh() {
+    inbox.active=!!user;if(user)inbox.refresh().catch(()=>{});else inbox.stop();
     byId('accountButton').textContent = user ? `Hi, ${user.name}` : 'Sign in';
     byId('accountProfile').hidden = !user;
     byId('accountForm').hidden = !!user;

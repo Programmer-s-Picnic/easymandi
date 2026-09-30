@@ -125,16 +125,20 @@ class AuthService {
   Future<Map<String, dynamic>> createOrder(Map<String, Object?> order) =>
       _request('order-create', method: 'POST', body: order);
 
-  Future<Map<String, dynamic>> deliveryRequest({int? orderId}) async {
+  Future<Map<String,dynamic>> orderNotifications({bool markAll=false, int? id}) =>
+    _request('notifications',method:markAll||id!=null?'POST':'GET',authenticated:true,
+      body:markAll||id!=null?{'id':id}:null);
+
+  Future<Map<String, dynamic>> deliveryRequest({int? orderId, bool markAll=false}) async {
     final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
     try {
-      final request = await client.openUrl(orderId == null ? 'GET' : 'POST',
+      final request = await client.openUrl(orderId == null && !markAll ? 'GET' : 'POST',
         Uri.parse('https://cserver.learnwithchampak.live/delivery/api/?action=customer'));
       if (_token == null) throw const AuthException('Please sign in.');
       request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_token');
-      if (orderId != null) {
+      if (orderId != null || markAll) {
         request.headers.contentType = ContentType.json;
-        request.write(jsonEncode({'id': orderId}));
+        request.write(jsonEncode({'operation':'read-notifications','id':orderId}));
       }
       final response = await request.close().timeout(const Duration(seconds: 15));
       final data = jsonDecode(await response.transform(utf8.decoder).join()) as Map<String, dynamic>;
