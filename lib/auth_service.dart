@@ -133,7 +133,7 @@ class AuthService {
     final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
     try {
       final request = await client.openUrl(orderId == null && !markAll ? 'GET' : 'POST',
-        Uri.parse('https://cserver.learnwithchampak.live/delivery/api/?action=customer'));
+        Uri.parse('https://cserver.learnwithchampak.live/delivery/api/?action=customer')).timeout(const Duration(seconds:12));
       if (_token == null) throw const AuthException('Please sign in.');
       request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_token');
       if (orderId != null || markAll) {
@@ -141,7 +141,7 @@ class AuthService {
         request.write(jsonEncode({'operation':'read-notifications','id':orderId}));
       }
       final response = await request.close().timeout(const Duration(seconds: 15));
-      final data = jsonDecode(await response.transform(utf8.decoder).join()) as Map<String, dynamic>;
+      final data = jsonDecode(await response.transform(utf8.decoder).join().timeout(const Duration(seconds:15))) as Map<String, dynamic>;
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw AuthException(data['error'] as String? ?? 'Could not load delivery.', response.statusCode);
       }
@@ -169,3 +169,4 @@ class AuthService {
     return revoked;
   }
 }
+

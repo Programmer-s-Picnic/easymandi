@@ -33,9 +33,10 @@ jobs:
           python3 -m pip install --user pillow
           python3 tool/make_icon.py
       - name: Remove generated template checks
-        run: rm -rf test analysis_options.yaml
+        run: rm -f test/widget_test.dart analysis_options.yaml
       - run: flutter pub get
       - run: flutter analyze
+      - run: flutter test
       - name: Restore demo signing key
         uses: actions/cache@v4
         with:
@@ -57,3 +58,4 @@ jobs:
             build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
             build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
           retention-days: 30
+

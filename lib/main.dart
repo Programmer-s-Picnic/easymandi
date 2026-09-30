@@ -11,6 +11,9 @@ import 'account_page.dart';
 import 'auth_service.dart';
 import 'delivery_page.dart';
 import 'local_store.dart';
+import 'product.dart';
+import 'checkout_utils.dart';
+import 'notification_overlay.dart';
 
 const catalogUrl =
     'https://cserver.learnwithchampak.live/easymandi/api/catalog.php';
@@ -18,22 +21,6 @@ const forest = Color(0xFF176B46);
 const pale = Color(0xFFF4F8F3);
 
 void main() => runApp(const EasyMandiApp());
-
-class Product {
-  Product(Map<String, dynamic> json)
-      : id = json['id'] as String,
-        name = json['name'] as String,
-        hindi = json['hindi'] as String? ?? '',
-        category = json['category'] as String,
-        unit = json['unit'] as String,
-        price = (json['price'] as num).toInt(),
-        description = json['description'] as String? ?? '',
-        emoji = json['emoji'] as String? ?? '🥬',
-        available = json['available'] as bool? ?? true;
-  final String id, name, hindi, category, unit, description, emoji;
-  final int price;
-  final bool available;
-}
 
 class EasyMandiApp extends StatelessWidget {
   const EasyMandiApp({super.key});
@@ -85,8 +72,8 @@ class _StorePageState extends State<StorePage> {
   void initState() {
     super.initState();
     notificationMark=(n) async {
-      if(n==null || n['_audience']=='order')await AuthService.instance.orderNotifications(markAll:n==null,id:n==null?null:(n['id'] as num).toInt());
-      if(n==null || n['_audience']=='delivery')await AuthService.instance.deliveryRequest(markAll:n==null,orderId:n==null?null:(n['order_id'] as num).toInt());
+      if(n==null || n['_audience']=='order')await AuthService.instance.orderNotifications(markAll:n==null,id:n==null?null:notificationId(n));
+      if(n==null || n['_audience']=='delivery')await AuthService.instance.deliveryRequest(markAll:n==null,orderId:n==null?null:notificationId(n));
       await checkNotifications();
     };
     loadCatalog();
@@ -103,8 +90,12 @@ class _StorePageState extends State<StorePage> {
     checkingNotifications=true;
     if(notificationUserId!=account.id){shownNotifications.clear();notificationUserId=account.id;}
     try {
-      final orders=await AuthService.instance.orderNotifications();
-      final deliveries=await AuthService.instance.deliveryRequest();
+      final feeds=await Future.wait([
+        AuthService.instance.orderNotifications().catchError((Object _) => <String,dynamic>{}),
+        AuthService.instance.deliveryRequest().catchError((Object _) => <String,dynamic>{}),
+      ]);
+      if(feeds.every((feed)=>feed.isEmpty))return;
+      final orders=feeds[0], deliveries=feeds[1];
       if(!mounted || AuthService.instance.user?.id!=account.id)return;
       final fresh=<String>[];
       final feed=<Map<String,dynamic>>[];
@@ -224,12 +215,12 @@ class _StorePageState extends State<StorePage> {
   }
 
   int get count => cart.values.fold(0, (a, b) => a + b);
-  int get subtotal => products.fold(0, (sum, p) => sum + p.price * (cart[p.id] ?? 0));
-  int get fee => subtotal == 0 || subtotal >= (store['freeDeliveryAbove'] as num? ?? 499) ? 0 : (store['deliveryFee'] as num? ?? 30).toInt();
-  String money(num amount) => '₹${amount.toInt()}';
+  num get subtotal => products.fold<num>(0, (sum, p) => sum + p.price * (cart[p.id] ?? 0));
+  num get fee => subtotal == 0 || subtotal >= (store['freeDeliveryAbove'] as num? ?? 499) ? 0 : (store['deliveryFee'] as num? ?? 30);
+  String money(num amount) => formatMoney(amount);
 
   Future<void> checkout() async {
-    final minimum = (store['minimumOrder'] as num? ?? 99).toInt();
+    final minimum = (store['minimumOrder'] as num? ?? 99);
     if (subtotal < minimum) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Minimum order is ${money(minimum)}. Add ${money(minimum - subtotal)} more.')));
       return;
@@ -386,21 +377,22 @@ class _StorePageState extends State<StorePage> {
       });
       _pendingOrderKey = null;
     } on AuthException catch (error) {
+      if(error.statusCode==409&&error.message.startsWith('Order request already used'))_pendingOrderKey=null;
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
       return;
     }
     if (!mounted) return;
     final orderId = savedOrder['orderId'] as String;
-    final savedTotal = (savedOrder['total'] as num).toInt();
+    final savedTotal = savedOrder['total'] as num;
     final lines = products.where((p) => cart.containsKey(p.id))
-        .map((p) => '• ${p.name} (${p.unit}) × ${cart[p.id]}').join('\\n');
+        .map((p) => '• ${p.name} (${p.unit}) × ${cart[p.id]}').join('\n');
     final address = [house.text.trim(), locality.text.trim(),
       if (landmark.text.trim().isNotEmpty) 'Near ${landmark.text.trim()}',
       '$city, $state - ${pin.text.trim()}'].join(', ');
-    final body = 'Hello Easy Mandi, my order $orderId has been placed.\\n\\n$lines'
-        '\\n\\nTotal: ${money(savedTotal)}\\nName: ${name.text.trim()}'
-        '\\nMobile: $countryCode ${phone.text.trim()}\\nAddress: $address'
-        '\\n\\nPlease confirm availability and delivery time.';
+    final body = 'Hello Easy Mandi, my order $orderId has been placed.\n\n$lines'
+        '\n\nTotal: ${money(savedTotal)}\nName: ${name.text.trim()}'
+        '\nMobile: $countryCode ${phone.text.trim()}\nAddress: $address'
+        '\n\nPlease confirm availability and delivery time.';
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
       await LocalStore.instance.recordRecentItems([
@@ -414,9 +406,9 @@ class _StorePageState extends State<StorePage> {
     } catch (_) {
       // Server order is already saved; recent items remain optional device data.
     }
-    final support = (store['supportPhone'] as String? ?? '').replaceAll(RegExp(r'\\D'), '');
-    final uri = Uri.parse('https://wa.me/$support?text=${Uri.encodeComponent(body)}');
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final uri = whatsappOrderUri(store['supportPhone'] as String? ?? '', body);
+    var opened = false;
+    try { opened = await launchUrl(uri, mode: LaunchMode.externalApplication); } catch (_) { /* Preserve saved order and copy its reference below. */ }
     if (!opened) {
       await Clipboard.setData(ClipboardData(text: body));
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Order $orderId saved. WhatsApp could not open; reference copied.')));
@@ -612,39 +604,3 @@ class _StorePageState extends State<StorePage> {
   }
 }
 
-final notificationNavigator = GlobalKey<NavigatorState>();
-final notificationFeed = ValueNotifier<List<Map<String,dynamic>>>([]);
-Future<void> Function(Map<String,dynamic>?)? notificationMark;
-Widget notificationOverlay(BuildContext context, Widget? child) => Stack(children:[
-  if(child!=null)child,
-  Positioned(left:12,right:12,bottom:82,child:SafeArea(child:Material(
-    elevation:8,borderRadius:BorderRadius.circular(14),color:const Color(0xFFE8F2FC),
-    child:ValueListenableBuilder<List<Map<String,dynamic>>>(valueListenable:notificationFeed,builder:(context,items,_) {
-      final unread=items.where((n)=>n['read_at']==null).length;
-      final latest=items.isEmpty?'No notifications yet.':(items.first['message'] as String? ?? 'Update');
-      return Padding(padding:const EdgeInsets.all(12),child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
-        Row(children:[Expanded(child:Text('Notifications · $unread unread',style:const TextStyle(fontWeight:FontWeight.bold))),
-          TextButton(onPressed:showNotificationModal,child:const Text('View all'))]),
-        Text(latest,maxLines:2,overflow:TextOverflow.ellipsis)
-      ]));
-    }))))
-]);
-Future<void> showNotificationModal() async {
-  final context=notificationNavigator.currentContext;
-  if(context==null)return;
-  await showDialog<void>(context:context,builder:(dialogContext)=>AlertDialog(
-    title:const Text('Notifications'),
-    content:SizedBox(width:520,height:350,child:ValueListenableBuilder<List<Map<String,dynamic>>>(
-      valueListenable:notificationFeed,builder:(context,items,_)=>items.isEmpty?const Center(child:Text('No notifications yet.')):
-        ListView(children:[for(final n in items)ListTile(
-          leading:Icon(n['read_at']==null?Icons.notifications_active:Icons.notifications_none),
-          title:Text(n['message'] as String? ?? 'Update'),subtitle:Text(n['created_at'] as String? ?? ''),
-          trailing:n['read_at']==null?IconButton(tooltip:'Mark as read',icon:const Icon(Icons.done),onPressed:()async{
-            try{await notificationMark?.call(n);}catch(_){if(dialogContext.mounted)ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content:Text('Could not mark as read. Please retry.')));}
-          }):null
-        )])
-    )),
-    actions:[TextButton(onPressed:()async{try{await notificationMark?.call(null);}catch(_){if(dialogContext.mounted)ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content:Text('Could not mark as read. Please retry.')));}},child:const Text('Mark all as read')),
-      TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('Close'))]
-  ));
-}

@@ -12,7 +12,7 @@
     n=>{byId('ordersFilter').value='All';byId('ordersDeliveryFilter').value='All';render();const card=[...byId('ordersList').children].find(c=>c.textContent.includes(n.order_ref));card?.scrollIntoView({behavior:'smooth'});});
 
   const statuses = ['New', 'Confirmed', 'Preparing', 'Delivered', 'Cancelled'];
-  const deliveryStatuses = {not_created:'Not sent to delivery',created:'Unassigned',assigned:'Assigned',picked_up:'Picked up',out_for_delivery:'Out for delivery',delivered:'Delivered'};
+  const deliveryStatuses = {not_created:'Not sent to delivery',created:'Unassigned',assigned:'Assigned',picked_up:'Picked up',out_for_delivery:'Out for delivery',delivered:'Delivered',cancelled:'Cancelled'};
   const deliveryLabel = document.createElement('label');
   deliveryLabel.className = 'field';
   const deliveryCaption = document.createElement('span');
@@ -45,7 +45,7 @@
     byId('ordersMessage').className = error ? 'error' : 'hint';
   };
   async function request(path, payload = {}) {
-    const response = await fetch(api + (path.startsWith('notifications?')?'notifications.php?audience=admin':path+'.php'), {
+    const response = await AppHttp.fetch(api + (path.startsWith('notifications?')?'notifications.php?audience=admin':path+'.php'), {
       method: 'POST', cache: 'no-store',
       headers: {'Content-Type': 'application/json', ...session.headers()},
       body: JSON.stringify(payload)
@@ -192,3 +192,4 @@
   setInterval(() => { if (session.token && !document.hidden) refresh(); }, 300000);
   document.addEventListener('visibilitychange', () => { if (session.token && !document.hidden) refresh(); });
 })();
+

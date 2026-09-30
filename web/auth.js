@@ -9,7 +9,7 @@
   let googleCredential = null;
 
   async function request(path, {method = 'GET', payload = null, authorized = false} = {}) {
-    const response = await fetch(`${api}/${path}.php`, {
+    const response = await AppHttp.fetch(`${api}/${path}.php`, {
       method, cache: 'no-store',
       headers: {Accept: 'application/json', ...(payload ? {'Content-Type': 'application/json'} : {}),
         ...(authorized && token ? {Authorization: `Bearer ${token}`} : {})},
@@ -24,7 +24,7 @@
   const notificationRoot=document.createElement('section');
   byId('accountProfile').append(notificationRoot);
   async function deliveryNotifications(id, mark=false) {
-    const response=await fetch('https://cserver.learnwithchampak.live/delivery/api/?action=notifications&audience=customer',{
+    const response=await AppHttp.fetch('https://cserver.learnwithchampak.live/delivery/api/?action=notifications&audience=customer',{
       method:mark?'POST':'GET',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
       ...(mark?{body:JSON.stringify({id})}:{})
     });
@@ -32,7 +32,9 @@
   }
   const inbox=new NotificationInbox(notificationRoot,
     async()=>{
-      const [order,delivery]=await Promise.all([request('notifications',{authorized:true}),deliveryNotifications()]);
+      const feeds=await Promise.allSettled([request('notifications',{authorized:true}),deliveryNotifications()]);
+      if(feeds.every(f=>f.status==='rejected'))throw feeds[0].reason;
+      const [order,delivery]=feeds.map(f=>f.status==='fulfilled'?f.value:{notifications:[],unreadCount:0});
       const notifications=[...order.notifications.map(n=>({...n,audience:'order'})),...delivery.notifications.map(n=>({...n,audience:'delivery'}))]
         .sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
       return {notifications,unreadCount:Number(order.unreadCount)+Number(delivery.unreadCount)};
@@ -171,3 +173,4 @@
     }
   });
 })();
+
