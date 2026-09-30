@@ -163,12 +163,13 @@
     try {
       const result = await request('admin-orders');
       orders = result.orders;
-      inbox.active=true;await inbox.refresh();
+      inbox.active=true;
       byId('ordersControls').hidden = false;
       byId('ordersRefresh').hidden = false;
       byId('ordersLock').hidden = false;
       message('Orders loaded.');
       render();
+      inbox.refresh().catch(() => { message('Orders loaded. Notifications could not refresh; they will retry automatically.'); });
     } catch (error) { message(error.message, true); }
   }
   byId('ordersUnlock').onclick = async () => {
