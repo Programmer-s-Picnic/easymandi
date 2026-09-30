@@ -92,7 +92,11 @@
           save.disabled = false;
         }
       };
-      row.append(select, save);
+      const delivery = document.createElement('a');
+      delivery.className = 'btn secondary';
+      delivery.href = 'https://programmer-s-picnic.github.io/delivery-app/web/?order=' + encodeURIComponent(order.public_id);
+      delivery.textContent = 'Open in delivery admin';
+      row.append(select, save, delivery);
       card.append(title, date, customer, address, map, items, totals, row);
       root.append(card);
     }
