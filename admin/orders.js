@@ -9,9 +9,25 @@
   const inbox=new NotificationInbox(notificationRoot,
     ()=>request('notifications?audience=admin'),
     id=>request('notifications?audience=admin',{id}),
-    n=>{byId('ordersFilter').value='All';render();const card=[...byId('ordersList').children].find(c=>c.textContent.includes(n.order_ref));card?.scrollIntoView({behavior:'smooth'});});
+    n=>{byId('ordersFilter').value='All';byId('ordersDeliveryFilter').value='All';render();const card=[...byId('ordersList').children].find(c=>c.textContent.includes(n.order_ref));card?.scrollIntoView({behavior:'smooth'});});
 
   const statuses = ['New', 'Confirmed', 'Preparing', 'Delivered', 'Cancelled'];
+  const deliveryStatuses = {not_created:'Not sent to delivery',created:'Unassigned',assigned:'Assigned',picked_up:'Picked up',out_for_delivery:'Out for delivery',delivered:'Delivered'};
+  const deliveryLabel = document.createElement('label');
+  deliveryLabel.className = 'field';
+  const deliveryCaption = document.createElement('span');
+  deliveryCaption.textContent = 'Filter by delivery status';
+  const deliveryFilter = document.createElement('select');
+  deliveryFilter.id = 'ordersDeliveryFilter';
+  for (const [value, label] of [['All','All delivery statuses'], ...Object.entries(deliveryStatuses)]) {
+    const option = document.createElement('option');
+    option.value = value; option.textContent = label; deliveryFilter.append(option);
+  }
+  deliveryLabel.append(deliveryCaption, deliveryFilter);
+  byId('ordersControls').insertBefore(deliveryLabel, byId('ordersCount'));
+  byId('ordersFilter').previousElementSibling.textContent = 'Filter by order status';
+  deliveryFilter.onchange = render;
+  const deliveryStatus = order => order.delivery_status || 'not_created';
   const money = value => '₹' + Number(value).toFixed(2);
   const message = (value, error = false) => {
     byId('ordersMessage').textContent = value;
@@ -38,7 +54,7 @@
     const root = byId('ordersList');
     root.replaceChildren();
     const filter = byId('ordersFilter').value;
-    const visible = orders.filter(order => filter === 'All' || order.status === filter);
+    const visible = orders.filter(order => (filter === 'All' || order.status === filter) && (deliveryFilter.value === 'All' || deliveryStatus(order) === deliveryFilter.value));
     byId('ordersCount').textContent = visible.length + ' orders shown';
     if (!visible.length) {
       const empty = document.createElement('p');
@@ -55,6 +71,8 @@
       const date = document.createElement('p');
       date.className = 'hint';
       date.textContent = order.created_at + ' · ' + order.source;
+      const progress = document.createElement('p');
+      progress.textContent = 'Order status: ' + order.status + ' · Delivery status: ' + (deliveryStatuses[deliveryStatus(order)] || order.delivery_status);
       const customer = document.createElement('p');
       customer.textContent = order.customer_name + ' · +91 ' + order.mobile;
       const address = document.createElement('p');
@@ -104,7 +122,7 @@
       delivery.href = 'https://programmer-s-picnic.github.io/delivery-app/web/?order=' + encodeURIComponent(order.public_id);
       delivery.textContent = 'Open in delivery admin';
       row.append(select, save, delivery);
-      card.append(title, date, customer, address, map, items, totals, row);
+      card.append(title, date, progress, customer, address, map, items, totals, row);
       root.append(card);
     }
   }
@@ -142,4 +160,6 @@
   byId('ordersRefresh').onclick = refresh;
   byId('ordersLock').onclick = () => { lock(); message('Orders locked.'); };
   byId('ordersFilter').onchange = render;
+  setInterval(() => { if (password && !document.hidden) refresh(); }, 300000);
+  document.addEventListener('visibilitychange', () => { if (password && !document.hidden) refresh(); });
 })();
