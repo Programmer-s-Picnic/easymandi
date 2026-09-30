@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -72,6 +73,10 @@ class _StorePageState extends State<StorePage> {
   Future<void> _cartWrite = Future.value();
   String? _pendingOrderKey;
   String category = 'All', query = '', message = '';
+  Timer? notificationTimer;
+  bool checkingNotifications=false;
+  int? notificationUserId;
+  final Set<String> shownNotifications={};
   bool loading = true;
 
   @override
@@ -79,12 +84,39 @@ class _StorePageState extends State<StorePage> {
     super.initState();
     loadCatalog();
     restoreAccount();
+    notificationTimer=Timer.periodic(const Duration(minutes:5),(_)=>checkNotifications());
+  }
+
+  @override
+  void dispose(){notificationTimer?.cancel();super.dispose();}
+  Future<void> checkNotifications() async {
+    final account=AuthService.instance.user;
+    if(account==null){shownNotifications.clear();notificationUserId=null;return;}
+    if(checkingNotifications || WidgetsBinding.instance.lifecycleState!=AppLifecycleState.resumed)return;
+    checkingNotifications=true;
+    if(notificationUserId!=account.id){shownNotifications.clear();notificationUserId=account.id;}
+    try {
+      final orders=await AuthService.instance.orderNotifications();
+      final deliveries=await AuthService.instance.deliveryRequest();
+      if(!mounted || AuthService.instance.user?.id!=account.id)return;
+      final fresh=<String>[];
+      for(final entry in {'order':orders,'delivery':deliveries}.entries){
+        for(final raw in entry.value['notifications'] as List<dynamic>? ?? []){
+          final key='${entry.key}:${raw['id']}';
+          if(raw['read_at']==null && !shownNotifications.contains(key))fresh.add(raw['message'] as String? ?? 'Order update');
+          shownNotifications.add(key);
+        }
+      }
+      if(fresh.isNotEmpty)ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        duration:const Duration(seconds:20),content:Text('${fresh.length} new notification(s): ${fresh.first}')));
+    }catch(_){/* Retry automatically at the next check without a password prompt. */}
+    finally{checkingNotifications=false;}
   }
 
   Future<void> restoreAccount() async {
     try {
       final account = await AuthService.instance.restore();
-      if (mounted) setState(() => signedInUser = account);
+      if (mounted) {setState(() => signedInUser = account);checkNotifications();}
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not restore your account. Sign in again.')));
@@ -95,7 +127,7 @@ class _StorePageState extends State<StorePage> {
     if (signedInUser == null) {
       final account = await Navigator.push<AuthUser>(context,
         MaterialPageRoute(builder: (_) => const AccountPage()));
-      if (mounted && account != null) setState(() => signedInUser = account);
+      if (mounted && account != null) {setState(() => signedInUser = account);checkNotifications();}
       return;
     }
     final account = signedInUser!;

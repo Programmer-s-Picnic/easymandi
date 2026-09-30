@@ -16,7 +16,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
   bool busy = true;
   String? error;
 
-  @override void initState() { super.initState(); refresh();timer=Timer.periodic(const Duration(seconds:30),(_){if(WidgetsBinding.instance.lifecycleState==AppLifecycleState.resumed)refresh(silent:true);}); }
+  @override void initState() { super.initState(); refresh();timer=Timer.periodic(const Duration(minutes:5),(_){if(WidgetsBinding.instance.lifecycleState==AppLifecycleState.resumed)refresh(silent:true);}); }
   @override void dispose(){timer?.cancel();super.dispose();}
   Future<void> mark({int? id, bool order=false}) async {
     try {if(order){await AuthService.instance.orderNotifications(markAll:id==null,id:id);}
