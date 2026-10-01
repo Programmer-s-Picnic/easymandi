@@ -74,3 +74,13 @@
 .notification-window-body { height:calc(100% - 78px); overflow:auto; padding:16px 20px 28px; overscroll-behavior:contain; }
 .notification-modal .notification-resize-handle { position:absolute; bottom:0; right:0; width:30px; height:30px; padding:0; cursor:nwse-resize; touch-action:none; background:#e8f2fc; color:#126dba; font-size:22px; }
 .notification-modal button:focus-visible { outline:3px solid #126dba; outline-offset:2px; }
+
+.notification-status-icons { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.notification-status-icons:empty { display:none; }
+.notification-dock .notification-status-icon { display:inline-flex; align-items:center; gap:5px; min-height:32px; padding:5px 8px; background:#e8f2fc; color:#155a95; border:1px solid #d4e5f5; border-radius:9px; }
+.notification-status-icon span { display:flex; }
+.notification-status-icon strong { font-size:13px; }
+.notification-dock .notification-status-icon.new { background:#fff1cf; color:#885000; }
+.notification-dock .notification-status-icon.delivered { background:#def5e6; color:#186c40; }
+.notification-dock .notification-status-icon.cancelled { background:#ffebe8; color:#9b251d; }
+.notification-dock .notification-status-icon:focus-visible { outline:3px solid #126dba; outline-offset:2px; }

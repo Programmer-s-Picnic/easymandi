@@ -26,7 +26,9 @@
       this.preview=document.createElement('div');
       this.preview.className='notification-preview';
       this.preview.textContent=this.lockedMessage;
-      this.dock.append(head,this.preview);
+      this.dockCounts=document.createElement('div');
+      this.dockCounts.className='notification-status-icons';
+      this.dock.append(head,this.dockCounts,this.preview);
       document.body.append(this.dock);
       this.dialog=document.createElement('dialog');
       this.dialog.className='notification-modal';
@@ -89,7 +91,17 @@
     }
     setOrderSummary(counts, select, note=''){
       this.summary.replaceChildren();
+      this.dockCounts.replaceChildren();
       if(!counts)return;
+      const icons={New:'<path d="M12 5v14M5 12h14"/>',Confirmed:'<path d="m5 12 4 4L19 6"/>',Preparing:'<circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/>',Delivered:'<path d="M3 6h11v11H3zM14 10h4l3 4v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>',Cancelled:'<path d="m6 6 12 12M18 6 6 18"/>'};
+      for(const [status,count] of Object.entries(counts)){
+        const button=document.createElement('button');button.type='button';button.className='notification-status-icon '+status.toLowerCase();
+        button.title=status+': '+count;button.setAttribute('aria-label',status+' orders: '+count);
+        const icon=document.createElement('span');icon.setAttribute('aria-hidden','true');
+        icon.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(icons[status]||icons.New)+'</svg>';
+        const number=document.createElement('strong');number.textContent=count;
+        button.append(icon,number);button.onclick=()=>{if(this.dialog.open)this.dialog.close();select(status);};this.dockCounts.append(button);
+      }
       const heading=document.createElement('h2');heading.textContent='Orders at a glance';this.summary.append(heading);
       const grid=document.createElement('div');grid.className='order-count-grid';
       for(const [status,count] of Object.entries(counts)){
@@ -124,6 +136,7 @@
       };
       this.title.textContent='Notifications';
       this.counts.textContent='';
+      this.dockCounts.replaceChildren();
       this.summary.replaceChildren();
       this.preview.textContent=this.lockedMessage;
       this.list.replaceChildren();
