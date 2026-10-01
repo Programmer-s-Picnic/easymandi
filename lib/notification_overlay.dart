@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 final notificationNavigator = GlobalKey<NavigatorState>();
 final notificationFeed = ValueNotifier<List<Map<String,dynamic>>>([]);
 Future<void> Function(Map<String,dynamic>?)? notificationMark;
-Widget notificationOverlay(BuildContext context, Widget? child) => Stack(children:[
-  if(child!=null)child,
-  Positioned(left:12,right:12,bottom:82,child:SafeArea(child:Material(
+Widget notificationOverlay(BuildContext context, Widget? child) => Column(children:[
+  Expanded(child:child ?? const SizedBox.shrink()),
+  SafeArea(top:false,child:Padding(padding:const EdgeInsets.fromLTRB(12,0,12,8),child:Material(
     elevation:8,borderRadius:BorderRadius.circular(14),color:const Color(0xFFE8F2FC),
     child:ValueListenableBuilder<List<Map<String,dynamic>>>(valueListenable:notificationFeed,builder:(context,items,_) {
       final unread=items.where((n)=>n['read_at']==null).length;
