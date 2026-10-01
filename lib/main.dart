@@ -5,6 +5,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import 'account_page.dart';
@@ -87,16 +88,19 @@ class _StorePageState extends State<StorePage> {
     if(signedInUser==null){await LocalStore.instance.saveAddress(address);return;}
     await AuthService.instance.saveServerAddress({...address.toRow(),if(address.id!=null)'id':address.id});
   }
-  int? migratedAddressUser;
+  bool syncingCustomerData=false;
   Future<void> syncCustomerData() async {
-    final user=AuthService.instance.user;if(user==null)return;
+    final user=AuthService.instance.user;if(user==null||syncingCustomerData)return;
+    syncingCustomerData=true;
     try {
-      if(migratedAddressUser!=user.id){for(final address in await LocalStore.instance.loadAddresses()){await AuthService.instance.saveServerAddress(address.toRow());}migratedAddressUser=user.id;}
+      final prefs=await SharedPreferences.getInstance();
+      final migrationKey='server-address-migration-${user.id}';
+      if(prefs.getBool(migrationKey)!=true){for(final address in await LocalStore.instance.loadAddresses()){if(AuthService.instance.user?.id!=user.id)return;await AuthService.instance.saveServerAddress(address.toRow());}await prefs.setBool(migrationKey,true);}
       final response=await AuthService.instance.customerData();
       if(!mounted || AuthService.instance.user?.id!=user.id)return;
       final rows=response['items'] as List<dynamic>? ?? [];
       setState(()=>recentItems=rows.map((raw){final r=raw as Map<String,dynamic>;return RecentItem(productId:r['product_id'] as String,name:r['name'] as String,unit:r['unit'] as String,emoji:'🥬',quantity:int.tryParse('${r['quantity']}')??1,requestedAt:0);}).toList());
-    } catch (_) { /* Device history remains available offline. */ }
+    } catch (_) { /* Device history remains available offline. */ } finally {syncingCustomerData=false;}
   }
   Future<void> checkNotifications() async {
     final account=AuthService.instance.user;
@@ -214,6 +218,7 @@ class _StorePageState extends State<StorePage> {
         loading = false;
         message = '';
       });
+      await syncCustomerData();
     } catch (_) {
       if (mounted) setState(() { loading = false; message = 'Could not load the catalog. Please try again.'; });
     }
