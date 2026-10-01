@@ -83,11 +83,27 @@ class _StorePageState extends State<StorePage> {
 
   @override
   void dispose(){notificationTimer?.cancel();super.dispose();}
+  Future<void> saveCustomerAddress(SavedAddress address) async {
+    if(signedInUser==null){await LocalStore.instance.saveAddress(address);return;}
+    await AuthService.instance.saveServerAddress({...address.toRow(),if(address.id!=null)'id':address.id});
+  }
+  int? migratedAddressUser;
+  Future<void> syncCustomerData() async {
+    final user=AuthService.instance.user;if(user==null)return;
+    try {
+      if(migratedAddressUser!=user.id){for(final address in await LocalStore.instance.loadAddresses()){await AuthService.instance.saveServerAddress(address.toRow());}migratedAddressUser=user.id;}
+      final response=await AuthService.instance.customerData();
+      if(!mounted || AuthService.instance.user?.id!=user.id)return;
+      final rows=response['items'] as List<dynamic>? ?? [];
+      setState(()=>recentItems=rows.map((raw){final r=raw as Map<String,dynamic>;return RecentItem(productId:r['product_id'] as String,name:r['name'] as String,unit:r['unit'] as String,emoji:'🥬',quantity:int.tryParse('${r['quantity']}')??1,requestedAt:0);}).toList());
+    } catch (_) { /* Device history remains available offline. */ }
+  }
   Future<void> checkNotifications() async {
     final account=AuthService.instance.user;
     if(account==null){notificationFeed.value=[];shownNotifications.clear();notificationUserId=null;return;}
     if(checkingNotifications || WidgetsBinding.instance.lifecycleState!=AppLifecycleState.resumed)return;
     checkingNotifications=true;
+    await syncCustomerData();
     if(notificationUserId!=account.id){shownNotifications.clear();notificationUserId=account.id;}
     try {
       final feeds=await Future.wait([
@@ -118,7 +134,7 @@ class _StorePageState extends State<StorePage> {
   Future<void> restoreAccount() async {
     try {
       final account = await AuthService.instance.restore();
-      if (mounted) {setState(() => signedInUser = account);checkNotifications();}
+      if (mounted) {setState(() => signedInUser = account);checkNotifications();syncCustomerData();}
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not restore your account. Sign in again.')));
@@ -129,7 +145,7 @@ class _StorePageState extends State<StorePage> {
     if (signedInUser == null) {
       final account = await Navigator.push<AuthUser>(context,
         MaterialPageRoute(builder: (_) => const AccountPage()));
-      if (mounted && account != null) {setState(() => signedInUser = account);checkNotifications();}
+      if (mounted && account != null) {setState(() => signedInUser = account);checkNotifications();syncCustomerData();}
       return;
     }
     final account = signedInUser!;
@@ -139,7 +155,7 @@ class _StorePageState extends State<StorePage> {
         children: [Text(account.name), Text('+91 ${account.mobile}'),
           if (account.email != null && account.email!.isNotEmpty) Text(account.email!),
           const SizedBox(height: 12),
-          const Text('Signing out removes the basket, saved addresses and recent items from this device.')]),
+          const Text('Signing out clears this device. Addresses saved to your account remain available when you sign in again.')]),
       actions: [
         TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close')),
         FilledButton(onPressed: () async {
@@ -239,10 +255,10 @@ class _StorePageState extends State<StorePage> {
     final form = GlobalKey<FormState>();
     List<SavedAddress> savedAddresses;
     try {
-      savedAddresses = await LocalStore.instance.loadAddresses();
+      savedAddresses = signedInUser==null ? await LocalStore.instance.loadAddresses() : ((await AuthService.instance.customerData())['addresses'] as List).map((row)=>SavedAddress.fromRow(Map<String,Object?>.from(row as Map))).toList();
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved addresses are unavailable on this device.')));
-      return;
+      savedAddresses=[];
     }
     if (!mounted) return;
     SavedAddress? selectedAddress;
@@ -316,12 +332,12 @@ class _StorePageState extends State<StorePage> {
             if (deliveryPosition != null) Text('Map pin: ${deliveryPosition!.latitude.toStringAsFixed(5)}, ${deliveryPosition!.longitude.toStringAsFixed(5)}'),
             Text('Delivery city: $city, $state', style: Theme.of(dialogContext).textTheme.bodySmall),
             if (selectedAddress == null) CheckboxListTile(
-              contentPadding: EdgeInsets.zero, title: const Text('Save this address on this device'),
+              contentPadding: EdgeInsets.zero, title: Text(signedInUser==null?'Save this address on this device':'Save address to my account (all devices)'),
               value: saveNewAddress, onChanged: (value) => updateDialog(() => saveNewAddress = value ?? false),
             ),
             if (selectedAddress != null) TextButton.icon(
               onPressed: () async {
-                await LocalStore.instance.deleteAddress(selectedAddress!.id!);
+                try {if(signedInUser==null)await LocalStore.instance.deleteAddress(selectedAddress!.id!);else await AuthService.instance.deleteServerAddress(selectedAddress!.id!);}catch(_){if(dialogContext.mounted)ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content:Text('Could not delete address. Please retry.')));return;}
                 if (!dialogContext.mounted) return;
                 updateDialog(() {
                   savedAddresses.removeWhere((a) => a.id == selectedAddress!.id);
@@ -341,14 +357,14 @@ class _StorePageState extends State<StorePage> {
     if (submitted != true || !mounted) return;
     if (saveNewAddress && selectedAddress == null) {
       try {
-        await LocalStore.instance.saveAddress(SavedAddress(name: name.text.trim(), phone: phone.text.trim(),
+        await saveCustomerAddress(SavedAddress(name: name.text.trim(), phone: phone.text.trim(),
           house: house.text.trim(), locality: locality.text.trim(), landmark: landmark.text.trim(), pin: pin.text.trim()));
       } catch (_) {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address could not be saved; the enquiry can still be sent.')));
       }
     } else if (selectedAddress != null) {
       try {
-        await LocalStore.instance.saveAddress(SavedAddress(id: selectedAddress!.id, name: name.text.trim(), phone: phone.text.trim(),
+        await saveCustomerAddress(SavedAddress(id: selectedAddress!.id, name: name.text.trim(), phone: phone.text.trim(),
           house: house.text.trim(), locality: locality.text.trim(), landmark: landmark.text.trim(), pin: pin.text.trim()));
       } catch (_) {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address changes could not be saved.')));
@@ -403,6 +419,7 @@ class _StorePageState extends State<StorePage> {
       ]);
       final recent = await LocalStore.instance.loadRecentItems();
       if (mounted) setState(() => recentItems = recent);
+      await syncCustomerData();
     } catch (_) {
       // Server order is already saved; recent items remain optional device data.
     }
@@ -538,7 +555,7 @@ class _StorePageState extends State<StorePage> {
           ])),
           const SizedBox(height: 16),
           if (recentItems.isNotEmpty) ...[
-            Text('Recently ordered items', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text('Previously ordered items', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             SizedBox(height: 88, child: ListView.separated(
               scrollDirection: Axis.horizontal,

@@ -122,6 +122,10 @@ class AuthService {
         }),
       );
 
+  Future<Map<String,dynamic>> customerData() => _request('customer-data', authenticated:true);
+  Future<void> saveServerAddress(Map<String,Object?> address) async { await _request('customer-data',method:'POST',body:address,authenticated:true); }
+  Future<void> deleteServerAddress(int id) async { await _request('customer-data',method:'POST',body:{'operation':'delete','id':id},authenticated:true); }
+
   Future<Map<String, dynamic>> createOrder(Map<String, Object?> order) =>
       _request('order-create', method: 'POST', body: order);
 

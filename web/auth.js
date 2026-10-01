@@ -82,7 +82,9 @@
     });
     if(id===null||n?.audience==='delivery')await deliveryNotifications(id,true);
   });
+  window.CustomerAccount={get user(){return user;},request};
   function refresh() {
+    window.dispatchEvent(new Event('customer-account-changed'));
     inbox.active=!!user;
     if(user)inbox.refresh().catch(()=>{
     });

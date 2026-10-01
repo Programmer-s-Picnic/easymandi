@@ -249,7 +249,8 @@ el('orderForm').onsubmit=async e=>{
     }if(!response.ok){
       if(response.status===409&&result.error?.startsWith('Order request already used'))sessionStorage.removeItem('easy-mandi-pending-order');
       throw Error(result.error||'Could not place order. Please retry.');
-    }sessionStorage.removeItem('easy-mandi-pending-order');
+    }window.dispatchEvent(new Event('customer-order-placed'));
+    sessionStorage.removeItem('easy-mandi-pending-order');
     deliveryLocation=null;
     el('locationStatus').textContent='Optional map pin for accurate delivery.';
     const address=[house,locality,...(landmark?['Near '+landmark]:[]),(data.store.city||'Varanasi')+', '+(data.checkout?.state||'Uttar Pradesh')+' - '+pin].join(', ');
