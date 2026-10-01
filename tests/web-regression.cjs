@@ -36,6 +36,9 @@ const tick=()=>new Promise(r=>setImmediate(r));
   for(const status of states.map(s=>s[0])){h.nodes.ordersFilter.value=status;await h.nodes.ordersFilter.fire('change');assert.equal(h.nodes.ordersCount.textContent,'1 of 4 orders shown');}
   const select=h.ctx.document.getElementById('ordersDeliveryFilter');select.value='out_for_delivery';await select.fire('input');assert.equal(h.nodes.ordersFilter.value,'All');assert.equal(h.nodes.ordersCount.textContent,'1 of 4 orders shown');
   select.value='created';await select.fire('change');assert.equal(h.nodes.ordersCount.textContent,'0 of 4 orders shown');assert.equal(h.ctx.document.getElementById('ordersEmpty').hidden,false);
+  const orderSearch=h.ctx.document.getElementById('ordersSearch');select.value='All';h.nodes.ordersFilter.value='All';orderSearch.value='ORDER1';await orderSearch.fire('input');assert.equal(h.nodes.ordersCount.textContent,'1 of 4 orders shown');
+  orderSearch.value='';await orderSearch.fire('input');assert.equal(h.nodes.ordersCount.textContent,'4 of 4 orders shown');
+  const countGrid=h.ctx.document.getElementById('orderDashboard');assert.equal(countGrid.children.length,5);await countGrid.children[3].fire('click');assert.equal(h.nodes.ordersFilter.value,'Delivered');assert.equal(h.nodes.ordersCount.textContent,'1 of 4 orders shown');
   h.ctx.AdminSession.clear();assert.equal(h.ctx.AdminSession.token,null);assert.equal(h.nodes.ordersControls.hidden,true);
   // Product forms validate before touching the draft; update preserves extra fields.
   const g=harness(fs.readFileSync(path.join(base,'admin/index.html'),'utf8'));

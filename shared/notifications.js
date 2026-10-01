@@ -20,6 +20,9 @@
       expand.textContent='View all';
       expand.onclick=()=>this.show();
       head.append(this.title,expand);
+      this.counts=document.createElement('span');
+      this.counts.className='notification-count-badge';
+      head.append(this.counts);
       this.preview=document.createElement('div');
       this.preview.className='notification-preview';
       this.preview.textContent=this.lockedMessage;
@@ -33,7 +36,9 @@
       close.textContent='Close';
       close.onclick=()=>this.dialog.close();
       this.list=document.createElement('section');
-      this.dialog.append(close,this.list);
+      this.summary=document.createElement('section');
+      this.summary.className='notification-order-summary';
+      this.dialog.append(close,this.summary,this.list);
       document.body.append(this.dialog);
       this.view=root.closest('.view');
       this.syncView=()=>{
@@ -54,6 +59,20 @@
       this.root.replaceChildren();
       this.list.textContent=this.lockedMessage;
     }
+    setOrderSummary(counts, select, note=''){
+      this.summary.replaceChildren();
+      if(!counts)return;
+      const heading=document.createElement('h2');heading.textContent='Orders at a glance';this.summary.append(heading);
+      const grid=document.createElement('div');grid.className='order-count-grid';
+      for(const [status,count] of Object.entries(counts)){
+        const button=document.createElement('button');button.type='button';button.className='order-count-chip';
+        const label=document.createElement('span');label.textContent=status;
+        const badge=document.createElement('strong');badge.textContent=count;
+        button.append(label,badge);button.onclick=()=>{this.dialog.close();select(status);};grid.append(button);
+      }
+      this.summary.append(grid);
+      if(note){const help=document.createElement('p');help.className='hint';help.textContent=note;this.summary.append(help);}
+    }
     destroy(){
       this.stop();
       clearInterval(this.timer);
@@ -71,6 +90,8 @@
         notifications:[],unreadCount:0
       };
       this.title.textContent='Notifications';
+      this.counts.textContent='';
+      this.summary.replaceChildren();
       this.preview.textContent=this.lockedMessage;
       this.list.replaceChildren();
       this.list.textContent=this.lockedMessage;
@@ -91,6 +112,8 @@
     render(data){
       this.data=data;
       this.title.textContent='Notifications · '+data.unreadCount+' unread';
+      this.counts.textContent=data.unreadCount||'';
+      this.counts.hidden=!data.unreadCount;
       const unread=data.notifications.filter(n=>!n.read_at);
       this.preview.textContent=(unread.length?unread:data.notifications).slice(0,3).map(n=>n.message).join('\n\n')||'No notifications yet.';
       this.list.replaceChildren();
@@ -110,6 +133,7 @@
       }
       for(const n of data.notifications){
         const row=document.createElement('article');
+        row.className=n.read_at?'notification-entry':'notification-entry unread';
         row.style.background=n.read_at?'white':'#e8f2fc';
         const p=document.createElement('p');
         p.textContent=(n.read_at?'':'Unread · ')+n.message;

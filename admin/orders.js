@@ -3,7 +3,7 @@
   const api = 'https://cserver.learnwithchampak.live/easymandi/api/';
   const byId = id => document.getElementById(id);
   const session=window.AdminSession;
-  let orders = [];
+  let orders = [], statusCounts=null, totalOrders=0;
   const notificationRoot=document.createElement('section');
   byId('ordersList').after(notificationRoot);
   const inbox=new NotificationInbox(notificationRoot,
@@ -15,7 +15,8 @@
     byId('ordersFilter').value='All';
     byId('ordersDeliveryFilter').value='All';
     render();
-    const card=[...byId('ordersList').children].find(c=>c.textContent.includes(n.order_ref));
+    const card=[...byId('ordersList').children].find(c=>c.dataset.orderId===n.order_ref);
+    if(card)card.open=true;
     card?.scrollIntoView({
       behavior:'smooth'
     });
@@ -54,9 +55,21 @@
   resetFilters.onclick = () => {
     byId('ordersFilter').value = 'All';
     deliveryFilter.value = 'All';
+    search.value='';
     render();
   };
   byId('ordersControls').append(resetFilters);
+  const search=document.createElement('input');search.type='search';search.id='ordersSearch';search.placeholder='Search order, customer, phone or locality';search.setAttribute('aria-label','Search customer orders');
+  search.addEventListener('input',applyFilters);byId('ordersControls').append(search);
+  const dashboard=document.createElement('div');dashboard.className='order-count-grid';dashboard.id='orderDashboard';byId('ordersControls').append(dashboard);
+  function selectStatus(status){byId('ordersFilter').value=status;deliveryFilter.value='All';search.value='';applyFilters();byId('ordersPanel').scrollIntoView({behavior:'smooth'});}
+  function renderCounts(){
+    const counts=statusCounts||Object.fromEntries(statuses.map(status=>[status,orders.filter(o=>o.status===status).length]));
+    dashboard.replaceChildren();
+    for(const [status,count] of Object.entries(counts)){const button=document.createElement('button');button.type='button';button.className='order-count-chip';const label=document.createElement('span');label.textContent=status;const number=document.createElement('strong');number.textContent=count;button.append(label,number);button.onclick=()=>selectStatus(status);dashboard.append(button);}
+    const note=statusCounts?'Counts cover all orders. The list shows the latest '+orders.length+' of '+totalOrders+' orders.':'Counts cover the loaded orders.';
+    inbox.setOrderSummary(counts,selectStatus,note);
+  }
   const filterHelp = document.createElement('p');
   filterHelp.className = 'hint';
   filterHelp.textContent = 'Choose an order status or a delivery status. Changing one resets the other to All.';
@@ -98,7 +111,8 @@
     let shown = 0;
     for (const card of byId('ordersList').querySelectorAll('[data-order-status]')) {
       const matches = (orderFilter === 'all' || card.dataset.orderStatus === orderFilter) &&
-      (deliveryValue === 'all' || card.dataset.deliveryStatus === deliveryValue);
+      (deliveryValue === 'all' || card.dataset.deliveryStatus === deliveryValue) &&
+      (!search.value.trim() || card.dataset.search.includes(search.value.trim().toLowerCase()));
       card.hidden = !matches;
       if(matches)shown++;
     }
@@ -117,13 +131,15 @@
     empty.className='hint';
     root.append(empty);
     for (const order of orders) {
-      const card = document.createElement('article');
-      card.className = 'product';
+      const card = document.createElement('details');
+      card.className = 'order-card';
+      card.dataset.search=[order.public_id,order.customer_name,order.mobile,order.locality,order.status].join(' ').toLowerCase();
       card.dataset.orderId=order.public_id;
       card.dataset.orderStatus=normalized(order.status);
       card.dataset.deliveryStatus=normalized(deliveryStatus(order));
-      const title = document.createElement('h3');
-      title.textContent = 'Order ' + order.public_id + ' · ' + money(order.total);
+      const title = document.createElement('summary');
+      title.className='order-card-heading';
+      for(const [value,style] of [[order.customer_name,'order-customer'],[money(order.total),'order-amount'],['#'+order.public_id,'order-reference'],[order.status,'order-status '+normalized(order.status)]]){const part=document.createElement('span');part.className=style;part.textContent=value;title.append(part);}
       const date = document.createElement('p');
       date.className = 'hint';
       date.textContent = order.created_at + ' · ' + order.source;
@@ -143,6 +159,7 @@
       }
       const items = document.createElement('p');
       items.textContent = itemText(order);
+      items.className='order-items';
       const totals = document.createElement('p');
       totals.className = 'hint';
       totals.textContent = 'Subtotal ' + money(order.subtotal) + ' · Delivery ' + money(order.delivery_fee);
@@ -173,7 +190,7 @@
           });
           order.status = select.value;
           message('Status updated for order ' + order.public_id + '.');
-          render();
+          await refresh();
         } catch (error) {
           message(error.message, true);
           save.disabled = false;
@@ -184,15 +201,18 @@
       delivery.href = 'https://programmer-s-picnic.github.io/delivery-app/web/?order=' + encodeURIComponent(order.public_id);
       delivery.textContent = 'Open in delivery admin';
       row.append(select, save, delivery);
-      card.append(title, date, progress, customer, address, map, items, totals, row);
+      const content=document.createElement('div');content.className='order-card-body';
+      content.append(date, progress, customer, address, map, items, totals, row);
+      card.append(title,content);
       root.append(card);
     }
+    renderCounts();
     applyFilters();
   }
   function lock() {
     inbox.stop();
     if(session.token)session.clear();
-    orders = [];
+    orders = [];statusCounts=null;totalOrders=0;dashboard.replaceChildren();
     byId('ordersUnlock').hidden=false;
     byId('ordersRefresh').hidden = true;
     byId('ordersLock').hidden = true;
@@ -207,6 +227,7 @@
       const result = await request('admin-orders');
       if(!token||session.token!==token)return;
       orders = result.orders;
+      statusCounts=result.statusCounts||null;totalOrders=result.totalOrders||orders.length;
       inbox.active=true;
       byId('ordersUnlock').hidden=true;
       byId('ordersControls').hidden = false;

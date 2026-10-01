@@ -6,13 +6,13 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#176b46">
 <title>Easy Mandi · Admin workspace</title>
-<link rel="stylesheet" href="catalog.css?v=20261001-grid">
-<link rel="stylesheet" href="../shared/notifications.css?v=20261001-grid">
-<script src="../shared/api-client.js?v=20261001-grid" defer>
+<link rel="stylesheet" href="catalog.css?v=20261001-orders">
+<link rel="stylesheet" href="../shared/notifications.css?v=20261001-orders">
+<script src="../shared/api-client.js?v=20261001-orders" defer>
 </script>
-<script src="../shared/admin-session.js?v=20261001-grid" defer>
+<script src="../shared/admin-session.js?v=20261001-orders" defer>
 </script>
-<script src="../shared/notifications.js?v=20261001-grid" defer>
+<script src="../shared/notifications.js?v=20261001-orders" defer>
 </script>
 </head>
 <body>
@@ -101,7 +101,7 @@
 </div>
 <p class="hint">Insert, update and delete change your draft. Choose Save to server to publish.</p>
 <div class="row"><label class="field"><span>Category</span><select id="productCategoryFilter"></select></label><label class="field"><span>Availability</span><select id="productAvailabilityFilter"><option value="all">All products</option><option value="yes">Available</option><option value="no">Unavailable</option></select></label></div>
-<div id="products">
+<div id="products" tabindex="0" role="region" aria-label="Scrollable product records">
 </div>
 </section>
 <section class="panel" id="ordersPanel">
@@ -130,7 +130,7 @@
 <span id="ordersCount" class="hint">
 </span>
 </div>
-<div id="ordersList">
+<div id="ordersList" tabindex="0" role="region" aria-label="Scrollable customer orders">
 </div>
 </section>
 <section class="panel" id="publishPanel">
@@ -168,10 +168,10 @@
 </main>
 <footer>Developed and maintained by <a href="https://learnwithchampak.live">Champak Roy</a>
 </footer>
-<script src="auth-dialog.js?v=20261001-grid" defer></script>
-<script src="catalog.js?v=20261001-grid" defer>
+<script src="auth-dialog.js?v=20261001-orders" defer></script>
+<script src="catalog.js?v=20261001-orders" defer>
 </script>
-<script src="orders.js?v=20261001-grid" defer>
+<script src="orders.js?v=20261001-orders" defer>
 </script>
 </body>
 </html>

@@ -57,3 +57,13 @@
 
  body {
   padding-bottom:210px!important}
+
+.notification-count-badge { background:#d93025; color:white; border-radius:20px; padding:3px 8px; min-width:24px; text-align:center; font-weight:800; }
+.notification-count-badge:empty { display:none; }
+.order-count-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px; margin:12px 0; }
+.order-count-chip,.notification-modal .order-count-chip { display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid #cbdfee; border-radius:12px; padding:12px; background:#e8f2fc; color:#18364d; font:inherit; cursor:pointer; }
+.order-count-chip strong { background:white; border-radius:20px; padding:2px 9px; color:#126dba; }
+.notification-order-summary { border-bottom:1px solid #d9e5ef; margin-bottom:20px; }
+.notification-entry { position:relative; }
+.notification-entry.unread { border-left:4px solid #126dba; }
+.notification-entry.unread::after { content:''; position:absolute; top:12px; right:12px; width:8px; height:8px; border-radius:50%; background:#126dba; }
