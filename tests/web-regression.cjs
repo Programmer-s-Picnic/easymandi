@@ -4,7 +4,7 @@ class Element {
  constructor(tag='div'){this.tagName=tag;this.children=[];this.listeners={};this.dataset={};this.value='';this.hidden=false;this.textContent='';this.style={};this.parentElement={hidden:false};this.open=false;this.attributes={};this.previousElementSibling={textContent:''};}
  append(...nodes){if(this.tagName==='select'&&!this.children.length&&nodes[0])this.value=nodes[0].value;this.children.push(...nodes);nodes.forEach(n=>{if(n&&typeof n==='object')n.parentElement=this;});}
  replaceChildren(...nodes){this.children=[];this.append(...nodes);}
- after(){} insertBefore(n){this.append(n)} closest(){return null} remove(){} focus(){} scrollIntoView(){}
+ before(){} prepend(...nodes){this.children.unshift(...nodes)} after(){} insertBefore(n){this.append(n)} closest(){return null} remove(){} focus(){} scrollIntoView(){}
  setAttribute(k,v){this.attributes[k]=v} getAttribute(k){return this.attributes[k]}
  addEventListener(name,fn){(this.listeners[name]??=[]).push(fn)}
  async fire(name){for(const f of this.listeners[name]||[])await f({target:this,currentTarget:this,preventDefault(){}});if(this['on'+name])await this['on'+name]({target:this,currentTarget:this,preventDefault(){}})}
@@ -80,6 +80,14 @@ const tick=()=>new Promise(r=>setImmediate(r));
   c.run('shared/api-client.js');c.run('web/storefront.js');await tick();await tick();vm.runInContext(`change(${JSON.stringify(id)},1)`,c.ctx);
   c.nodes.orderForm.values={name:'Test User',phone:'9876543210',house:'House 12',locality:'Lanka',landmark:'',pin:'221005'};await c.nodes.orderForm.fire('submit');
   const link=c.nodes.orderConfirmation.children.find(n=>n.tagName==='a');assert.ok(link.href.startsWith('https://wa.me/917398564033?'));assert.ok(new URL(link.href).searchParams.get('text').includes('\n'));assert.equal(c.nodes.orderForm.hidden,true);
+  const cloud=harness(fs.readFileSync(path.join(base,'web/index.html'),'utf8'));let addressPayload;
+  cloud.nodes.orderForm.elements=Object.fromEntries(['name','phone','house','locality','landmark','pin'].map(key=>[key,new Element('input')]));
+  cloud.ctx.data={products:[{id:'potato',price:20,available:true}]};cloud.ctx.change=()=>{};cloud.ctx.deliveryLocation={locationLat:1,locationLng:2};
+  cloud.ctx.window.CustomerAccount={user:{id:7},request:async(path,options)=>{assert.equal(path,'customer-data');assert.equal(options.authorized,true);if(options.payload){addressPayload=options.payload;return {saved:true};}return {addresses:[{id:3,name:'Customer',phone:'9876543210',house:'House 12',locality:'Lanka',landmark:'',pin:'221005'}],items:[{product_id:'potato',name:'Potato'}]};}};
+  cloud.run('web/customer-data.js');await tick();await tick();
+  const controls=cloud.nodes.orderForm.children[0];const addressSelect=controls.children[1];addressSelect.value='3';await addressSelect.fire('change');assert.equal(cloud.nodes.orderForm.elements.house.value,'House 12');assert.equal(cloud.ctx.deliveryLocation,null);
+  cloud.nodes.orderForm.elements.house.value='House 25';await controls.children[2].fire('click');await tick();assert.equal(addressPayload.id,3);assert.equal(addressPayload.house,'House 25');
+
  }else{
   // Entire delivery application executes; admin inbox must never reference a deleted password.
   h.run('web/app.js');await tick();await tick();assert.ok(calls.some(c=>c.url.includes('audience=admin')));const call=calls.find(c=>c.url.includes('audience=admin'));assert.equal(call.options.headers['X-Admin-Session'],'signed-token');assert.equal(call.options.headers['X-Admin-Password'],undefined);
