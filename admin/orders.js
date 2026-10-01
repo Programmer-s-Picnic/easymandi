@@ -193,8 +193,6 @@
     inbox.stop();
     if(session.token)session.clear();
     orders = [];
-    byId('ordersPassword').value = '';
-    byId('ordersPassword').parentElement.hidden=false;
     byId('ordersUnlock').hidden=false;
     byId('ordersRefresh').hidden = true;
     byId('ordersLock').hidden = true;
@@ -210,7 +208,6 @@
       if(!token||session.token!==token)return;
       orders = result.orders;
       inbox.active=true;
-      byId('ordersPassword').parentElement.hidden=true;
       byId('ordersUnlock').hidden=true;
       byId('ordersControls').hidden = false;
       byId('ordersRefresh').hidden = false;
@@ -229,20 +226,9 @@
       await refresh();
       return;
     }
-    const input = byId('ordersPassword');
-    if (!input.value) {
-      message('Enter the admin password.', true);
-      input.focus();
-      return;
-    }
     try {
-      await session.login(input.value);
-      input.value='';
-      await refresh();
-    } catch(error){
-      input.value='';
-      message(error.message,true);
-    }
+      await window.AdminAccess.ensure();
+    } catch(error) { message(error.message, true); }
   };
   window.addEventListener('admin-session-started',refresh);
   window.addEventListener('admin-session-ended',()=>{

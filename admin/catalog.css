@@ -316,3 +316,18 @@ dialog::backdrop {
 .order-tools label {
   width:100%}
 }
+
+.grid-scroll { overflow-x:auto; margin-top:18px; border:1px solid var(--line); border-radius:10px; }
+.product-grid { width:100%; border-collapse:collapse; font-size:14px; }
+.product-grid caption { text-align:left; padding:12px; font-weight:700; background:#e8f2fc; }
+.product-grid th,.product-grid td { padding:12px; text-align:left; border-bottom:1px solid var(--line); vertical-align:middle; }
+.product-grid thead { background:#f1f6fb; }
+.product-grid tbody tr:nth-child(even) { background:#f7faff; }
+.product-grid tbody tr:hover { background:#eaf4ff; }
+.product-grid td:last-child { min-width:190px; }
+.sort-button { background:transparent; color:#18364d; border:0; padding:0; font-weight:700; white-space:nowrap; }
+.record-dialog { border:0; border-radius:16px; padding:24px; width: min(760px,calc(100% - 28px)); max-height:90vh; overflow-y:auto; color:#18364d; }
+.field-error,#adminError,#productFormMessage { color:#9b251d; }
+.field-error:empty,#adminError:empty,#productFormMessage:empty { display:none; }
+[aria-invalid=true] { border:2px solid #b62b24; }
+.record-dialog .wide { grid-column:1/-1; }

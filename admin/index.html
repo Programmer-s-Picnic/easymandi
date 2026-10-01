@@ -6,13 +6,13 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#176b46">
 <title>Easy Mandi · Admin workspace</title>
-<link rel="stylesheet" href="catalog.css?v=20260930-cleanup">
-<link rel="stylesheet" href="../shared/notifications.css?v=20260930-cleanup">
-<script src="../shared/api-client.js?v=20260930-cleanup" defer>
+<link rel="stylesheet" href="catalog.css?v=20261001-grid">
+<link rel="stylesheet" href="../shared/notifications.css?v=20261001-grid">
+<script src="../shared/api-client.js?v=20261001-grid" defer>
 </script>
-<script src="../shared/admin-session.js?v=20260930-cleanup" defer>
+<script src="../shared/admin-session.js?v=20261001-grid" defer>
 </script>
-<script src="../shared/notifications.js?v=20260930-cleanup" defer>
+<script src="../shared/notifications.js?v=20261001-grid" defer>
 </script>
 </head>
 <body>
@@ -34,14 +34,14 @@
 <ol>
 <li>Review store settings, delivery fees and minimum order.</li>
 <li>Add a category before assigning products to it. Rename updates the products in that category. Move its products before deleting a category.</li>
-<li>Find or add a product. Enter a unique ID, name, category, unit and price. Enable Available to order when ready.</li>
-<li>Choose Validate catalog, then Save to server and enter the admin password. Changes become available when customers reload the catalog.</li>
+<li>Search, filter or sort the product grid. Choose Add product, Update or Delete to open the record form. Insert and Update validate the fields before changing your draft.</li>
+<li>Choose Validate catalog, then Save to server. Sign in through the password pop-up if your 30-minute session has ended. Changes become available when customers reload the catalog.</li>
 </ol>
 </article>
 <article>
 <h3>2. Manage customer orders</h3>
 <ol>
-<li>Go to Customer orders, enter the admin password and choose Show orders.</li>
+<li>Sign in using the password pop-up, then go to Customer orders.</li>
 <li>Filter by status, review items, totals, address and map pin.</li>
 <li>Choose a status and Update status. Refresh orders to see recent changes.</li>
 <li>Choose Open in delivery admin on an order to carry its ID into the import form. Sign in there and choose Import order.</li>
@@ -99,6 +99,8 @@
 <input id="filter" type="search" placeholder="Find a product" aria-label="Find a product" style="max-width:340px">
 <button class="btn secondary" id="add">Add product</button>
 </div>
+<p class="hint">Insert, update and delete change your draft. Choose Save to server to publish.</p>
+<div class="row"><label class="field"><span>Category</span><select id="productCategoryFilter"></select></label><label class="field"><span>Availability</span><select id="productAvailabilityFilter"><option value="all">All products</option><option value="yes">Available</option><option value="no">Unavailable</option></select></label></div>
 <div id="products">
 </div>
 </section>
@@ -106,10 +108,7 @@
 <h2>Customer orders</h2>
 <p class="hint">Enter the admin password once. Both admin websites reuse your session for 30 minutes; notifications update automatically every five minutes.</p>
 <div class="row">
-<label class="field" style="min-width:220px;flex:1">
-<span>Admin password</span>
-<input id="ordersPassword" type="password" autocomplete="current-password">
-</label>
+
 <button class="btn" id="ordersUnlock" type="button">Show orders</button>
 <button class="btn secondary" id="ordersRefresh" type="button" hidden>Refresh orders</button>
 <button class="btn secondary" id="ordersLock" type="button" hidden>Lock</button>
@@ -143,26 +142,36 @@
 <button class="btn secondary" id="exportBottom">Download backup</button>
 </div>
 </section>
-<dialog id="adminDialog" style="border:0;border-radius:16px;max-width:420px;width:calc(100% - 30px);padding:24px;box-shadow:0 20px 80px #173b2a66">
+<dialog aria-labelledby="adminTitle" id="adminDialog" style="border:0;border-radius:16px;max-width:420px;width:calc(100% - 30px);padding:24px;box-shadow:0 20px 80px #173b2a66">
 <form id="adminForm">
-<h2>Publish catalog</h2>
-<p class="hint">Enter the Easy Mandi admin password to save these changes on the server.</p>
+<h2 id="adminTitle">Administrator sign-in</h2>
+<p class="hint">Enter the administrator password once for a 30-minute session. Orders, publishing and notifications use this session.</p>
 <label class="field">
 <span>Admin password</span>
 <input id="adminPassword" type="password" autocomplete="current-password" required>
 </label>
+<p id="adminError" role="alert" aria-live="polite"></p>
 <div class="row" style="justify-content:flex-end;margin-top:20px">
 <button class="btn secondary" type="button" id="adminCancel">Cancel</button>
-<button class="btn" type="submit" id="adminSubmit">Save now</button>
+<button class="btn" type="submit" id="adminSubmit">Sign in</button>
 </div>
 </form>
 </dialog>
+<dialog id="productDialog" class="record-dialog" aria-labelledby="productTitle">
+<form id="productForm" novalidate>
+<h2 id="productTitle">Product record</h2>
+<p id="productFormMessage" role="alert"></p>
+<div id="productFields" class="grid"></div>
+<p class="hint">Changes are saved to this browser draft. Save to server publishes them.</p>
+<div class="row"><button id="productCancel" type="button" class="btn secondary">Cancel</button><button id="productSubmit" type="submit" class="btn">Update draft</button></div>
+</form></dialog>
 </main>
 <footer>Developed and maintained by <a href="https://learnwithchampak.live">Champak Roy</a>
 </footer>
-<script src="catalog.js?v=20260930-cleanup" defer>
+<script src="auth-dialog.js?v=20261001-grid" defer></script>
+<script src="catalog.js?v=20261001-grid" defer>
 </script>
-<script src="orders.js?v=20260930-cleanup" defer>
+<script src="orders.js?v=20261001-grid" defer>
 </script>
 </body>
 </html>

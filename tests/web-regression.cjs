@@ -37,6 +37,38 @@ const tick=()=>new Promise(r=>setImmediate(r));
   const select=h.ctx.document.getElementById('ordersDeliveryFilter');select.value='out_for_delivery';await select.fire('input');assert.equal(h.nodes.ordersFilter.value,'All');assert.equal(h.nodes.ordersCount.textContent,'1 of 4 orders shown');
   select.value='created';await select.fire('change');assert.equal(h.nodes.ordersCount.textContent,'0 of 4 orders shown');assert.equal(h.ctx.document.getElementById('ordersEmpty').hidden,false);
   h.ctx.AdminSession.clear();assert.equal(h.ctx.AdminSession.token,null);assert.equal(h.nodes.ordersControls.hidden,true);
+  // Product forms validate before touching the draft; update preserves extra fields.
+  const g=harness(fs.readFileSync(path.join(base,'admin/index.html'),'utf8'));
+  const sample=JSON.parse(fs.readFileSync(path.join(base,'assets/products.json')));
+  g.storage.setItem('easy-mandi-admin-draft-v1',JSON.stringify(sample));
+  g.ctx.AppHttp={fetch:async()=>{throw Error('Unexpected network request')}};
+  g.run('admin/catalog.js');
+  const before=JSON.parse(g.storage.getItem('easy-mandi-admin-draft-v1'));
+  await g.nodes.add.fire('click');assert.equal(g.nodes.productDialog.open,true);
+  await g.nodes.productForm.fire('submit');assert.equal(g.nodes.productDialog.open,true);
+  assert.equal(JSON.parse(g.storage.getItem('easy-mandi-admin-draft-v1')).products.length,before.products.length);
+  const el=id=>g.ctx.document.getElementById('product_'+id);
+  el('id').value=before.products[0].id;el('name').value='Test product';el('price').value='12.75';
+  await g.nodes.productForm.fire('submit');assert.ok(g.ctx.document.getElementById('product_error_id').textContent.includes('already exists'));
+  el('id').value='test_product';el('price').value='-1';await g.nodes.productForm.fire('submit');assert.ok(g.ctx.document.getElementById('product_error_price').textContent);
+  el('price').value='12.75';await g.nodes.productForm.fire('submit');assert.equal(g.nodes.productDialog.open,false);
+  assert.equal(JSON.parse(g.storage.getItem('easy-mandi-admin-draft-v1')).products.at(-1).price,12.75);
+  vm.runInContext("openProduct(data.products.find(p=>p.id==='test_product'),'update')",g.ctx);
+  el('name').value='Updated product';await g.nodes.productForm.fire('submit');
+  assert.equal(JSON.parse(g.storage.getItem('easy-mandi-admin-draft-v1')).products.at(-1).name,'Updated product');
+  vm.runInContext("openProduct(data.products.find(p=>p.id==='test_product'),'delete')",g.ctx);
+  await g.nodes.productCancel.fire('click');assert.equal(JSON.parse(g.storage.getItem('easy-mandi-admin-draft-v1')).products.length,before.products.length+1);
+  vm.runInContext("openProduct(data.products.find(p=>p.id==='test_product'),'delete')",g.ctx);
+  await g.nodes.productForm.fire('submit');assert.equal(JSON.parse(g.storage.getItem('easy-mandi-admin-draft-v1')).products.length,before.products.length);
+  g.nodes.filter.value='nothing_matches';await g.nodes.filter.fire('input');assert.ok(g.nodes.products.children[1].textContent.includes('No matching'));
+  // Password pop-up retains validation errors and uses the shared session.
+  const a=harness(fs.readFileSync(path.join(base,'admin/index.html'),'utf8'));let attempts=0;
+  a.ctx.AdminSession={token:null,login:async()=>{if(++attempts===1)throw Error('Incorrect password');a.ctx.AdminSession.token='valid';}};
+  a.run('admin/auth-dialog.js');const signin=a.ctx.window.AdminAccess.ensure();
+  assert.equal(a.nodes.adminDialog.open,true);a.nodes.adminPassword.value='wrong';await a.nodes.adminForm.fire('submit');
+  assert.equal(a.nodes.adminDialog.open,true);assert.equal(a.nodes.adminError.textContent,'Incorrect password');assert.equal(a.nodes.adminPassword.value,'');
+  a.nodes.adminPassword.value='correct';await a.nodes.adminForm.fire('submit');await signin;
+  assert.equal(a.nodes.adminDialog.open,false);await a.ctx.window.AdminAccess.ensure();assert.equal(attempts,2);
   // Execute customer checkout including WhatsApp confirmation with real production script.
   const c=harness(fs.readFileSync(path.join(base,'web/index.html'),'utf8'));const catalog=JSON.parse(fs.readFileSync(path.join(base,'assets/products.json')));catalog.store.minimumOrder=0;catalog.products[0].price=10.75;const id=catalog.products[0].id;
   c.ctx.fetch=async(url,options)=>({ok:true,status:200,json:async()=>({orderId:'ABC123',total:10.75}),text:async()=>JSON.stringify(catalog)});

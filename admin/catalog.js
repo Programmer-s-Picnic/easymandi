@@ -70,56 +70,96 @@ function renderStore(){
   },opts||{
   }))
 }
-function renderProducts(){
-  const root=$('products');
-  root.replaceChildren();
-  const query=$('filter').value.trim().toLocaleLowerCase();
-  for(const p of data.products){
-    if(!(p.name+' '+p.hindi+' '+p.id).toLocaleLowerCase().includes(query))continue;
-    const card=document.createElement('article');
-    card.className='product';
-    const head=document.createElement('div');
-    head.className='producthead';
-    const title=document.createElement('h3');
-    title.textContent=(p.emoji||'🥬')+' '+(p.name||'New product');
-    const remove=document.createElement('button');
-    remove.className='btn danger';
-    remove.textContent='Remove';
-    remove.onclick=()=>{
-      if(!confirm('Remove '+(p.name||p.id)+' from this draft?'))return;
-      data.products=data.products.filter(item=>item!==p);
-      persist();
-      renderProducts()
-    };
-    head.append(title,remove);
-    const grid=document.createElement('div');
-    grid.className='grid';
-    for(const [label,key,opts] of [['ID','id'],['English name','name'],['Hindi name','hindi'],['Category','category',{
-      choices:data.categories.filter(x=>x!=='All')
-    }],['Unit','unit'],['Price (₹)','price',{
-      type:'number'
-    }],['Emoji','emoji'],['Description','description',{
-      wide:true
-    }]])grid.append(field(label,p[key],value=>{
-      p[key]=value;
-      persist();
-      if(key==='name'||key==='emoji')title.textContent=(p.emoji||'🥬')+' '+(p.name||'New product')
-    },opts||{
-    }));
-    const available=document.createElement('label');
-    available.className='row';
-    const checkbox=document.createElement('input');
-    checkbox.type='checkbox';
-    checkbox.checked=!!p.available;
-    checkbox.onchange=()=>{
-      p.available=checkbox.checked;
-      persist()
-    };
-    available.append(checkbox,document.createTextNode('Available to order'));
-    card.append(head,grid,available);
-    root.append(card)
-  }if(!root.children.length)root.textContent='No matching products.'
+let productPage=1, productSort='name', productAscending=true, editingProduct=null, productMode='insert';
+const pageSize=10;
+const productSpecs=[['ID','id'],['English name','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price (₹)','price'],['Emoji','emoji'],['Description','description']];
+function productErrors(p, original){
+  const errors={};
+  if(!/^[a-z0-9_-]{1,64}$/.test(p.id||''))errors.id='Use 1–64 lowercase letters, numbers, underscores or hyphens.';
+  else if(data.products.some(other=>other!==original&&other.id===p.id))errors.id='This product ID already exists. Enter a unique ID.';
+  if(!p.name?.trim())errors.name='English name is required.';
+  if(!p.unit?.trim())errors.unit='Unit is required (for example, 1 kg).';
+  if(!data.categories.includes(p.category)||p.category==='All')errors.category='Select an existing product category.';
+  if(p.price===''||!Number.isFinite(Number(p.price))||Number(p.price)<0)errors.price='Enter a price of zero or greater.';
+  else if(Math.abs(Number(p.price)*100-Math.round(Number(p.price)*100))>0.000001)errors.price='Use no more than two decimal places.';
+  for(const [,key] of productSpecs){const limit=key==='id'?64:key==='name'?150:key==='unit'?80:300;if(Array.from(String(p[key]||'')).length>limit)errors[key]='Use no more than '+limit+' characters.';}
+  if(Number(p.price)>1000000)errors.price='Price cannot exceed ₹1,000,000.';
+  if(!original&&data.products.length>=500)errors.id='The catalog supports at most 500 products.';
+  return errors;
 }
+function openProduct(original=null, mode='insert'){
+  if(!data){notify('Load the catalog first.','error');return;}
+  editingProduct=original;productMode=mode;
+  const value=original||{id:'',name:'',hindi:'',category:data.categories.find(x=>x!=='All')||'',unit:'1 kg',price:'',emoji:'🥬',description:'',available:false};
+  $('productTitle').textContent=mode==='delete'?'Delete product':mode==='insert'?'Insert product':'Update product';
+  $('productSubmit').textContent=mode==='delete'?'Delete from draft':mode==='insert'?'Insert into draft':'Update draft';
+  $('productSubmit').className=mode==='delete'?'btn danger':'btn';
+  $('productFormMessage').textContent=mode==='delete'?'Review this record. Confirm deletion to remove it from the draft.':'';
+  const root=$('productFields');root.replaceChildren();
+  for(const [label,key] of productSpecs){
+    const wrap=field(label,value[key],()=>{},key==='category'?{choices:data.categories.filter(x=>x!=='All')}:key==='description'?{multiline:true,wide:true}:key==='price'?{type:'number'}:{});
+    const input=wrap.children[1];input.id='product_'+key;input.disabled=mode==='delete';
+    input.setAttribute('aria-describedby','product_error_'+key);
+    const error=document.createElement('small');error.id='product_error_'+key;error.className='field-error';wrap.append(error);root.append(wrap);
+  }
+  const wrap=document.createElement('label');wrap.className='row';
+  const check=document.createElement('input');check.id='product_available';check.type='checkbox';check.checked=!!value.available;check.disabled=mode==='delete';
+  wrap.append(check,document.createTextNode('Available to order'));root.append(wrap);
+  $('productDialog').showModal();$('product_id').focus();
+}
+function renderProducts(){
+  if(!data)return;
+  const root=$('products');root.replaceChildren();
+  const category=$('productCategoryFilter'), selected=category.value||'All';
+  category.replaceChildren();
+  for(const name of data.categories){const o=document.createElement('option');o.value=name;o.textContent=name;category.append(o);}
+  category.value=data.categories.includes(selected)?selected:'All';
+  const query=$('filter').value.trim().toLocaleLowerCase(), available=$('productAvailabilityFilter').value||'all';
+  const rows=data.products.filter(p=>(p.name+' '+p.hindi+' '+p.id+' '+p.category).toLocaleLowerCase().includes(query)&&(category.value==='All'||p.category===category.value)&&(available==='all'||Boolean(p.available)===(available==='yes')));
+  rows.sort((a,b)=>{const result=productSort==='price'?Number(a.price)-Number(b.price):String(a[productSort]??'').localeCompare(String(b[productSort]??''));return productAscending?result:-result;});
+  const pages=Math.max(1,Math.ceil(rows.length/pageSize));productPage=Math.min(productPage,pages);
+  const scroll=document.createElement('div');scroll.className='grid-scroll';
+  const table=document.createElement('table');table.className='product-grid';
+  const caption=document.createElement('caption');caption.textContent='Product records';table.append(caption);
+  const head=document.createElement('thead'), header=document.createElement('tr');
+  for(const [label,key] of [['ID','id'],['Product','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price','price'],['Available','available']]){
+    const th=document.createElement('th');th.setAttribute('scope','col');th.setAttribute('aria-sort',productSort===key?(productAscending?'ascending':'descending'):'none');
+    const button=document.createElement('button');button.type='button';button.className='sort-button';button.textContent=label+(productSort===key?(productAscending?' ↑':' ↓'):'');
+    button.onclick=()=>{productAscending=productSort===key?!productAscending:true;productSort=key;productPage=1;renderProducts();};th.append(button);header.append(th);
+  }
+  const actions=document.createElement('th');actions.textContent='Actions';actions.setAttribute('scope','col');header.append(actions);head.append(header);table.append(head);
+  const body=document.createElement('tbody');
+  for(const p of rows.slice((productPage-1)*pageSize,productPage*pageSize)){
+    const row=document.createElement('tr');
+    for(const value of [p.id,(p.emoji||'')+' '+p.name,p.hindi,p.category,p.unit,'₹'+Number(p.price).toFixed(2),p.available?'Yes':'No']){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
+    const cell=document.createElement('td');const controls=document.createElement('div');controls.className='row';
+    for(const [label,mode] of [['Update','update'],['Delete','delete']]){const button=document.createElement('button');button.type='button';button.className=mode==='delete'?'btn danger':'btn secondary';button.textContent=label;button.setAttribute('aria-label',label+' '+p.name);button.onclick=()=>openProduct(p,mode);controls.append(button);}
+    cell.append(controls);row.append(cell);body.append(row);
+  }
+  table.append(body);scroll.append(table);root.append(scroll);
+  const summary=document.createElement('p');summary.setAttribute('role','status');summary.textContent=rows.length?rows.length+' matching products · Page '+productPage+' of '+pages:'No matching products. Change the filters or add a product.';root.append(summary);
+  const pager=document.createElement('div');pager.className='row';
+  for(const [label,delta,disabled] of [['Previous',-1,productPage===1],['Next',1,productPage===pages]]){const button=document.createElement('button');button.type='button';button.className='btn secondary';button.textContent=label;button.disabled=disabled;button.onclick=()=>{productPage+=delta;renderProducts();};pager.append(button);}root.append(pager);
+}
+$('productCancel').onclick=()=>$('productDialog').close();
+$('productForm').onsubmit=event=>{
+  event.preventDefault();
+  if(productMode==='delete'){
+    data.products=data.products.filter(p=>p!==editingProduct);
+  }else{
+    const value={...(editingProduct||{})};
+    for(const [,key] of productSpecs)value[key]=$('product_'+key).value.trim();
+    value.available=$('product_available').checked;
+    const errors=productErrors(value,editingProduct);
+    for(const [,key] of productSpecs){$('product_error_'+key).textContent=errors[key]||'';$('product_'+key).setAttribute('aria-invalid',errors[key]?'true':'false');}
+    if(Object.keys(errors).length){$('productFormMessage').textContent='Please correct the highlighted fields.';$('product_'+Object.keys(errors)[0]).focus();return;}
+    value.price=Number(value.price);
+    if(editingProduct)Object.assign(editingProduct,value);else data.products.push(value);
+  }
+  persist();renderProducts();renderCategories();$('productDialog').close();
+  notify((productMode==='delete'?'Product deleted':productMode==='insert'?'Product inserted':'Product updated')+' in the draft. Save to server to publish.');
+};
+for(const id of ['filter','productCategoryFilter','productAvailabilityFilter'])$(id).addEventListener(id==='filter'?'input':'change',()=>{productPage=1;renderProducts();});
 function renderCategories(){
   const root=$('categories');
   root.replaceChildren();
@@ -187,7 +227,7 @@ function validate(){
   const ids=new Set();
   for(const [i,p] of data.products.entries()){
     const prefix='Product '+(i+1)+': ';
-    if(!/^[a-z0-9_-]+$/.test(p.id||''))errors.push(prefix+'ID must use lowercase letters, numbers, _ or -');
+    if(!/^[a-z0-9_-]{1,64}$/.test(p.id||''))errors.push(prefix+'ID must use lowercase letters, numbers, _ or -');
     if(ids.has(p.id))errors.push(prefix+'duplicate ID');
     ids.add(p.id);
     if(!p.name?.trim()||!p.unit?.trim())errors.push(prefix+'name and unit are required');
@@ -235,12 +275,13 @@ function exportFile(){
   link.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000)
 }
-async function saveToServer(password){
+async function saveToServer(){
   if(!validate())return;
-  const button=$('adminSubmit');
+  const button=$('saveTop');
+  $('saveBottom').disabled=true;
   button.disabled=true;
   try{
-    if(!window.AdminSession.token)await window.AdminSession.login(password);
+    await window.AdminAccess.ensure();
     if(!version){
       let current;
       try{
@@ -272,30 +313,20 @@ async function saveToServer(password){
       }throw Error(result.error||'Could not save catalog.')
     }version=result.version;
     localStorage.setItem(KEY+'-version',version);
-    $('adminDialog').close();
     notify('Saved to cserver. The customer website and app will load these catalog changes.')
   }catch(error){
     notify(error.message||'Could not save catalog.','error')
   }finally{
-    $('adminPassword').value='';
-    button.disabled=false
+    button.disabled=false;
+    $('saveBottom').disabled=false
   }
-}$('saveTop').onclick=$('saveBottom').onclick=()=>{
-  if(validate()){
-    if(window.AdminSession.token)saveToServer();
-    else $('adminDialog').showModal()
-  }
-};
-$('adminCancel').onclick=()=>$('adminDialog').close();
-$('adminForm').onsubmit=e=>{
-  e.preventDefault();
-  saveToServer($('adminPassword').value)
-};
+}
+$('saveTop').onclick=$('saveBottom').onclick=()=>{if(validate())saveToServer();};
 $('reload').onclick=load;
 $('validate').onclick=validate;
 $('export').onclick=exportFile;
 $('exportBottom').onclick=exportFile;
-$('filter').oninput=renderProducts;
+
 $('addCategory').onclick=()=>{
   if(!data){
     notify('Load the catalog first.','error');
@@ -316,18 +347,7 @@ $('newCategory').onkeydown=e=>{
     $('addCategory').click()
   }
 };
-$('add').onclick=()=>{
-  const id='new_product_'+Date.now();
-  data.products.push({
-    id,name:'New product',hindi:'',category:data.categories.find(x=>x!=='All')||'Vegetables',unit:'1 kg',price:0,description:'',emoji:'🥬',available:false
-  });
-  persist();
-  $('filter').value='';
-  renderProducts();
-  document.querySelector('.product:last-child')?.scrollIntoView({
-    behavior:'smooth'
-  })
-};
+$('add').onclick=()=>openProduct();
 try{
   const draft=JSON.parse(localStorage.getItem(KEY));
   if(draft&&Array.isArray(draft.products)&&draft.store&&Array.isArray(draft.categories)){
