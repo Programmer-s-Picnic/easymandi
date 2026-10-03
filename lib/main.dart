@@ -279,7 +279,7 @@ class _StorePageState extends State<StorePage> {
           Text(info,style:Theme.of(dialogContext).textTheme.bodySmall),
           const SizedBox(height:8),
           OutlinedButton.icon(onPressed:busy||status=='submitted'?null:() async {
-            final picked=await FilePicker.platform.pickFiles(type:FileType.image,withData:true,allowMultiple:false);
+            final picked=await FilePicker.pickFiles(type:FileType.image,withData:true,allowMultiple:false);
             if(picked==null||picked.files.isEmpty)return;
             final file=picked.files.single,bytes=file.bytes;
             if(bytes==null){updateDialog(()=>info='Could not read that image. Choose the receipt again.');return;}
