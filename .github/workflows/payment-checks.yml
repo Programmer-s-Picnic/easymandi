@@ -1,0 +1,40 @@
+name: Validate payment feature
+on:
+  push:
+    branches: ['feature/payments-2026-10-03']
+    paths:
+      - 'lib/**'
+      - 'web/**'
+      - 'admin/**'
+      - 'shared/**'
+      - 'pubspec.yaml'
+      - 'test/**'
+      - 'tests/**'
+      - '.github/workflows/payment-checks.yml'
+permissions:
+  contents: read
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: find web admin shared -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+      - run: node tests/web-regression.cjs
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Create Android project
+        run: flutter create --platforms=android --org in.easymandi .
+      - run: rm -f test/widget_test.dart analysis_options.yaml
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build apk --release --split-per-abi
