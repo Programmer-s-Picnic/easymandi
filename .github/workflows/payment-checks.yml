@@ -11,6 +11,7 @@ on:
       - 'test/**'
       - 'tests/**'
       - '.github/workflows/payment-checks.yml'
+      - '.github/workflows/android.yml'
 permissions:
   contents: read
 jobs:
