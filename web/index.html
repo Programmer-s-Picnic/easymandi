@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#176b46">
 <meta name="description" content="Easy Mandi: fresh onions, potatoes and vegetables delivered in Varanasi.">
 <title>Easy Mandi | Fresh vegetables</title>
-<link rel="stylesheet" href="storefront.css?v=20260930-cleanup">
+<link rel="stylesheet" href="storefront.css?v=20261003-payments">
 <link rel="stylesheet" href="../shared/notifications.css?v=20260930-cleanup">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
 </script>
@@ -72,12 +72,34 @@
 <p class="note">Address format: <span id="addressExample">House 12, Lanka, Varanasi, Uttar Pradesh 221005</span>. Delivery city: <strong id="deliveryCity">Varanasi</strong>.</p>
 <button type="button" class="btn ghost" id="shareLocation">Share current location</button>
 <p class="note" id="locationStatus">Optional map pin for accurate delivery. Your browser will ask for permission.</p>
-<p class="note">Your order is saved for the Easy Mandi team. You can also send its reference by WhatsApp. Confirm the final price and delivery before payment.</p>
+<label for="paymentMethod">Payment method</label>
+<select id="paymentMethod" name="paymentMethod">
+<option value="cod">Cash on Delivery (COD)</option>
+<option value="upi">UPI — pay now and upload receipt</option>
+</select>
+<p class="note" id="paymentHelp">COD is collected at successful delivery handoff. For UPI, pay the exact saved total and upload a receipt for admin verification.</p>
 <div class="actions">
 <button type="button" class="btn ghost" id="close">Close</button>
 <button class="btn" id="send">Place order</button>
 </div>
 </form>
+</dialog>
+<dialog id="paymentDialog" aria-labelledby="paymentTitle">
+<div class="detail-shell payment-shell">
+<div class="detail-top"><h2 id="paymentTitle">UPI payment</h2><button type="button" class="btn ghost" id="paymentClose">Close</button></div>
+<p><strong id="paymentAmount"></strong></p>
+<p>Payee: <strong>ABHISHEK KUMAR SINGH</strong><br>UPI ID: <code id="paymentUpiId">7398564033@kotakbank</code></p>
+<img id="paymentQr" src="upi-qr.png" alt="UPI QR code for 7398564033@kotakbank" width="320" height="320">
+<p class="note">The QR selects the payee. Check the exact order amount shown above before confirming in your UPI app.</p>
+<a class="btn" id="paymentDeepLink" href="#">Pay with UPI app</a>
+<button class="btn ghost" id="copyUpi" type="button">Copy UPI ID</button>
+<label for="upiReference">UPI transaction/reference (optional)</label>
+<input id="upiReference" maxlength="80" placeholder="UTR / transaction ID">
+<label for="receiptFile">Payment screenshot / receipt</label>
+<input id="receiptFile" type="file" accept="image/jpeg,image/png,image/webp">
+<p class="note" id="paymentStatus" role="status">Upload a JPG, PNG or WebP receipt smaller than 1 MB.</p>
+<div class="actions"><button class="btn" id="submitReceipt" type="button">Upload receipt for verification</button></div>
+</div>
 </dialog>
 <dialog id="itemDetail" aria-labelledby="detailTitle">
 <div class="detail-shell">
@@ -145,7 +167,7 @@
 </div>
 </dialog>
 <footer>Easy Mandi · Varanasi · Client demonstration</footer>
-<script src="storefront.js?v=20261001-addresses" defer>
+<script src="storefront.js?v=20261003-payments" defer>
 </script>
 <script src="auth.js?v=20261001-addresses" defer>
 </script>
