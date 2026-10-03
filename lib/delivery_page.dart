@@ -105,7 +105,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
               Text('Order ${o['external_order_id']}', style: Theme.of(context).textTheme.titleMedium),
               Text('Status: $status'),
               if(o['payment_method']!=null) Text(
-                'Payment: ${String(o['payment_method']).toUpperCase()} · ${String(o['payment_status']??'pending').replaceAll('_',' ')}'
+                'Payment: ${(o['payment_method']??'').toString().toUpperCase()} · ${(o['payment_status']??'pending').toString().replaceAll('_',' ')}'
                 '${o['payment_total']==null?'':' · ₹${(o['payment_total'] as num).toStringAsFixed(2)}'}',
                 style:const TextStyle(fontWeight:FontWeight.w700)),
               if(o['payment_method']=='upi'&&o['payment_status']!='verified') Wrap(spacing:8,runSpacing:8,children:[
