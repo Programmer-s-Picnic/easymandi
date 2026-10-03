@@ -80,6 +80,24 @@
     byId('ordersMessage').textContent = value;
     byId('ordersMessage').className = error ? 'error' : 'hint';
   };
+  let receiptDialog=null;
+  function showReceipt(order,result){
+    if(receiptDialog)receiptDialog.remove();
+    receiptDialog=document.createElement('dialog');
+    receiptDialog.className='record-dialog payment-receipt-dialog';
+    const title=document.createElement('h2');title.textContent='Payment receipt · '+order.public_id;
+    const meta=document.createElement('p');meta.className='hint';
+    meta.textContent='Method: '+String(result.method||'').toUpperCase()+' · Status: '+String(result.status||'')+(result.upiReference?' · Reference: '+result.upiReference:'');
+    const image=document.createElement('img');image.src=result.receipt;image.alt='Uploaded UPI receipt for order '+order.public_id;image.className='payment-receipt-image';
+    const close=document.createElement('button');close.type='button';close.className='btn secondary';close.textContent='Close';close.onclick=()=>receiptDialog.close();
+    receiptDialog.append(title,meta,image,close);document.body.append(receiptDialog);receiptDialog.showModal();
+  }
+  async function paymentAction(order,operation){
+    const label={verify:'verified',reject:'rejected','cod-paid':'marked paid'}[operation]||operation;
+    await request('admin-payment',{operation,orderId:order.public_id});
+    message('Payment '+label+' for order '+order.public_id+'.');
+    await refresh();
+  }
   async function request(path, payload = {
   }) {
     const response = await AppHttp.fetch(api + (path.startsWith('notifications?')?'notifications.php?audience=admin':path+'.php'), {
@@ -163,6 +181,36 @@
       const totals = document.createElement('p');
       totals.className = 'hint';
       totals.textContent = 'Subtotal ' + money(order.subtotal) + ' · Delivery ' + money(order.delivery_fee);
+      const payment=document.createElement('section');
+      payment.className='payment-admin';
+      const paymentTitle=document.createElement('strong');
+      const method=String(order.payment_method||'cod').toUpperCase();
+      const payStatus=String(order.payment_status||'pending');
+      paymentTitle.textContent='Payment: '+method+' · '+payStatus.replaceAll('_',' ');
+      payment.append(paymentTitle);
+      if(order.upi_reference){const ref=document.createElement('span');ref.textContent='UPI reference: '+order.upi_reference;payment.append(ref);}
+      if(order.submitted_at){const submitted=document.createElement('span');submitted.textContent='Submitted: '+order.submitted_at;payment.append(submitted);}
+      if(order.verified_at){const verified=document.createElement('span');verified.textContent='Verified/paid: '+order.verified_at;payment.append(verified);}
+      const payActions=document.createElement('div');payActions.className='row payment-actions';
+      if(Number(order.payment_has_receipt)===1){
+        const receipt=document.createElement('button');receipt.type='button';receipt.className='btn secondary';receipt.textContent='View payment receipt';
+        receipt.onclick=async()=>{try{showReceipt(order,await request('admin-payment',{operation:'receipt',orderId:order.public_id}));}catch(error){message(error.message,true);}};
+        payActions.append(receipt);
+      }
+      if(order.payment_method==='upi'&&payStatus==='submitted'){
+        const verify=document.createElement('button');verify.type='button';verify.className='btn';verify.textContent='Verify UPI payment';
+        verify.onclick=async()=>{verify.disabled=true;try{await paymentAction(order,'verify');}catch(error){message(error.message,true);verify.disabled=false;}};
+        const reject=document.createElement('button');reject.type='button';reject.className='btn danger';reject.textContent='Reject receipt';
+        reject.onclick=async()=>{if(!confirm('Reject this UPI receipt? The customer may submit another receipt.'))return;reject.disabled=true;try{await paymentAction(order,'reject');}catch(error){message(error.message,true);reject.disabled=false;}};
+        payActions.append(verify,reject);
+      }
+      if(order.payment_method==='cod'&&payStatus!=='paid'&&normalized(order.status)!=='cancelled'){
+        const cod=document.createElement('button');cod.type='button';cod.className='btn secondary';cod.textContent='Mark COD paid';
+        cod.title='Normally COD is marked paid automatically when the delivery code is successfully confirmed.';
+        cod.onclick=async()=>{if(!confirm('Mark this Cash on Delivery order as paid?'))return;cod.disabled=true;try{await paymentAction(order,'cod-paid');}catch(error){message(error.message,true);cod.disabled=false;}};
+        payActions.append(cod);
+      }
+      if(payActions.childElementCount)payment.append(payActions);
       const row = document.createElement('div');
       row.className = 'row';
       const select = document.createElement('select');
@@ -202,7 +250,7 @@
       delivery.textContent = 'Open in delivery admin';
       row.append(select, save, delivery);
       const content=document.createElement('div');content.className='order-card-body';
-      content.append(date, progress, customer, address, map, items, totals, row);
+      content.append(date, progress, customer, address, map, items, totals, payment, row);
       card.append(title,content);
       root.append(card);
     }
