@@ -42,7 +42,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
   Future<void> uploadReceipt(Map<String,dynamic> order) async {
     final ref=order['external_order_id'] as String? ?? '';
     if(ref.isEmpty)return;
-    final picked=await FilePicker.platform.pickFiles(type:FileType.image,withData:true,allowMultiple:false);
+    final picked=await FilePicker.pickFiles(type:FileType.image,withData:true,allowMultiple:false);
     if(picked==null||picked.files.isEmpty)return;
     final file=picked.files.single,bytes=file.bytes;
     if(bytes==null){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Could not read the receipt image.')));return;}
