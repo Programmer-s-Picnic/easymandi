@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'auth_service.dart';
 
 class DeliveryPage extends StatefulWidget {
@@ -23,6 +25,54 @@ class _DeliveryPageState extends State<DeliveryPage> {
     else {await AuthService.instance.deliveryRequest(orderId:id,markAll:id==null);}
     await refresh(silent:true);}catch(_){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Could not mark notifications. Please retry.')));}
   }
+  Future<void> payUpi(Map<String,dynamic> order) async {
+    final total=(order['payment_total'] as num?)?.toDouble();
+    final ref=order['external_order_id'] as String? ?? '';
+    if(total==null||ref.isEmpty)return;
+    final uri=Uri(scheme:'upi',host:'pay',queryParameters:{
+      'pa':'7398564033@kotakbank','pn':'ABHISHEK KUMAR SINGH',
+      'am':total.toStringAsFixed(2),'cu':'INR','tn':'Easy Mandi $ref'
+    });
+    try{
+      final opened=await launchUrl(uri,mode:LaunchMode.externalApplication);
+      if(!opened&&mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('No UPI app could be opened. Use UPI ID 7398564033@kotakbank.')));
+    }catch(_){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Could not open a UPI app. Use UPI ID 7398564033@kotakbank.')));}
+  }
+
+  Future<void> uploadReceipt(Map<String,dynamic> order) async {
+    final ref=order['external_order_id'] as String? ?? '';
+    if(ref.isEmpty)return;
+    final picked=await FilePicker.pickFiles(type:FileType.image,withData:true,allowMultiple:false);
+    if(picked==null||picked.files.isEmpty)return;
+    final file=picked.files.single,bytes=file.bytes;
+    if(bytes==null){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Could not read the receipt image.')));return;}
+    if(bytes.length>1048576){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Receipt must be smaller than 1 MB.')));return;}
+    final ext=(file.extension??file.name.split('.').last).toLowerCase();
+    final mime=ext=='png'?'image/png':(ext=='webp'?'image/webp':((ext=='jpg'||ext=='jpeg')?'image/jpeg':''));
+    if(mime.isEmpty){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Use a JPG, PNG or WebP receipt.')));return;}
+    if(!mounted)return;
+    final controller=TextEditingController();
+    final reference=await showDialog<String>(context:context,builder:(dialogContext)=>AlertDialog(
+      title:const Text('Submit UPI receipt'),
+      content:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
+        const Text('The receipt will be stored privately for Easy Mandi admin verification.'),
+        const SizedBox(height:12),
+        TextField(controller:controller,maxLength:80,decoration:const InputDecoration(labelText:'UPI transaction/reference (optional)')),
+      ]),
+      actions:[
+        TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('Cancel')),
+        FilledButton(onPressed:()=>Navigator.pop(dialogContext,controller.text.trim()),child:const Text('Submit receipt')),
+      ],
+    ));
+    controller.dispose();
+    if(reference==null)return;
+    try{
+      await AuthService.instance.submitUpiReceipt(orderId:ref,mimeType:mime,bytes:bytes,upiReference:reference);
+      if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Receipt submitted for verification.')));
+      await refresh(silent:true);
+    }on AuthException catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.message)));}
+  }
+
   Future<void> refresh({bool silent=false}) async {
     if(loading)return;loading=true;
     if(!silent)setState(() { busy = true; error = null; });
@@ -54,6 +104,16 @@ class _DeliveryPageState extends State<DeliveryPage> {
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Order ${o['external_order_id']}', style: Theme.of(context).textTheme.titleMedium),
               Text('Status: $status'),
+              if(o['payment_method']!=null) Text(
+                'Payment: ${(o['payment_method']??'').toString().toUpperCase()} · ${(o['payment_status']??'pending').toString().replaceAll('_',' ')}'
+                '${o['payment_total']==null?'':' · ₹${(o['payment_total'] as num).toStringAsFixed(2)}'}',
+                style:const TextStyle(fontWeight:FontWeight.w700)),
+              if(o['payment_method']=='upi'&&o['payment_status']!='verified') Wrap(spacing:8,runSpacing:8,children:[
+                OutlinedButton.icon(onPressed:()=>payUpi(o),icon:const Icon(Icons.account_balance_wallet_outlined),label:const Text('Pay with UPI')),
+                FilledButton.tonalIcon(onPressed:()=>uploadReceipt(o),icon:const Icon(Icons.upload_file),label:Text(o['payment_status']=='submitted'?'Replace receipt':'Upload receipt')),
+              ]),
+              if(o['payment_method']=='upi'&&o['payment_status']=='submitted') const Text('Receipt submitted; waiting for Easy Mandi admin verification.'),
+              if(o['payment_method']=='upi'&&o['payment_status']=='rejected') const Text('The previous receipt was not verified. You may submit another receipt.',style:TextStyle(color:Colors.deepOrange)),
               Text(o['address_text'] as String? ?? ''),
               if (['assigned','picked_up','out_for_delivery'].contains(status))
                 const Text('The admin will send your handoff code. Give it to the delivery person only after receiving your order.'),

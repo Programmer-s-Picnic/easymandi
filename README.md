@@ -19,3 +19,14 @@ Customer authentication uses the plain PHP API at `https://cserver.learnwithcham
 ## Development
 
 Run `flutter create --platforms=android --org in.easymandi .`, add Android Internet permission, then `flutter pub get` and `flutter run`. The build workflow creates the Android project and builds split APKs.
+
+## Payments
+
+Easy Mandi supports two checkout methods:
+
+- **Cash on Delivery (COD):** the server records the order as COD/pending. When the delivery person successfully verifies the customer's handoff code, COD is automatically marked paid.
+- **UPI:** payee **ABHISHEK KUMAR SINGH**, UPI ID `7398564033@kotakbank`. The website and Android app show the order amount and UPI payment controls. Customers can upload a JPG/PNG/WebP receipt (maximum 1 MB); signed-in Android customers can also resume payment and replace a receipt from My deliveries.
+- UPI receipts are stored privately in MySQL. Admin can view the receipt, verify it, or reject it. The delivery handoff action is blocked until a UPI payment is verified.
+- Payment status is shown to customer, admin, delivery admin and assigned delivery partner. Manual delivery carts do not supply or override Easy Mandi payment amounts.
+
+Payment processing is manual UPI verification; Easy Mandi does not store card details and does not claim automatic bank-side confirmation.

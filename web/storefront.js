@@ -201,6 +201,61 @@ el('refresh').onclick=load;
 el('search').oninput=render;
 el('mobile').oninput=()=>el('mobile').setCustomValidity('');
 el('pin').oninput=()=>el('pin').setCustomValidity('');
+let activePayment=null;
+function bytesToBase64(bytes){
+  let binary='';
+  const chunk=0x8000;
+  for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,Math.min(i+chunk,bytes.length)));
+  return btoa(binary)
+}
+async function openUpiPayment(result,requestKey){
+  activePayment={orderId:result.orderId,total:Number(result.total),requestKey};
+  el('paymentTitle').textContent='UPI payment · '+result.orderId;
+  el('paymentAmount').textContent='Amount: '+money(result.total);
+  const params=new URLSearchParams({pa:'7398564033@kotakbank',pn:'ABHISHEK KUMAR SINGH',am:Number(result.total).toFixed(2),cu:'INR',tn:'Easy Mandi '+result.orderId});
+  el('paymentDeepLink').href='upi://pay?'+params.toString();
+  el('upiReference').value='';
+  el('receiptFile').value='';
+  el('paymentStatus').textContent='Upload a JPG, PNG or WebP receipt smaller than 1 MB.';
+  el('submitReceipt').disabled=false;
+  el('submitReceipt').textContent='Upload receipt for verification';
+  el('paymentDialog').showModal()
+}
+el('paymentClose').onclick=()=>el('paymentDialog').close();
+el('copyUpi').onclick=async()=>{
+  try{
+    await navigator.clipboard.writeText('7398564033@kotakbank');
+    el('paymentStatus').textContent='UPI ID copied.'
+  }catch{
+    el('paymentStatus').textContent='UPI ID: 7398564033@kotakbank'
+  }
+};
+el('submitReceipt').onclick=async()=>{
+  if(!activePayment)return;
+  const file=el('receiptFile').files[0];
+  if(!file){el('paymentStatus').textContent='Choose the payment screenshot/receipt first.';return}
+  if(file.size>1048576){el('paymentStatus').textContent='Receipt must be smaller than 1 MB.';return}
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)){el('paymentStatus').textContent='Use a JPG, PNG or WebP receipt.';return}
+  const button=el('submitReceipt');button.disabled=true;button.textContent='Uploading…';
+  try{
+    const encoded=bytesToBase64(new Uint8Array(await file.arrayBuffer()));
+    const response=await AppHttp.fetch('https://cserver.learnwithchampak.live/easymandi/api/payment.php',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        operation:'submit',orderId:activePayment.orderId,requestKey:activePayment.requestKey,
+        receiptMime:file.type,receiptBase64:encoded,upiReference:el('upiReference').value.trim()
+      })
+    });
+    let result;
+    try{result=await response.json()}catch{throw Error('Unexpected server response.')}
+    if(!response.ok)throw Error(result.error||'Could not submit receipt.');
+    el('paymentStatus').textContent='Receipt submitted. Easy Mandi admin must verify the UPI payment before delivery handoff.';
+    button.textContent='Receipt submitted';button.disabled=true;
+    window.dispatchEvent(new Event('customer-order-placed'))
+  }catch(error){
+    el('paymentStatus').textContent=error.message||'Could not submit receipt. Please retry.';
+    button.disabled=false;button.textContent='Upload receipt for verification'
+  }
+};
 el('orderForm').onsubmit=async e=>{
   e.preventDefault();
   const t=totals();
@@ -238,7 +293,7 @@ el('orderForm').onsubmit=async e=>{
       method:'POST',headers:{
         'Content-Type':'application/json'
       },body:JSON.stringify({
-        requestKey:key,source:'web',name:String(form.get('name')||'').trim(),mobile:phone,house,locality,landmark,pin,...deliveryLocation,items:chosen
+        requestKey:key,source:'web',paymentMethod:String(form.get('paymentMethod')||'cod'),name:String(form.get('name')||'').trim(),mobile:phone,house,locality,landmark,pin,...deliveryLocation,items:chosen
       })
     });
     let result;
@@ -250,12 +305,14 @@ el('orderForm').onsubmit=async e=>{
       if(response.status===409&&result.error?.startsWith('Order request already used'))sessionStorage.removeItem('easy-mandi-pending-order');
       throw Error(result.error||'Could not place order. Please retry.');
     }window.dispatchEvent(new Event('customer-order-placed'));
+    const paymentKey=key;
     sessionStorage.removeItem('easy-mandi-pending-order');
     deliveryLocation=null;
     el('locationStatus').textContent='Optional map pin for accurate delivery.';
     const address=[house,locality,...(landmark?['Near '+landmark]:[]),(data.store.city||'Varanasi')+', '+(data.checkout?.state||'Uttar Pradesh')+' - '+pin].join(', ');
     const lines=data.products.filter(p=>cart[p.id]).map(p=>'• '+p.name+' ('+p.unit+') × '+cart[p.id]).join('\n');
-    const message='Hello Easy Mandi, my order '+result.orderId+' has been placed.\n\n'+lines+'\n\nName: '+form.get('name')+'\nMobile: +91 '+phone+'\nAddress: '+address+'\n\nPlease confirm availability and delivery time.';
+    const selectedPayment=String(form.get('paymentMethod')||'cod');
+    const message='Hello Easy Mandi, my order '+result.orderId+' has been placed.\n\n'+lines+'\n\nTotal: '+money(result.total)+'\nName: '+form.get('name')+'\nMobile: +91 '+phone+'\nAddress: '+address+'\nPayment: '+(selectedPayment==='upi'?'UPI':'Cash on Delivery')+'\n\nPlease confirm availability and delivery time.';
     const box=el('orderConfirmation');
     box.replaceChildren();
     const title=document.createElement('h3');
@@ -271,6 +328,13 @@ el('orderForm').onsubmit=async e=>{
     link.rel='noopener noreferrer';
     link.textContent='Send reference on WhatsApp';
     box.append(title,note,link);
+    if(selectedPayment==='upi'){
+      const pay=document.createElement('button');
+      pay.type='button';pay.className='btn secondary';pay.textContent='Complete UPI payment / upload receipt';
+      pay.onclick=()=>openUpiPayment(result,paymentKey);
+      box.append(pay);
+      await openUpiPayment(result,paymentKey)
+    }
     e.target.hidden=true;
     for(const id of Object.keys(cart))delete cart[id];
     save();

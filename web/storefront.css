@@ -226,3 +226,9 @@ footer {
 .basket-name {
   min-width:100%}
 }
+
+.payment-shell{width:min(520px,calc(100vw - 56px));}
+#paymentQr{display:block;max-width:100%;height:auto;margin:12px auto;background:#fff;padding:10px;border:1px solid #dce7df;border-radius:16px;image-rendering:pixelated;}
+#paymentDialog code{display:inline-block;max-width:100%;overflow-wrap:anywhere;background:#eef6f1;padding:3px 7px;border-radius:6px;}
+#paymentDialog .btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;margin:4px 0;}
+#paymentStatus{min-height:24px;}
