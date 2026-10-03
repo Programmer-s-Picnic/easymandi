@@ -129,6 +129,18 @@ class AuthService {
   Future<Map<String, dynamic>> createOrder(Map<String, Object?> order) =>
       _request('order-create', method: 'POST', body: order);
 
+  Future<Map<String,dynamic>> paymentStatus({required String orderId, String? requestKey}) =>
+      _request('payment', method:'POST', authenticated: requestKey==null, body:{
+        'operation':'status','orderId':orderId,if(requestKey!=null)'requestKey':requestKey
+      });
+
+  Future<Map<String,dynamic>> submitUpiReceipt({required String orderId, String? requestKey,
+      required String mimeType, required List<int> bytes, String upiReference=''}) =>
+      _request('payment', method:'POST', authenticated: requestKey==null, body:{
+        'operation':'submit','orderId':orderId,if(requestKey!=null)'requestKey':requestKey,
+        'receiptMime':mimeType,'receiptBase64':base64Encode(bytes),'upiReference':upiReference.trim()
+      });
+
   Future<Map<String,dynamic>> orderNotifications({bool markAll=false, int? id}) =>
     _request('notifications',method:markAll||id!=null?'POST':'GET',authenticated:true,
       body:markAll||id!=null?{'id':id}:null);
