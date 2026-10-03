@@ -400,7 +400,7 @@ class _StorePageState extends State<StorePage> {
             Text('Delivery city: $city, $state', style: Theme.of(dialogContext).textTheme.bodySmall),
             const SizedBox(height:10),
             DropdownButtonFormField<String>(
-              value:paymentMethod,
+              initialValue:paymentMethod,
               decoration:const InputDecoration(labelText:'Payment method'),
               items:const [
                 DropdownMenuItem(value:'cod',child:Text('Cash on Delivery (COD)')),
