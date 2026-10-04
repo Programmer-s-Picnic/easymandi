@@ -23,9 +23,14 @@ class _AccountPageState extends State<AccountPage> {
   String? _googleClientId;
   String? _error;
 
+  void _languageChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
+    EasyMandiLanguage.hindi.addListener(_languageChanged);
     AuthService.instance.googleClientId().then((id) {
       if (mounted) setState(() => _googleClientId = id);
     }).catchError((Object _) {});
@@ -112,6 +117,7 @@ class _AccountPageState extends State<AccountPage> {
 
   @override
   void dispose() {
+    EasyMandiLanguage.hindi.removeListener(_languageChanged);
     _name.dispose();
     _mobile.dispose();
     _email.dispose();
