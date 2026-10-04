@@ -226,3 +226,11 @@ footer {
 .basket-name {
   min-width:100%}
 }
+
+
+.payment-choice{border:1px solid #d8e5dc;border-radius:14px;padding:12px 14px;display:grid;gap:8px;background:#f8fbf8}
+.payment-choice legend{font-weight:800;padding:0 6px}
+.payment-choice label{display:flex;gap:8px;align-items:center}
+.payment-panel{margin:14px 0;padding:14px;border:1px solid #cfe0d4;border-radius:16px;background:#f7fbf7;display:grid;gap:10px}
+.payment-panel h4,.payment-panel p{margin:0}
+.payment-panel input[type="file"],.payment-panel input[type="text"]{width:100%}
