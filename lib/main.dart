@@ -79,9 +79,14 @@ class _StorePageState extends State<StorePage> {
   final Set<String> shownNotifications={};
   bool loading = true;
 
+  void _languageChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
+    EasyMandiLanguage.hindi.addListener(_languageChanged);
     notificationMark=(n) async {
       if(n==null || n['_audience']=='order')await AuthService.instance.orderNotifications(markAll:n==null,id:n==null?null:notificationId(n));
       if(n==null || n['_audience']=='delivery')await AuthService.instance.deliveryRequest(markAll:n==null,orderId:n==null?null:notificationId(n));
@@ -93,7 +98,11 @@ class _StorePageState extends State<StorePage> {
   }
 
   @override
-  void dispose(){notificationTimer?.cancel();super.dispose();}
+  void dispose(){
+    EasyMandiLanguage.hindi.removeListener(_languageChanged);
+    notificationTimer?.cancel();
+    super.dispose();
+  }
   Future<void> saveCustomerAddress(SavedAddress address) async {
     if(signedInUser==null){await LocalStore.instance.saveAddress(address);return;}
     await AuthService.instance.saveServerAddress({...address.toRow(),if(address.id!=null)'id':address.id});
@@ -714,7 +723,7 @@ class _StorePageState extends State<StorePage> {
                       Text(product == null ? item.name : productName(product.name, product.hindi), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
                       Text(available ? '${money(product!.price)} / ${product.unit}' : tr('Unavailable','उपलब्ध नहीं'), style: Theme.of(context).textTheme.bodySmall),
                     ])),
-                    IconButton(tooltip: available ? 'Add ${item.name} again' : '${item.name} unavailable',
+                    IconButton(tooltip: available ? tr('Add ${item.name} again','${item.name} फिर जोड़ें') : tr('${item.name} unavailable','${item.name} उपलब्ध नहीं'),
                       onPressed: available ? () => changeQuantity(product!, 1) : null,
                       icon: const Icon(Icons.add_circle_outline)),
                   ])))),
