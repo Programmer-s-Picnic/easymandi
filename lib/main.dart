@@ -140,7 +140,7 @@ class _StorePageState extends State<StorePage> {
       feed.sort((a,b)=>(b['created_at']?.toString() ?? '').compareTo(a['created_at']?.toString() ?? ''));
       notificationFeed.value=feed;
       if(fresh.isNotEmpty)ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        duration:const Duration(seconds:20),content:Text('${fresh.length} new notification(s): ${fresh.first}')));
+        duration:const Duration(seconds:20),content:Text(tr('${fresh.length} new notification(s): ${fresh.first}','${fresh.length} नई सूचना: ${fresh.first}'))));
     }catch(_){/* Retry automatically at the next check without a password prompt. */}
     finally{checkingNotifications=false;}
   }
@@ -525,15 +525,22 @@ class _StorePageState extends State<StorePage> {
     final orderId = savedOrder['orderId'] as String;
     final savedTotal = savedOrder['total'] as num;
     final lines = products.where((p) => cart.containsKey(p.id))
-        .map((p) => '• ${p.name} (${p.unit}) × ${cart[p.id]}').join('\n');
+        .map((p) => '• ${productName(p.name,p.hindi)} (${p.unit}) × ${cart[p.id]}').join('\n');
     final address = [house.text.trim(), locality.text.trim(),
       if (landmark.text.trim().isNotEmpty) 'Near ${landmark.text.trim()}',
       '$city, $state - ${pin.text.trim()}'].join(', ');
-    final body = 'Hello Easy Mandi, my order $orderId has been placed.\n\n$lines'
-        '\n\nTotal: ${money(savedTotal)}\nName: ${name.text.trim()}'
-        '\nMobile: $countryCode ${phone.text.trim()}\nAddress: $address'
-        '\nPayment: ${paymentMethod == 'upi' ? 'UPI selected' : 'Cash on Delivery'}'
-        '\n\nPlease confirm availability and delivery time.';
+    final body = tr(
+      'Hello Easy Mandi, my order $orderId has been placed.\n\n$lines'
+      '\n\nTotal: ${money(savedTotal)}\nName: ${name.text.trim()}'
+      '\nMobile: $countryCode ${phone.text.trim()}\nAddress: $address'
+      '\nPayment: ${paymentMethod == 'upi' ? 'UPI selected' : 'Cash on Delivery'}'
+      '\n\nPlease confirm availability and delivery time.',
+      'नमस्ते Easy Mandi, मेरा ऑर्डर $orderId कर दिया गया है।\n\n$lines'
+      '\n\nकुल: ${money(savedTotal)}\nनाम: ${name.text.trim()}'
+      '\nमोबाइल: $countryCode ${phone.text.trim()}\nपता: $address'
+      '\nभुगतान: ${paymentMethod == 'upi' ? 'UPI चुना गया' : 'कैश ऑन डिलीवरी'}'
+      '\n\nकृपया उपलब्धता और डिलीवरी समय की पुष्टि करें।'
+    );
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
       await LocalStore.instance.recordRecentItems([
