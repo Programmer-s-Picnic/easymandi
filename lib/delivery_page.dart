@@ -20,9 +20,14 @@ class _DeliveryPageState extends State<DeliveryPage> {
   bool busy = true;
   String? error;
 
+  void _languageChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
+    EasyMandiLanguage.hindi.addListener(_languageChanged);
     refresh();
     timer = Timer.periodic(const Duration(minutes: 5), (_) {
       if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
@@ -33,6 +38,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
 
   @override
   void dispose() {
+    EasyMandiLanguage.hindi.removeListener(_languageChanged);
     timer?.cancel();
     super.dispose();
   }
