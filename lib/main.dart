@@ -259,7 +259,7 @@ class _StorePageState extends State<StorePage> {
     try {
       payment = await AuthService.instance.paymentStatus(orderId: orderId, requestKey: requestKey);
     } on AuthException catch (error) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(localizeError(error.message))));
       return;
     }
     if (!mounted) return;
@@ -344,7 +344,7 @@ class _StorePageState extends State<StorePage> {
   Future<void> checkout() async {
     final minimum = (store['minimumOrder'] as num? ?? 99);
     if (subtotal < minimum) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Minimum order is ${money(minimum)}. Add ${money(minimum - subtotal)} more.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Minimum order is ${money(minimum)}. Add ${money(minimum - subtotal)} more.','न्यूनतम ऑर्डर ${money(minimum)} है। ${money(minimum - subtotal)} और जोड़ें।'))));
       return;
     }
     final name = TextEditingController(text: signedInUser?.name ?? '');
@@ -363,7 +363,7 @@ class _StorePageState extends State<StorePage> {
     try {
       savedAddresses = signedInUser==null ? await LocalStore.instance.loadAddresses() : ((await AuthService.instance.customerData())['addresses'] as List).map((row)=>SavedAddress.fromRow(Map<String,Object?>.from(row as Map))).toList();
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved addresses are unavailable on this device.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Saved addresses are unavailable on this device.','सहेजे गए पते इस डिवाइस पर उपलब्ध नहीं हैं।'))));
       savedAddresses=[];
     }
     if (!mounted) return;
@@ -374,17 +374,17 @@ class _StorePageState extends State<StorePage> {
     final submitted = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(builder: (dialogContext, updateDialog) => AlertDialog(
-        title: const Text('Place order'),
+        title: Text(tr('Place order','ऑर्डर करें')),
         content: Form(
           key: form,
           child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Your order will be saved for the Easy Mandi team. You can also send its reference by WhatsApp. Confirm final price and delivery before payment.'),
+            Text(tr('Your order will be saved for the Easy Mandi team. You can also send its reference by WhatsApp. Confirm final price and delivery before payment.','आपका ऑर्डर Easy Mandi टीम के लिए सहेजा जाएगा। आप इसका रेफरेंस WhatsApp पर भी भेज सकते हैं। भुगतान से पहले अंतिम कीमत और डिलीवरी की पुष्टि करें।')),
             const SizedBox(height: 16),
             if (savedAddresses.isNotEmpty) DropdownButtonFormField<int?>(
               key: ValueKey(selectedAddress?.id),
               initialValue: selectedAddress?.id,
-              decoration: const InputDecoration(labelText: 'Delivery address'),
-              items: [const DropdownMenuItem<int?>(value: null, child: Text('Use a new address')),
+              decoration: InputDecoration(labelText: tr('Delivery address','डिलीवरी पता')),
+              items: [DropdownMenuItem<int?>(value: null, child: Text(tr('Use a new address','नया पता इस्तेमाल करें'))),
                 ...savedAddresses.map((a) => DropdownMenuItem<int?>(value: a.id, child: Text('${a.house}, ${a.locality} • ${a.pin}', overflow: TextOverflow.ellipsis)))],
               onChanged: (id) => updateDialog(() {
                 selectedAddress = id == null ? null : savedAddresses.firstWhere((a) => a.id == id);
@@ -395,28 +395,28 @@ class _StorePageState extends State<StorePage> {
               }),
             ),
             if (savedAddresses.isNotEmpty) const SizedBox(height: 10),
-            TextFormField(controller: name, decoration: const InputDecoration(labelText: 'Your name'), textCapitalization: TextCapitalization.words, validator: (v) => v == null || v.trim().length < 2 ? 'Enter your name' : null),
+            TextFormField(controller: name, decoration: InputDecoration(labelText: tr('Your name','आपका नाम')), textCapitalization: TextCapitalization.words, validator: (v) => v == null || v.trim().length < 2 ? tr('Enter your name','अपना नाम दर्ज करें') : null),
             const SizedBox(height: 10),
             TextFormField(
               controller: phone,
-              decoration: InputDecoration(labelText: 'Mobile number', prefixText: '$countryCode ', hintText: checkoutRules['mobileExample'] as String? ?? '9876543210', helperText: '10 digits, starting with 6, 7, 8 or 9'),
+              decoration: InputDecoration(labelText: tr('Mobile number','मोबाइल नंबर'), prefixText: '$countryCode ', hintText: checkoutRules['mobileExample'] as String? ?? '9876543210', helperText: tr('10 digits, starting with 6, 7, 8 or 9','10 अंक, 6, 7, 8 या 9 से शुरू')),
               keyboardType: TextInputType.phone,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
-              validator: (v) => mobilePattern.hasMatch(v?.trim() ?? '') ? null : 'Enter a valid 10-digit Indian mobile number',
+              validator: (v) => mobilePattern.hasMatch(v?.trim() ?? '') ? null : tr('Enter a valid 10-digit Indian mobile number','मान्य 10 अंकों का भारतीय मोबाइल नंबर दर्ज करें'),
             ),
             const SizedBox(height: 10),
-            TextFormField(controller: house, decoration: const InputDecoration(labelText: 'House / flat / building', hintText: 'House 12'), textCapitalization: TextCapitalization.words, validator: (v) => (v?.trim().length ?? 0) >= 2 && RegExp(r'[A-Za-z0-9\u0900-\u097F]').hasMatch(v!.trim()) ? null : 'Enter a house or building number/name'),
+            TextFormField(controller: house, decoration: InputDecoration(labelText: tr('House / flat / building','मकान / फ्लैट / बिल्डिंग'), hintText: tr('House 12','मकान 12')), textCapitalization: TextCapitalization.words, validator: (v) => (v?.trim().length ?? 0) >= 2 && RegExp(r'[A-Za-z0-9\u0900-\u097F]').hasMatch(v!.trim()) ? null : tr('Enter a house or building number/name','मकान या बिल्डिंग का नंबर/नाम दर्ज करें')),
             const SizedBox(height: 10),
-            TextFormField(controller: locality, decoration: const InputDecoration(labelText: 'Street / locality', hintText: 'Lanka'), textCapitalization: TextCapitalization.words, validator: (v) => (v?.trim().length ?? 0) >= 5 && RegExp(r'[A-Za-z0-9\u0900-\u097F]').hasMatch(v!.trim()) ? null : 'Enter a street/locality (at least 5 characters)'),
+            TextFormField(controller: locality, decoration: InputDecoration(labelText: tr('Street / locality','गली / मोहल्ला'), hintText: 'Lanka'), textCapitalization: TextCapitalization.words, validator: (v) => (v?.trim().length ?? 0) >= 5 && RegExp(r'[A-Za-z0-9\u0900-\u097F]').hasMatch(v!.trim()) ? null : tr('Enter a street/locality (at least 5 characters)','गली/मोहल्ला दर्ज करें (कम से कम 5 अक्षर)')),
             const SizedBox(height: 10),
-            TextFormField(controller: landmark, decoration: const InputDecoration(labelText: 'Landmark (optional)'), textCapitalization: TextCapitalization.words),
+            TextFormField(controller: landmark, decoration: InputDecoration(labelText: tr('Landmark (optional)','लैंडमार्क (वैकल्पिक)')), textCapitalization: TextCapitalization.words),
             const SizedBox(height: 10),
             TextFormField(
               controller: pin,
-              decoration: InputDecoration(labelText: 'PIN code', hintText: checkoutRules['pinExample'] as String? ?? '221005', helperText: '6-digit Indian PIN code'),
+              decoration: InputDecoration(labelText: tr('PIN code','पिन कोड'), hintText: checkoutRules['pinExample'] as String? ?? '221005', helperText: tr('6-digit Indian PIN code','6 अंकों का भारतीय पिन कोड')),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
-              validator: (v) => pinPattern.hasMatch(v?.trim() ?? '') ? null : 'Enter a valid 6-digit PIN code',
+              validator: (v) => pinPattern.hasMatch(v?.trim() ?? '') ? null : tr('Enter a valid 6-digit PIN code','मान्य 6 अंकों का पिन कोड दर्ज करें'),
             ),
             const SizedBox(height: 10),
             OutlinedButton.icon(onPressed: () async {
@@ -432,46 +432,46 @@ class _StorePageState extends State<StorePage> {
                 updateDialog(() => deliveryPosition = position);
               } catch (_) {
                 if (dialogContext.mounted) ScaffoldMessenger.of(dialogContext).showSnackBar(
-                  const SnackBar(content: Text('Location unavailable. You can still use the written address.')));
+                  SnackBar(content: Text(tr('Location unavailable. You can still use the written address.','लोकेशन उपलब्ध नहीं है। आप लिखित पता इस्तेमाल कर सकते हैं।'))));
               }
             }, icon: const Icon(Icons.my_location), label: Text(deliveryPosition == null
-              ? 'Share current location (optional)' : 'Location attached · update pin')),
-            if (deliveryPosition != null) Text('Map pin: ${deliveryPosition!.latitude.toStringAsFixed(5)}, ${deliveryPosition!.longitude.toStringAsFixed(5)}'),
-            Text('Delivery city: $city, $state', style: Theme.of(dialogContext).textTheme.bodySmall),
+              ? tr('Share current location (optional)','वर्तमान लोकेशन साझा करें (वैकल्पिक)') : tr('Location attached · update pin','लोकेशन जुड़ी है · पिन अपडेट करें'))),
+            if (deliveryPosition != null) Text(tr('Map pin: ${deliveryPosition!.latitude.toStringAsFixed(5)}, ${deliveryPosition!.longitude.toStringAsFixed(5)}','मैप पिन: ${deliveryPosition!.latitude.toStringAsFixed(5)}, ${deliveryPosition!.longitude.toStringAsFixed(5)}')),
+            Text(tr('Delivery city: $city, $state','डिलीवरी शहर: $city, $state'), style: Theme.of(dialogContext).textTheme.bodySmall),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: paymentMethod,
-              decoration: const InputDecoration(labelText: 'Payment method'),
-              items: const [
-                DropdownMenuItem(value: 'cod', child: Text('Cash on Delivery')),
-                DropdownMenuItem(value: 'upi', child: Text('UPI / QR payment')),
+              decoration: InputDecoration(labelText: tr('Payment method','भुगतान का तरीका')),
+              items: [
+                DropdownMenuItem(value: 'cod', child: Text(tr('Cash on Delivery','कैश ऑन डिलीवरी'))),
+                DropdownMenuItem(value: 'upi', child: Text(tr('UPI / QR payment','UPI / QR भुगतान'))),
               ],
               onChanged: (value) => updateDialog(() => paymentMethod = value ?? 'cod'),
             ),
-            if (paymentMethod == 'upi') const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text('After placing the order, pay the exact saved total by UPI and upload the payment screenshot for admin verification.'),
+            if (paymentMethod == 'upi') Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(tr('After placing the order, pay the exact saved total by UPI and upload the payment screenshot for admin verification.','ऑर्डर करने के बाद सहेजी गई सही राशि UPI से भुगतान करें और एडमिन सत्यापन के लिए भुगतान स्क्रीनशॉट अपलोड करें।')),
             ),
             if (selectedAddress == null) CheckboxListTile(
-              contentPadding: EdgeInsets.zero, title: Text(signedInUser==null?'Save this address on this device':'Save address to my account (all devices)'),
+              contentPadding: EdgeInsets.zero, title: Text(signedInUser==null?tr('Save this address on this device','यह पता इस डिवाइस पर सहेजें'):tr('Save address to my account (all devices)','यह पता मेरे खाते में सहेजें (सभी डिवाइस)')),
               value: saveNewAddress, onChanged: (value) => updateDialog(() => saveNewAddress = value ?? false),
             ),
             if (selectedAddress != null) TextButton.icon(
               onPressed: () async {
-                try {if(signedInUser==null)await LocalStore.instance.deleteAddress(selectedAddress!.id!);else await AuthService.instance.deleteServerAddress(selectedAddress!.id!);}catch(_){if(dialogContext.mounted)ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content:Text('Could not delete address. Please retry.')));return;}
+                try {if(signedInUser==null)await LocalStore.instance.deleteAddress(selectedAddress!.id!);else await AuthService.instance.deleteServerAddress(selectedAddress!.id!);}catch(_){if(dialogContext.mounted)ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content:Text(tr('Could not delete address. Please retry.','पता हटाया नहीं जा सका। कृपया फिर प्रयास करें।'))));return;}
                 if (!dialogContext.mounted) return;
                 updateDialog(() {
                   savedAddresses.removeWhere((a) => a.id == selectedAddress!.id);
                   selectedAddress = null;
                   name.clear(); phone.clear(); house.clear(); locality.clear(); landmark.clear(); pin.clear();
                 });
-              }, icon: const Icon(Icons.delete_outline), label: const Text('Delete saved address'),
+              }, icon: const Icon(Icons.delete_outline), label: Text(tr('Delete saved address','सहेजा पता हटाएँ')),
             ),
           ])),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () { if (form.currentState!.validate()) Navigator.pop(dialogContext, true); }, child: const Text('Place order')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(tr('Cancel','रद्द करें'))),
+          FilledButton(onPressed: () { if (form.currentState!.validate()) Navigator.pop(dialogContext, true); }, child: Text(tr('Place order','ऑर्डर करें'))),
         ],
       )),
     );
@@ -481,14 +481,14 @@ class _StorePageState extends State<StorePage> {
         await saveCustomerAddress(SavedAddress(name: name.text.trim(), phone: phone.text.trim(),
           house: house.text.trim(), locality: locality.text.trim(), landmark: landmark.text.trim(), pin: pin.text.trim()));
       } catch (_) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address could not be saved; the enquiry can still be sent.')));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Address could not be saved; the enquiry can still be sent.','पता सहेजा नहीं जा सका; ऑर्डर फिर भी भेजा जा सकता है।'))));
       }
     } else if (selectedAddress != null) {
       try {
         await saveCustomerAddress(SavedAddress(id: selectedAddress!.id, name: name.text.trim(), phone: phone.text.trim(),
           house: house.text.trim(), locality: locality.text.trim(), landmark: landmark.text.trim(), pin: pin.text.trim()));
       } catch (_) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address changes could not be saved.')));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Address changes could not be saved.','पते के बदलाव सहेजे नहीं जा सके।'))));
       }
     }
     final orderItems = [
@@ -557,9 +557,9 @@ class _StorePageState extends State<StorePage> {
     try { opened = await launchUrl(uri, mode: LaunchMode.externalApplication); } catch (_) { /* Preserve saved order and copy its reference below. */ }
     if (!opened) {
       await Clipboard.setData(ClipboardData(text: body));
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Order $orderId saved. WhatsApp could not open; reference copied.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Order $orderId saved. WhatsApp could not open; reference copied.','ऑर्डर $orderId सहेजा गया। WhatsApp नहीं खुला; रेफरेंस कॉपी कर दिया गया है।'))));
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Order $orderId saved.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Order $orderId saved.','ऑर्डर $orderId सहेजा गया।'))));
     }
     for (final id in cart.keys.toList()) {
       _cartWrite = _cartWrite.then((_) => LocalStore.instance.setQuantity(id, 0));
