@@ -103,11 +103,48 @@ class LanguageButton extends StatelessWidget {
   const LanguageButton({super.key});
 
   @override
-  Widget build(BuildContext context) => TextButton(
-        onPressed: EasyMandiLanguage.toggle,
-        child: Text(
-          EasyMandiLanguage.hindi.value ? 'EN' : 'हिन्दी',
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
+  Widget build(BuildContext context) => PopupMenuButton<bool>(
+        tooltip: tr('Language', 'भाषा'),
+        initialValue: EasyMandiLanguage.hindi.value,
+        icon: const Icon(Icons.language),
+        onSelected: (value) {
+          EasyMandiLanguage.setHindi(value);
+        },
+        itemBuilder: (context) => [
+          PopupMenuItem<bool>(
+            value: false,
+            child: Row(
+              children: [
+                Icon(
+                  EasyMandiLanguage.hindi.value
+                      ? Icons.radio_button_unchecked
+                      : Icons.check_circle,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                const Expanded(child: Text('English')),
+                const Text('EN',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+          PopupMenuItem<bool>(
+            value: true,
+            child: Row(
+              children: [
+                Icon(
+                  EasyMandiLanguage.hindi.value
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                const Expanded(child: Text('हिन्दी')),
+                const Text('HI',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        ],
       );
 }
