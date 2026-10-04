@@ -151,7 +151,7 @@ class _StorePageState extends State<StorePage> {
       if (mounted) {setState(() => signedInUser = account);checkNotifications();syncCustomerData();}
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not restore your account. Sign in again.')));
+        SnackBar(content: Text(tr('Could not restore your account. Sign in again.','आपका खाता पुनः लोड नहीं हो सका। फिर से साइन इन करें।'))));
     }
   }
 
@@ -164,14 +164,14 @@ class _StorePageState extends State<StorePage> {
     }
     final account = signedInUser!;
     await showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
-      title: const Text('My account'),
+      title: Text(tr('My account','मेरा खाता')),
       content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
         children: [Text(account.name), Text('+91 ${account.mobile}'),
           if (account.email != null && account.email!.isNotEmpty) Text(account.email!),
           const SizedBox(height: 12),
-          const Text('Signing out clears this device. Addresses saved to your account remain available when you sign in again.')]),
+          Text(tr('Signing out clears this device. Addresses saved to your account remain available when you sign in again.','साइन आउट करने पर इस डिवाइस का स्थानीय डेटा साफ होगा। खाते में सहेजे पते अगली बार साइन इन करने पर उपलब्ध रहेंगे।'))]),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close')),
+        TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('Close','बंद करें'))),
         FilledButton(onPressed: () async {
           Navigator.pop(dialogContext);
           try {
@@ -180,12 +180,12 @@ class _StorePageState extends State<StorePage> {
             await AuthService.instance.logout();
             if (!mounted) return;
             setState(() { signedInUser = null; notificationFeed.value=[]; cart.clear(); recentItems = []; });
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signed out.')));
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Signed out.','साइन आउट हो गया।'))));
           } catch (_) {
             if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Could not clear account data. Please try again.')));
+              SnackBar(content: Text(tr('Could not clear account data. Please try again.','खाते का डेटा साफ नहीं हो सका। कृपया फिर प्रयास करें।'))));
           }
-        }, child: const Text('Sign out')),
+        }, child: Text(tr('Sign out','साइन आउट'))),
       ],
     ));
   }
@@ -230,7 +230,7 @@ class _StorePageState extends State<StorePage> {
       });
       await syncCustomerData();
     } catch (_) {
-      if (mounted) setState(() { loading = false; message = 'Could not load the catalog. Please try again.'; });
+      if (mounted) setState(() { loading = false; message = tr('Could not load the catalog. Please try again.','कैटलॉग लोड नहीं हो सका। कृपया फिर प्रयास करें।'); });
     }
   }
 
@@ -241,7 +241,7 @@ class _StorePageState extends State<StorePage> {
     });
     final quantity = cart[p.id] ?? 0;
     _cartWrite = _cartWrite.then((_) => LocalStore.instance.setQuantity(p.id, quantity)).catchError((Object error) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save the basket on this device.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Could not save the basket on this device.','इस डिवाइस पर टोकरी सहेजी नहीं जा सकी।'))));
     });
   }
 
@@ -265,15 +265,15 @@ class _StorePageState extends State<StorePage> {
     if (!mounted) return;
     final reference = TextEditingController();
     XFile? receipt;
-    String receiptStatus = 'Upload a JPG, PNG or WebP payment screenshot under 1 MB.';
+    String receiptStatus = tr('Upload a JPG, PNG or WebP payment screenshot under 1 MB.','1 MB से कम JPG, PNG या WebP भुगतान स्क्रीनशॉट अपलोड करें।');
     bool uploading = false;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(builder: (dialogContext, updateDialog) => AlertDialog(
-        title: Text('UPI payment · $orderId'),
+        title: Text(tr('UPI payment · $orderId','UPI भुगतान · $orderId')),
         content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('Pay exactly ${money(total)}', style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          Text(tr('Pay exactly ${money(total)}','ठीक ${money(total)} भुगतान करें'), style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Text('${payment['payeeName']}'),
           SelectableText('${payment['upiId']}', style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -285,32 +285,32 @@ class _StorePageState extends State<StorePage> {
               final uri=Uri.parse(payment['upiUri'] as String);
               final opened=await launchUrl(uri, mode: LaunchMode.externalApplication);
               if(!opened && dialogContext.mounted) {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content: Text('No UPI app could be opened. Scan the QR instead.')));
+                ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content: Text(tr('No UPI app could be opened. Scan the QR instead.','कोई UPI ऐप नहीं खुला। इसके बजाय QR स्कैन करें।'))));
               }
             },
             icon: const Icon(Icons.account_balance_wallet_outlined),
-            label: const Text('Open UPI app'),
+            label: Text(tr('Open UPI app','UPI ऐप खोलें')),
           ),
           const SizedBox(height: 14),
-          TextField(controller: reference, maxLength: 80, decoration: const InputDecoration(labelText: 'UPI transaction/reference (optional)')),
+          TextField(controller: reference, maxLength: 80, decoration: InputDecoration(labelText: tr('UPI transaction/reference (optional)','UPI ट्रांज़ैक्शन/रेफरेंस (वैकल्पिक)'))),
           OutlinedButton.icon(
             onPressed: uploading ? null : () async {
               final picked=await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 92);
               if(picked==null)return;
               final length=await picked.length();
               if(length>1048576){
-                updateDialog(()=>receiptStatus='Receipt must be smaller than 1 MB.');
+                updateDialog(()=>receiptStatus=tr('Receipt must be smaller than 1 MB.','रसीद 1 MB से छोटी होनी चाहिए।'));
                 return;
               }
-              updateDialog((){receipt=picked;receiptStatus='Receipt selected: ${picked.name}';});
+              updateDialog((){receipt=picked;receiptStatus=tr('Receipt selected: ${picked.name}','रसीद चुनी गई: ${picked.name}');});
             },
             icon: const Icon(Icons.receipt_long_outlined),
-            label: Text(receipt==null?'Choose payment screenshot':'Change screenshot'),
+            label: Text(receipt==null?tr('Choose payment screenshot','भुगतान स्क्रीनशॉट चुनें'):tr('Change screenshot','स्क्रीनशॉट बदलें')),
           ),
           Text(receiptStatus, style: Theme.of(dialogContext).textTheme.bodySmall),
         ])),
         actions: [
-          TextButton(onPressed: uploading ? null : () => Navigator.pop(dialogContext), child: const Text('Upload later')),
+          TextButton(onPressed: uploading ? null : () => Navigator.pop(dialogContext), child: Text(tr('Upload later','बाद में अपलोड करें'))),
           FilledButton(
             onPressed: uploading || receipt==null ? null : () async {
               updateDialog(()=>uploading=true);
@@ -326,14 +326,14 @@ class _StorePageState extends State<StorePage> {
                   receiptMime: mime, receiptBase64: base64Encode(bytes),
                 );
                 if(dialogContext.mounted) Navigator.pop(dialogContext);
-                if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment receipt submitted for verification.')));
+                if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Payment receipt submitted for verification.','भुगतान रसीद सत्यापन के लिए भेज दी गई है।'))));
               } on AuthException catch(error) {
-                updateDialog((){uploading=false;receiptStatus=error.message;});
+                updateDialog((){uploading=false;receiptStatus=localizeError(error.message);});
               } catch (_) {
-                updateDialog((){uploading=false;receiptStatus='Could not upload the receipt. Please try again.';});
+                updateDialog((){uploading=false;receiptStatus=tr('Could not upload the receipt. Please try again.','रसीद अपलोड नहीं हो सकी। कृपया फिर प्रयास करें।');});
               }
             },
-            child: Text(uploading?'Uploading…':'Submit receipt'),
+            child: Text(uploading?tr('Uploading…','अपलोड हो रहा है…'):tr('Submit receipt','रसीद भेजें')),
           ),
         ],
       )),
