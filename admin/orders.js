@@ -104,6 +104,26 @@
   function itemText(order) {
     return order.items.map(item => item.product_name + ' (' + item.unit + ') × ' + item.quantity + ' — ' + money(item.line_total)).join(' · ');
   }
+  const paymentLabel = order => {
+    const method = order.payment_method === 'upi' ? 'UPI' : 'Cash on Delivery';
+    const status = String(order.payment_status || 'pending').replaceAll('_',' ');
+    return method + ' · ' + status.charAt(0).toUpperCase() + status.slice(1);
+  };
+  async function paymentAction(order, operation) {
+    const result = await request('admin-payment', {orderId: order.public_id, operation});
+    message('Payment for order ' + order.public_id + ': ' + result.status + '.');
+    await refresh();
+  }
+  async function showReceipt(order) {
+    const result = await request('admin-payment', {orderId: order.public_id, operation:'receipt'});
+    const dialog=document.createElement('dialog');
+    dialog.className='record-dialog';
+    const title=document.createElement('h2');title.textContent='Payment receipt · '+order.public_id;
+    const info=document.createElement('p');info.textContent='UPI reference: '+(result.upiReference||'Not supplied')+' · Status: '+result.status;
+    const image=document.createElement('img');image.src=result.receipt;image.alt='Customer payment receipt';image.style.cssText='max-width:min(90vw,560px);max-height:65vh;display:block;margin:12px auto;border-radius:12px';
+    const close=document.createElement('button');close.type='button';close.className='btn';close.textContent='Close';close.onclick=()=>dialog.close();
+    dialog.append(title,info,image,close);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.showModal();
+  }
   const normalized = value => String(value || '').trim().toLowerCase().replaceAll(' ', '_');
   function applyFilters() {
     const orderFilter = normalized(byId('ordersFilter').value);
@@ -163,6 +183,24 @@
       const totals = document.createElement('p');
       totals.className = 'hint';
       totals.textContent = 'Subtotal ' + money(order.subtotal) + ' · Delivery ' + money(order.delivery_fee);
+      const payment = document.createElement('section');
+      payment.className='payment-admin';
+      const paymentInfo=document.createElement('p');
+      paymentInfo.innerHTML='<strong>Payment:</strong> '+paymentLabel(order)+(order.upi_reference?' · Ref '+order.upi_reference:'');
+      payment.append(paymentInfo);
+      const paymentActions=document.createElement('div');paymentActions.className='row';
+      if(order.payment_has_receipt){
+        const receipt=document.createElement('button');receipt.type='button';receipt.className='btn secondary';receipt.textContent='View receipt';receipt.onclick=()=>showReceipt(order).catch(error=>message(error.message,true));paymentActions.append(receipt);
+      }
+      if(order.payment_method==='upi' && order.payment_status==='submitted'){
+        const verify=document.createElement('button');verify.type='button';verify.className='btn';verify.textContent='Verify UPI';verify.onclick=()=>paymentAction(order,'verify').catch(error=>message(error.message,true));
+        const reject=document.createElement('button');reject.type='button';reject.className='btn secondary';reject.textContent='Reject receipt';reject.onclick=()=>paymentAction(order,'reject').catch(error=>message(error.message,true));
+        paymentActions.append(verify,reject);
+      }
+      if(order.payment_method==='cod' && order.payment_status!=='paid' && order.status!=='Cancelled'){
+        const paid=document.createElement('button');paid.type='button';paid.className='btn secondary';paid.textContent='Mark COD paid';paid.onclick=()=>paymentAction(order,'cod-paid').catch(error=>message(error.message,true));paymentActions.append(paid);
+      }
+      payment.append(paymentActions);
       const row = document.createElement('div');
       row.className = 'row';
       const select = document.createElement('select');
@@ -202,7 +240,7 @@
       delivery.textContent = 'Open in delivery admin';
       row.append(select, save, delivery);
       const content=document.createElement('div');content.className='order-card-body';
-      content.append(date, progress, customer, address, map, items, totals, row);
+      content.append(date, progress, customer, address, map, items, totals, payment, row);
       card.append(title,content);
       root.append(card);
     }
