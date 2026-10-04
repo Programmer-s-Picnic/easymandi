@@ -8,6 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'account_page.dart';
 import 'auth_service.dart';
 import 'delivery_page.dart';
@@ -240,6 +242,97 @@ class _StorePageState extends State<StorePage> {
   num get fee => subtotal == 0 || subtotal >= (store['freeDeliveryAbove'] as num? ?? 499) ? 0 : (store['deliveryFee'] as num? ?? 30);
   String money(num amount) => formatMoney(amount);
 
+  Future<void> showUpiPayment({
+    required String orderId,
+    required num total,
+    required String requestKey,
+  }) async {
+    Map<String,dynamic> payment;
+    try {
+      payment = await AuthService.instance.paymentStatus(orderId: orderId, requestKey: requestKey);
+    } on AuthException catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      return;
+    }
+    if (!mounted) return;
+    final reference = TextEditingController();
+    XFile? receipt;
+    String receiptStatus = 'Upload a JPG, PNG or WebP payment screenshot under 1 MB.';
+    bool uploading = false;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(builder: (dialogContext, updateDialog) => AlertDialog(
+        title: Text('UPI payment · $orderId'),
+        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('Pay exactly ${money(total)}', style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Text('${payment['payeeName']}'),
+          SelectableText('${payment['upiId']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          QrImageView(data: payment['upiUri'] as String, size: 220),
+          const SizedBox(height: 10),
+          FilledButton.icon(
+            onPressed: () async {
+              final uri=Uri.parse(payment['upiUri'] as String);
+              final opened=await launchUrl(uri, mode: LaunchMode.externalApplication);
+              if(!opened && dialogContext.mounted) {
+                ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content: Text('No UPI app could be opened. Scan the QR instead.')));
+              }
+            },
+            icon: const Icon(Icons.account_balance_wallet_outlined),
+            label: const Text('Open UPI app'),
+          ),
+          const SizedBox(height: 14),
+          TextField(controller: reference, maxLength: 80, decoration: const InputDecoration(labelText: 'UPI transaction/reference (optional)')),
+          OutlinedButton.icon(
+            onPressed: uploading ? null : () async {
+              final picked=await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 92);
+              if(picked==null)return;
+              final length=await picked.length();
+              if(length>1048576){
+                updateDialog(()=>receiptStatus='Receipt must be smaller than 1 MB.');
+                return;
+              }
+              updateDialog((){receipt=picked;receiptStatus='Receipt selected: ${picked.name}';});
+            },
+            icon: const Icon(Icons.receipt_long_outlined),
+            label: Text(receipt==null?'Choose payment screenshot':'Change screenshot'),
+          ),
+          Text(receiptStatus, style: Theme.of(dialogContext).textTheme.bodySmall),
+        ])),
+        actions: [
+          TextButton(onPressed: uploading ? null : () => Navigator.pop(dialogContext), child: const Text('Upload later')),
+          FilledButton(
+            onPressed: uploading || receipt==null ? null : () async {
+              updateDialog(()=>uploading=true);
+              try {
+                final bytes=await receipt!.readAsBytes();
+                var mime=receipt!.mimeType ?? '';
+                if(mime.isEmpty){
+                  final lower=receipt!.name.toLowerCase();
+                  mime=lower.endsWith('.png')?'image/png':lower.endsWith('.webp')?'image/webp':'image/jpeg';
+                }
+                await AuthService.instance.submitPaymentReceipt(
+                  orderId: orderId, requestKey: requestKey, upiReference: reference.text,
+                  receiptMime: mime, receiptBase64: base64Encode(bytes),
+                );
+                if(dialogContext.mounted) Navigator.pop(dialogContext);
+                if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment receipt submitted for verification.')));
+              } on AuthException catch(error) {
+                updateDialog((){uploading=false;receiptStatus=error.message;});
+              } catch (_) {
+                updateDialog((){uploading=false;receiptStatus='Could not upload the receipt. Please try again.';});
+              }
+            },
+            child: Text(uploading?'Uploading…':'Submit receipt'),
+          ),
+        ],
+      )),
+    );
+    reference.dispose();
+  }
+
   Future<void> checkout() async {
     final minimum = (store['minimumOrder'] as num? ?? 99);
     if (subtotal < minimum) {
@@ -269,6 +362,7 @@ class _StorePageState extends State<StorePage> {
     SavedAddress? selectedAddress;
     Position? deliveryPosition;
     bool saveNewAddress = true;
+    String paymentMethod = 'cod';
     final submitted = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(builder: (dialogContext, updateDialog) => AlertDialog(
@@ -336,6 +430,20 @@ class _StorePageState extends State<StorePage> {
               ? 'Share current location (optional)' : 'Location attached · update pin')),
             if (deliveryPosition != null) Text('Map pin: ${deliveryPosition!.latitude.toStringAsFixed(5)}, ${deliveryPosition!.longitude.toStringAsFixed(5)}'),
             Text('Delivery city: $city, $state', style: Theme.of(dialogContext).textTheme.bodySmall),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: paymentMethod,
+              decoration: const InputDecoration(labelText: 'Payment method'),
+              items: const [
+                DropdownMenuItem(value: 'cod', child: Text('Cash on Delivery')),
+                DropdownMenuItem(value: 'upi', child: Text('UPI / QR payment')),
+              ],
+              onChanged: (value) => updateDialog(() => paymentMethod = value ?? 'cod'),
+            ),
+            if (paymentMethod == 'upi') const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text('After placing the order, pay the exact saved total by UPI and upload the payment screenshot for admin verification.'),
+            ),
             if (selectedAddress == null) CheckboxListTile(
               contentPadding: EdgeInsets.zero, title: Text(signedInUser==null?'Save this address on this device':'Save address to my account (all devices)'),
               value: saveNewAddress, onChanged: (value) => updateDialog(() => saveNewAddress = value ?? false),
@@ -382,10 +490,13 @@ class _StorePageState extends State<StorePage> {
     _pendingOrderKey ??= List<int>.generate(16, (_) => Random.secure().nextInt(256))
         .map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
     Map<String, dynamic> savedOrder;
+    late String orderAccessKey;
     try {
+      orderAccessKey = _pendingOrderKey!;
       savedOrder = await AuthService.instance.createOrder({
         'requestKey': _pendingOrderKey,
         'source': 'android',
+        'paymentMethod': paymentMethod,
         'name': name.text.trim(),
         'mobile': phone.text.trim(),
         'house': house.text.trim(),
@@ -413,6 +524,7 @@ class _StorePageState extends State<StorePage> {
     final body = 'Hello Easy Mandi, my order $orderId has been placed.\n\n$lines'
         '\n\nTotal: ${money(savedTotal)}\nName: ${name.text.trim()}'
         '\nMobile: $countryCode ${phone.text.trim()}\nAddress: $address'
+        '\nPayment: ${paymentMethod == 'upi' ? 'UPI selected' : 'Cash on Delivery'}'
         '\n\nPlease confirm availability and delivery time.';
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -427,6 +539,10 @@ class _StorePageState extends State<StorePage> {
       await syncCustomerData();
     } catch (_) {
       // Server order is already saved; recent items remain optional device data.
+    }
+    if (paymentMethod == 'upi') {
+      await showUpiPayment(orderId: orderId, total: savedTotal, requestKey: orderAccessKey);
+      if (!mounted) return;
     }
     final uri = whatsappOrderUri(store['supportPhone'] as String? ?? '', body);
     var opened = false;
@@ -470,7 +586,7 @@ class _StorePageState extends State<StorePage> {
               const SizedBox(height: 8),
               Text('Free delivery from ${money(store['freeDeliveryAbove'] as num? ?? 499)} • Minimum order ${money(store['minimumOrder'] as num? ?? 99)}', style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 16),
-              FilledButton.icon(onPressed: () { Navigator.pop(sheetContext); checkout(); }, icon: const Icon(Icons.chat_bubble_outline), label: const Text('Send order enquiry')),
+              FilledButton.icon(onPressed: () { Navigator.pop(sheetContext); checkout(); }, icon: const Icon(Icons.chat_bubble_outline), label: const Text('Place order')),
             ],
           ]),
         ));
