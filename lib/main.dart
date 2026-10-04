@@ -17,34 +17,42 @@ import 'local_store.dart';
 import 'product.dart';
 import 'checkout_utils.dart';
 import 'notification_overlay.dart';
+import 'i18n.dart';
 
 const catalogUrl =
     'https://cserver.learnwithchampak.live/easymandi/api/catalog.php';
 const forest = Color(0xFF176B46);
 const pale = Color(0xFFF4F8F3);
 
-void main() => runApp(const EasyMandiApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await EasyMandiLanguage.load();
+  runApp(const EasyMandiApp());
+}
 
 class EasyMandiApp extends StatelessWidget {
   const EasyMandiApp({super.key});
   @override
-  Widget build(BuildContext context) => MaterialApp(
-        navigatorKey: notificationNavigator,
-        builder: notificationOverlay,
-        title: 'Easy Mandi',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: forest, surface: pale),
-          scaffoldBackgroundColor: pale,
-          appBarTheme: const AppBarTheme(backgroundColor: pale),
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+  Widget build(BuildContext context) => ValueListenableBuilder<bool>(
+        valueListenable: EasyMandiLanguage.hindi,
+        builder: (context, _, __) => MaterialApp(
+          navigatorKey: notificationNavigator,
+          builder: notificationOverlay,
+          title: 'Easy Mandi',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(seedColor: forest, surface: pale),
+            scaffoldBackgroundColor: pale,
+            appBarTheme: const AppBarTheme(backgroundColor: pale),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            ),
           ),
+          home: const StorePage(),
         ),
-        home: const StorePage(),
       );
 }
 
@@ -664,19 +672,19 @@ class _StorePageState extends State<StorePage> {
   Widget build(BuildContext context) {
     final filtered = products.where((p) => (category == 'All' || p.category == category) && '${p.name} ${p.hindi} ${p.category}'.toLowerCase().contains(query.toLowerCase())).toList();
     return Scaffold(
-      appBar: AppBar(title: const Row(children: [Text('🥬 ', style: TextStyle(fontSize: 28)), Text('Easy Mandi', style: TextStyle(fontWeight: FontWeight.w800))]), actions: [IconButton(tooltip: signedInUser == null ? 'Register or sign in' : 'My account and sign out', onPressed: openAccount, icon: Icon(signedInUser == null ? Icons.person_outline : Icons.account_circle)), IconButton(tooltip: 'My deliveries', onPressed: () async { if (signedInUser == null) { await openAccount(); } if (mounted && signedInUser != null) Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const DeliveryPage())); }, icon: const Icon(Icons.local_shipping_outlined)), IconButton(tooltip: 'About and developer', onPressed: showCredits, icon: const Icon(Icons.info_outline)), IconButton(tooltip: 'Refresh catalog', onPressed: loadCatalog, icon: const Icon(Icons.refresh))]),
-      body: loading ? const Center(child: CircularProgressIndicator()) : message.isNotEmpty ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text(message), TextButton(onPressed: loadCatalog, child: const Text('Retry'))])) : CustomScrollView(slivers: [
+      appBar: AppBar(title: const Row(children: [Text('🥬 ', style: TextStyle(fontSize: 28)), Text('Easy Mandi', style: TextStyle(fontWeight: FontWeight.w800))]), actions: [const LanguageButton(), IconButton(tooltip: signedInUser == null ? tr('Register or sign in','रजिस्टर या साइन इन करें') : tr('My account and sign out','मेरा खाता और साइन आउट'), onPressed: openAccount, icon: Icon(signedInUser == null ? Icons.person_outline : Icons.account_circle)), IconButton(tooltip: tr('My deliveries','मेरी डिलीवरी'), onPressed: () async { if (signedInUser == null) { await openAccount(); } if (mounted && signedInUser != null) Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const DeliveryPage())); }, icon: const Icon(Icons.local_shipping_outlined)), IconButton(tooltip: tr('About and developer','जानकारी और डेवलपर'), onPressed: showCredits, icon: const Icon(Icons.info_outline)), IconButton(tooltip: tr('Refresh catalog','कैटलॉग रीफ़्रेश करें'), onPressed: loadCatalog, icon: const Icon(Icons.refresh))]),
+      body: loading ? const Center(child: CircularProgressIndicator()) : message.isNotEmpty ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text(message), TextButton(onPressed: loadCatalog, child: Text(tr('Retry','फिर प्रयास करें')))])) : CustomScrollView(slivers: [
         SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.fromLTRB(18, 8, 18, 0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Container(width: double.infinity, padding: const EdgeInsets.all(22), decoration: BoxDecoration(color: forest, borderRadius: BorderRadius.circular(24)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('FRESH FROM THE MANDI', style: TextStyle(color: Color(0xFFBCEAD1), fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+            Text(tr('FRESH FROM THE MANDI','मंडी से ताज़ा'), style: const TextStyle(color: Color(0xFFBCEAD1), fontWeight: FontWeight.bold, letterSpacing: 1.2)),
             const SizedBox(height: 10),
-            const Text('Good food starts fresh.', style: TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.w800)),
+            Text(tr('Good food starts fresh.','अच्छा खाना ताज़गी से शुरू होता है।'), style: const TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.w800)),
             const SizedBox(height: 7),
-            Text('Vegetables for your everyday kitchen • ${store['city'] ?? 'Varanasi'}', style: const TextStyle(color: Colors.white70)),
+            Text(tr('Vegetables for your everyday kitchen • ${store['city'] ?? 'Varanasi'}','आपकी रोज़ की रसोई के लिए ताज़ी सब्ज़ियाँ • ${store['city'] ?? 'Varanasi'}'), style: const TextStyle(color: Colors.white70)),
           ])),
           const SizedBox(height: 16),
           if (recentItems.isNotEmpty) ...[
-            Text('Previously ordered items', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(tr('Previously ordered items','पहले मँगाए गए सामान'), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             SizedBox(height: 88, child: ListView.separated(
               scrollDirection: Axis.horizontal,
@@ -696,8 +704,8 @@ class _StorePageState extends State<StorePage> {
                     Text(item.emoji, style: const TextStyle(fontSize: 29)),
                     const SizedBox(width: 6),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text(available ? '${money(product!.price)} / ${product.unit}' : 'Unavailable', style: Theme.of(context).textTheme.bodySmall),
+                      Text(product == null ? item.name : productName(product.name, product.hindi), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(available ? '${money(product!.price)} / ${product.unit}' : tr('Unavailable','उपलब्ध नहीं'), style: Theme.of(context).textTheme.bodySmall),
                     ])),
                     IconButton(tooltip: available ? 'Add ${item.name} again' : '${item.name} unavailable',
                       onPressed: available ? () => changeQuantity(product!, 1) : null,
@@ -708,16 +716,16 @@ class _StorePageState extends State<StorePage> {
             )),
             const SizedBox(height: 16),
           ],
-          TextField(onChanged: (v) => setState(() => query = v), decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search onions, potatoes, tomatoes...')),
+          TextField(onChanged: (v) => setState(() => query = v), decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: tr('Search onions, potatoes, tomatoes...','प्याज, आलू, टमाटर खोजें...'))),
           const SizedBox(height: 14),
-          SizedBox(height: 44, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: categories.length, separatorBuilder: (_, __) => const SizedBox(width: 8), itemBuilder: (_, i) => ChoiceChip(label: Text(categories[i]), selected: category == categories[i], onSelected: (_) => setState(() => category = categories[i])))),
+          SizedBox(height: 44, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: categories.length, separatorBuilder: (_, __) => const SizedBox(width: 8), itemBuilder: (_, i) => ChoiceChip(label: Text(categoryText(categories[i])), selected: category == categories[i], onSelected: (_) => setState(() => category = categories[i])))),
           const SizedBox(height: 18),
-          Text('Shop fresh', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          Text(tr('Shop fresh','ताज़ा खरीदें'), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 5),
-          Text('${filtered.length} products', style: Theme.of(context).textTheme.bodySmall),
+          Text(tr('${filtered.length} products','${filtered.length} उत्पाद'), style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 12),
         ]))),
-        if (filtered.isEmpty) const SliverFillRemaining(child: Center(child: Text('No matching products. Try another search.'))),
+        if (filtered.isEmpty) SliverFillRemaining(child: Center(child: Text(tr('No matching products. Try another search.','कोई मिलते-जुलते उत्पाद नहीं मिले। दूसरी खोज करें।')))),
         SliverPadding(padding: const EdgeInsets.fromLTRB(18, 0, 18, 16), sliver: SliverLayoutBuilder(builder: (context, constraints) {
           final columns = constraints.crossAxisExtent >= 700 ? 4 : constraints.crossAxisExtent >= 460 ? 3 : 2;
           return SliverGrid.builder(itemCount: filtered.length, gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: columns, mainAxisSpacing: 12, crossAxisSpacing: 12, mainAxisExtent: 252), itemBuilder: (_, i) {
@@ -725,19 +733,19 @@ class _StorePageState extends State<StorePage> {
             return Card(elevation: 0, color: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)), clipBehavior: Clip.antiAlias, child: InkWell(onTap: () => showProductDetail(p), child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(child: Container(width: double.infinity, decoration: BoxDecoration(color: const Color(0xFFEAF4E9), borderRadius: BorderRadius.circular(12)), child: Center(child: Text(p.emoji, style: const TextStyle(fontSize: 62))))),
               const SizedBox(height: 8),
-              Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text('${p.hindi} • ${p.unit}', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
+              Text(productName(p.name, p.hindi), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text('${EasyMandiLanguage.hindi.value ? p.name : p.hindi} • ${p.unit}', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
               const Spacer(),
-              Row(children: [Expanded(child: Text(money(p.price), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: forest))), if (!p.available) const Text('Sold out') else if ((cart[p.id] ?? 0) == 0) IconButton.filled(tooltip: 'Add ${p.name}', onPressed: () => changeQuantity(p, 1), icon: const Icon(Icons.add)) else Row(mainAxisSize: MainAxisSize.min, children: [InkWell(onTap: () => changeQuantity(p, -1), child: const Icon(Icons.remove_circle_outline, size: 26)), Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: Text('${cart[p.id]}')), InkWell(onTap: () => changeQuantity(p, 1), child: const Icon(Icons.add_circle, color: forest, size: 26))])]),
+              Row(children: [Expanded(child: Text(money(p.price), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: forest))), if (!p.available) Text(tr('Sold out','स्टॉक खत्म')) else if ((cart[p.id] ?? 0) == 0) IconButton.filled(tooltip: 'Add ${p.name}', onPressed: () => changeQuantity(p, 1), icon: const Icon(Icons.add)) else Row(mainAxisSize: MainAxisSize.min, children: [InkWell(onTap: () => changeQuantity(p, -1), child: const Icon(Icons.remove_circle_outline, size: 26)), Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: Text('${cart[p.id]}')), InkWell(onTap: () => changeQuantity(p, 1), child: const Icon(Icons.add_circle, color: forest, size: 26))])]),
             ]))));
           });
         })),
         SliverToBoxAdapter(child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 6, 18, 110),
-          child: Center(child: TextButton(onPressed: openDeveloperSite, child: const Text('Developed and maintained by Champak Roy\nlearnwithchampak.live', textAlign: TextAlign.center))),
+          child: Center(child: TextButton(onPressed: openDeveloperSite, child: Text(tr('Developed and maintained by Champak Roy\nlearnwithchampak.live','विकसित और अनुरक्षित: Champak Roy\nlearnwithchampak.live'), textAlign: TextAlign.center))),
         )),
       ]),
-      bottomNavigationBar: count == 0 ? null : SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(18, 8, 18, 12), child: FilledButton.icon(onPressed: showCart, icon: const Icon(Icons.shopping_basket_outlined), label: Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text('View basket • $count items • ${money(subtotal + fee)}'))))),
+      bottomNavigationBar: count == 0 ? null : SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(18, 8, 18, 12), child: FilledButton.icon(onPressed: showCart, icon: const Icon(Icons.shopping_basket_outlined), label: Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(tr('View basket • $count items • ${money(subtotal + fee)}','टोकरी देखें • $count सामान • ${money(subtotal + fee)}')))))),
     );
   }
 }
