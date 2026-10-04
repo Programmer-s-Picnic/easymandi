@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'auth_service.dart';
 import 'i18n.dart';
 
@@ -132,14 +133,93 @@ class _DeliveryPageState extends State<DeliveryPage> {
                                     Text(tr('Status: ${statusText(status)}',
                                         'स्थिति: ${statusText(status)}')),
                                     Text(o['address_text'] as String? ?? ''),
-                                    if ([
+                                    if (o['handoff_code'] != null &&
+                                        o['handoff_qr'] != null) ...[
+                                      const SizedBox(height: 12),
+                                      Card(
+                                        color: const Color(0xFFF2F8F4),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(14),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.stretch,
+                                            children: [
+                                              Text(
+                                                tr('Delivery handoff code',
+                                                    'डिलीवरी हैंडऑफ कोड'),
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.w800),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              Wrap(
+                                                spacing: 18,
+                                                runSpacing: 14,
+                                                crossAxisAlignment:
+                                                    WrapCrossAlignment.center,
+                                                children: [
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      SelectableText(
+                                                        '${o['handoff_code']}',
+                                                        style: const TextStyle(
+                                                          fontSize: 32,
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                          letterSpacing: 5,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 6),
+                                                      Text(
+                                                        tr(
+                                                            'Show this code or QR only after you receive your order.',
+                                                            'ऑर्डर मिलने के बाद ही यह कोड या QR डिलीवरी व्यक्ति को दिखाएँ।'),
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .bodySmall,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Container(
+                                                    color: Colors.white,
+                                                    padding:
+                                                        const EdgeInsets.all(8),
+                                                    child: QrImageView(
+                                                      data:
+                                                          '${o['handoff_qr']}',
+                                                      size: 150,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              if (o['code_expires_at'] != null)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          top: 8),
+                                                  child: Text(
+                                                    tr(
+                                                        'Code valid until ${o['code_expires_at']}',
+                                                        'कोड ${o['code_expires_at']} तक मान्य है'),
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ] else if ([
                                       'assigned',
                                       'picked_up',
                                       'out_for_delivery'
                                     ].contains(status))
                                       Text(tr(
-                                          'The admin will send your handoff code. Give it to the delivery person only after receiving your order.',
-                                          'एडमिन आपको डिलीवरी कोड भेजेगा। ऑर्डर मिलने के बाद ही यह कोड डिलीवरी व्यक्ति को दें।')),
+                                          'Your handoff code will appear here. Give it to the delivery person only after receiving your order.',
+                                          'आपका डिलीवरी कोड यहाँ दिखाई देगा। ऑर्डर मिलने के बाद ही यह कोड डिलीवरी व्यक्ति को दें।')),
                                   ],
                                 ),
                               ),
