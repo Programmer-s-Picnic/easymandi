@@ -238,7 +238,7 @@ el('orderForm').onsubmit=async e=>{
       method:'POST',headers:{
         'Content-Type':'application/json'
       },body:JSON.stringify({
-        requestKey:key,source:'web',name:String(form.get('name')||'').trim(),mobile:phone,house,locality,landmark,pin,...deliveryLocation,items:chosen
+        requestKey:key,source:'web',paymentMethod:String(form.get('paymentMethod')||'cod'),name:String(form.get('name')||'').trim(),mobile:phone,house,locality,landmark,pin,...deliveryLocation,items:chosen
       })
     });
     let result;
@@ -250,7 +250,7 @@ el('orderForm').onsubmit=async e=>{
       if(response.status===409&&result.error?.startsWith('Order request already used'))sessionStorage.removeItem('easy-mandi-pending-order');
       throw Error(result.error||'Could not place order. Please retry.');
     }window.dispatchEvent(new Event('customer-order-placed'));
-    sessionStorage.removeItem('easy-mandi-pending-order');
+    const paymentMethod=String(form.get('paymentMethod')||'cod');
     deliveryLocation=null;
     el('locationStatus').textContent='Optional map pin for accurate delivery.';
     const address=[house,locality,...(landmark?['Near '+landmark]:[]),(data.store.city||'Varanasi')+', '+(data.checkout?.state||'Uttar Pradesh')+' - '+pin].join(', ');
@@ -261,7 +261,41 @@ el('orderForm').onsubmit=async e=>{
     const title=document.createElement('h3');
     title.textContent='Order placed · '+result.orderId;
     const note=document.createElement('p');
-    note.textContent='Saved total: '+money(result.total)+'. The Easy Mandi team can review your order.';
+    note.textContent='Saved total: '+money(result.total)+'. '+(paymentMethod==='upi'?'UPI payment selected. Pay only this exact amount.':'Cash on Delivery selected.');
+    box.append(title,note);
+    if(paymentMethod==='upi'){
+      const payWrap=document.createElement('section');
+      payWrap.className='payment-panel';
+      const payTitle=document.createElement('h4');payTitle.textContent='UPI payment';
+      const payInfo=document.createElement('p');payInfo.textContent='Pay '+money(result.total)+' to ABHISHEK KUMAR SINGH · 7398564033@kotakbank';
+      const payLink=document.createElement('a');payLink.className='btn';payLink.textContent='Open UPI app';
+      const upi='upi://pay?pa='+encodeURIComponent('7398564033@kotakbank')+'&pn='+encodeURIComponent('ABHISHEK KUMAR SINGH')+'&am='+encodeURIComponent(Number(result.total).toFixed(2))+'&cu=INR&tn='+encodeURIComponent('Easy Mandi '+result.orderId);
+      payLink.href=upi;
+      const ref=document.createElement('input');ref.placeholder='UPI transaction/reference (optional)';ref.maxLength=80;
+      const receipt=document.createElement('input');receipt.type='file';receipt.accept='image/jpeg,image/png,image/webp';
+      const receiptStatus=document.createElement('p');receiptStatus.className='note';receiptStatus.textContent='Upload a JPG, PNG or WebP receipt under 1 MB.';
+      const submitReceipt=document.createElement('button');submitReceipt.type='button';submitReceipt.className='btn secondary';submitReceipt.textContent='Submit payment receipt';
+      submitReceipt.onclick=async()=>{
+        const file=receipt.files?.[0];
+        if(!file){receiptStatus.textContent='Choose your payment screenshot first.';return;}
+        if(file.size>1048576){receiptStatus.textContent='Receipt must be smaller than 1 MB.';return;}
+        if(!['image/jpeg','image/png','image/webp'].includes(file.type)){receiptStatus.textContent='Use JPG, PNG or WebP.';return;}
+        submitReceipt.disabled=true;receiptStatus.textContent='Uploading receipt…';
+        try{
+          const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');reader.onerror=reject;reader.readAsDataURL(file);});
+          const pr=await AppHttp.fetch('https://cserver.learnwithchampak.live/easymandi/api/payment.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operation:'submit',orderId:result.orderId,requestKey:key,upiReference:ref.value.trim(),receiptMime:file.type,receiptBase64:base64})});
+          const pd=await pr.json();
+          if(!pr.ok)throw Error(pd.error||'Could not submit receipt.');
+          receiptStatus.textContent='Receipt submitted. Payment status: Submitted for verification.';
+          submitReceipt.textContent='Receipt submitted';
+          sessionStorage.removeItem('easy-mandi-pending-order');
+        }catch(error){receiptStatus.textContent=error.message||'Could not submit receipt.';submitReceipt.disabled=false;}
+      };
+      payWrap.append(payTitle,payInfo,payLink,ref,receipt,submitReceipt,receiptStatus);
+      box.append(payWrap);
+    }else{
+      sessionStorage.removeItem('easy-mandi-pending-order');
+    }
     const link=document.createElement('a');
     link.className='btn';
     let supportNumber=String(data.store.supportPhone||'').replace(/[^0-9]/g,'');
@@ -270,7 +304,7 @@ el('orderForm').onsubmit=async e=>{
     link.target='_blank';
     link.rel='noopener noreferrer';
     link.textContent='Send reference on WhatsApp';
-    box.append(title,note,link);
+    box.append(link);
     e.target.hidden=true;
     for(const id of Object.keys(cart))delete cart[id];
     save();
