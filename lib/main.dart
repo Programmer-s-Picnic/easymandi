@@ -578,23 +578,23 @@ class _StorePageState extends State<StorePage> {
         return SafeArea(child: Padding(
           padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('Your basket', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+            Text(tr('Your basket','आपकी टोकरी'), style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            if (chosen.isEmpty) const Padding(padding: EdgeInsets.symmetric(vertical: 32), child: Center(child: Text('Your basket is empty. Add some fresh vegetables!'))),
+            if (chosen.isEmpty) Padding(padding: const EdgeInsets.symmetric(vertical: 32), child: Center(child: Text(tr('Your basket is empty. Add some fresh vegetables!','आपकी टोकरी खाली है। कुछ ताज़ी सब्ज़ियाँ जोड़ें!')))),
             if (chosen.isNotEmpty) ...[
               ConstrainedBox(constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .42), child: ListView.builder(shrinkWrap: true, itemCount: chosen.length, itemBuilder: (_, i) {
                 final p = chosen[i];
-                return ListTile(contentPadding: EdgeInsets.zero, leading: Text(p.emoji, style: const TextStyle(fontSize: 30)), title: Text(p.name), subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('${money(p.price)} / ${p.unit} · Tap for details'), TextButton.icon(onPressed: () => update(p, -(cart[p.id] ?? 0)), icon: const Icon(Icons.delete_outline, size: 18), label: const Text('Remove'), style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 40), alignment: Alignment.centerLeft))]), trailing: Row(mainAxisSize: MainAxisSize.min, children: [IconButton(tooltip: 'Remove one ${p.name}', onPressed: () => update(p, -1), icon: const Icon(Icons.remove_circle_outline)), Text('${cart[p.id]}'), IconButton(tooltip: 'Add one ${p.name}', onPressed: () => update(p, 1), icon: const Icon(Icons.add_circle_outline))]), onTap: () => showProductDetail(p, refreshCart: () => updateSheet(() {})));
+                return ListTile(contentPadding: EdgeInsets.zero, leading: Text(p.emoji, style: const TextStyle(fontSize: 30)), title: Text(productName(p.name,p.hindi)), subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(tr('${money(p.price)} / ${p.unit} · Tap for details','${money(p.price)} / ${p.unit} · विवरण के लिए टैप करें')), TextButton.icon(onPressed: () => update(p, -(cart[p.id] ?? 0)), icon: const Icon(Icons.delete_outline, size: 18), label: Text(tr('Remove','हटाएँ')), style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 40), alignment: Alignment.centerLeft))]), trailing: Row(mainAxisSize: MainAxisSize.min, children: [IconButton(tooltip: 'Remove one ${p.name}', onPressed: () => update(p, -1), icon: const Icon(Icons.remove_circle_outline)), Text('${cart[p.id]}'), IconButton(tooltip: 'Add one ${p.name}', onPressed: () => update(p, 1), icon: const Icon(Icons.add_circle_outline))]), onTap: () => showProductDetail(p, refreshCart: () => updateSheet(() {})));
               })),
               const Divider(),
-              _totalRow('Subtotal', money(subtotal)),
-              _totalRow('Delivery', fee == 0 ? 'Free' : money(fee)),
+              _totalRow(tr('Subtotal','उप-योग'), money(subtotal)),
+              _totalRow(tr('Delivery','डिलीवरी'), fee == 0 ? tr('Free','मुफ़्त') : money(fee)),
               const SizedBox(height: 6),
-              _totalRow('Estimated total', money(subtotal + fee), bold: true),
+              _totalRow(tr('Estimated total','अनुमानित कुल'), money(subtotal + fee), bold: true),
               const SizedBox(height: 8),
-              Text('Free delivery from ${money(store['freeDeliveryAbove'] as num? ?? 499)} • Minimum order ${money(store['minimumOrder'] as num? ?? 99)}', style: Theme.of(context).textTheme.bodySmall),
+              Text(tr('Free delivery from ${money(store['freeDeliveryAbove'] as num? ?? 499)} • Minimum order ${money(store['minimumOrder'] as num? ?? 99)}','${money(store['freeDeliveryAbove'] as num? ?? 499)} से मुफ़्त डिलीवरी • न्यूनतम ऑर्डर ${money(store['minimumOrder'] as num? ?? 99)}'), style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 16),
-              FilledButton.icon(onPressed: () { Navigator.pop(sheetContext); checkout(); }, icon: const Icon(Icons.chat_bubble_outline), label: const Text('Place order')),
+              FilledButton.icon(onPressed: () { Navigator.pop(sheetContext); checkout(); }, icon: const Icon(Icons.chat_bubble_outline), label: Text(tr('Place order','ऑर्डर करें'))),
             ],
           ]),
         ));
@@ -612,7 +612,7 @@ class _StorePageState extends State<StorePage> {
           refreshCart?.call();
         }
         return Scaffold(
-          appBar: AppBar(title: Text(product.name)),
+          appBar: AppBar(title: Text(productName(product.name, product.hindi))),
           body: SafeArea(child: LayoutBuilder(builder: (context, bounds) => SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Center(child: ConstrainedBox(
@@ -624,21 +624,21 @@ class _StorePageState extends State<StorePage> {
                   child: Center(child: Text(product.emoji, style: const TextStyle(fontSize: 120))),
                 ),
                 const SizedBox(height: 24),
-                Text(product.name, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                if (product.hindi.isNotEmpty) Text(product.hindi, style: Theme.of(context).textTheme.titleMedium),
+                Text(productName(product.name, product.hindi), style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                if (product.hindi.isNotEmpty) Text(EasyMandiLanguage.hindi.value ? product.name : product.hindi, style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 10),
                 Text('${money(product.price)} / ${product.unit}', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: forest, fontWeight: FontWeight.bold)),
-                if (product.description.isNotEmpty) ...[const SizedBox(height: 18), Text(product.description)],
+                if (product.description.isNotEmpty) ...[const SizedBox(height: 18), Text(productDescription(product.description))],
                 const SizedBox(height: 24),
                 Row(children: [
-                  const Text('Quantity', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(tr('Quantity','मात्रा'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const Spacer(),
                   IconButton.filledTonal(tooltip: 'Remove one ${product.name}', onPressed: quantity == 0 ? null : () => adjust(-1), icon: const Icon(Icons.remove)),
                   Padding(padding: const EdgeInsets.symmetric(horizontal: 18), child: Text('$quantity', style: const TextStyle(fontSize: 20))),
                   IconButton.filledTonal(tooltip: 'Add one ${product.name}', onPressed: !product.available || quantity >= 99 ? null : () => adjust(1), icon: const Icon(Icons.add)),
                 ]),
                 const SizedBox(height: 12),
-                Text('Item total: ${money(product.price * quantity)}', style: Theme.of(context).textTheme.titleMedium),
+                Text(tr('Item total: ${money(product.price * quantity)}','सामान का कुल: ${money(product.price * quantity)}'), style: Theme.of(context).textTheme.titleMedium),
               ]),
             )),
           ))),
@@ -652,7 +652,7 @@ class _StorePageState extends State<StorePage> {
   Future<void> openDeveloperSite() async {
     final uri = Uri.parse('https://learnwithchampak.live');
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open learnwithchampak.live.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Could not open learnwithchampak.live.','learnwithchampak.live नहीं खुल सका।'))));
     }
   }
 
@@ -661,10 +661,10 @@ class _StorePageState extends State<StorePage> {
     builder: (dialogContext) => AlertDialog(
       title: const Text('Easy Mandi'),
       content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Developed and maintained by Champak Roy'),
+        Text(tr('Developed and maintained by Champak Roy','विकसित और अनुरक्षित: Champak Roy')),
         TextButton.icon(onPressed: openDeveloperSite, icon: const Icon(Icons.open_in_new), label: const Text('learnwithchampak.live')),
       ]),
-      actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Close'))],
+      actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: Text(tr('Close','बंद करें')))],
     ),
   );
 
