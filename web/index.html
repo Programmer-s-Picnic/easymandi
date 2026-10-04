@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#176b46">
 <meta name="description" content="Easy Mandi: fresh onions, potatoes and vegetables delivered in Varanasi.">
 <title>Easy Mandi | Fresh vegetables</title>
-<link rel="stylesheet" href="storefront.css?v=20260930-cleanup">
+<link rel="stylesheet" href="storefront.css?v=20261004-payments">
 <link rel="stylesheet" href="../shared/notifications.css?v=20260930-cleanup">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
 </script>
@@ -72,7 +72,12 @@
 <p class="note">Address format: <span id="addressExample">House 12, Lanka, Varanasi, Uttar Pradesh 221005</span>. Delivery city: <strong id="deliveryCity">Varanasi</strong>.</p>
 <button type="button" class="btn ghost" id="shareLocation">Share current location</button>
 <p class="note" id="locationStatus">Optional map pin for accurate delivery. Your browser will ask for permission.</p>
-<p class="note">Your order is saved for the Easy Mandi team. You can also send its reference by WhatsApp. Confirm the final price and delivery before payment.</p>
+<fieldset class="payment-choice">
+<legend>Payment method</legend>
+<label><input type="radio" name="paymentMethod" value="cod" checked> Cash on Delivery</label>
+<label><input type="radio" name="paymentMethod" value="upi"> UPI / QR payment</label>
+</fieldset>
+<p class="note">For UPI, the exact saved order total is used. Upload the payment screenshot/receipt after paying so the admin can verify it.</p>
 <div class="actions">
 <button type="button" class="btn ghost" id="close">Close</button>
 <button class="btn" id="send">Place order</button>
@@ -145,7 +150,7 @@
 </div>
 </dialog>
 <footer>Easy Mandi · Varanasi · Client demonstration</footer>
-<script src="storefront.js?v=20261001-addresses" defer>
+<script src="storefront.js?v=20261004-payments" defer>
 </script>
 <script src="auth.js?v=20261001-addresses" defer>
 </script>
