@@ -180,10 +180,13 @@
   byId('googleComplete').addEventListener('click', completeGoogle);
   byId('accountForm').addEventListener('submit', async event => {
     event.preventDefault();
+    // currentTarget is only available while the event is being dispatched.
+    // Keep the form reference before awaiting the authentication response.
+    const form = event.currentTarget;
     const button = byId('accountSubmit');
     button.disabled = true;
     byId('accountError').textContent = '';
-    const fields = new FormData(event.currentTarget);
+    const fields = new FormData(form);
     if (registering && fields.get('password') !== fields.get('password_confirmation')) {
       byId('accountError').textContent = t('passwordsMismatch');
       button.disabled = false;
@@ -204,7 +207,8 @@
       sessionStorage.setItem(tokenKey, token);
       user = result.user;
       googleCredential = null;
-      event.currentTarget.reset();
+      form.reset();
+      mode(false);
       refresh();
       byId('accountDialog').close();
     } catch (error) {
