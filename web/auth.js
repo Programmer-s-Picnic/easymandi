@@ -83,7 +83,18 @@
     });
     if(id===null||n?.audience==='delivery')await deliveryNotifications(id,true);
   });
-  window.CustomerAccount={get user(){return user;},request};
+  async function customerDeliveries(){
+    if(!token||!user)throw Error('Sign in to see your deliveries.');
+    const response=await AppHttp.fetch('https://cserver.learnwithchampak.live/delivery/api/?action=customer',{
+      method:'GET',
+      cache:'no-store',
+      headers:{Accept:'application/json',Authorization:'Bearer '+token}
+    });
+    const result=await response.json();
+    if(!response.ok)throw Error(result.error||'Could not load deliveries.');
+    return result;
+  }
+  window.CustomerAccount={get user(){return user;},request,customerDeliveries};
   function refresh() {
     window.dispatchEvent(new Event('customer-account-changed'));
     inbox.active=!!user;
