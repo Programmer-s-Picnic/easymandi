@@ -16,7 +16,7 @@
       mobileNumber:'Mobile number', mobileHint:'Format: +91 9876543210. Enter only the 10 digits.',
       house:'House / flat / building', locality:'Street / locality', landmark:'Landmark (optional)',
       pin:'PIN code', addressFormat:'Address format:', deliveryCityLabel:'Delivery city:',
-      yourName:'Your name', shareLocation:'Share current location',
+      yourName:'Your name', emailOptional:'Email (optional)', housePlaceholder:'House 12', localityPlaceholder:'Lanka', landmarkPlaceholder:'Near the main gate', searchAria:'Search products', shareLocation:'Share current location',
       locationHint:'Optional map pin for accurate delivery. Your browser will ask for permission.',
       locationUnavailable:'Location is unavailable on this device.', locationFinding:'Finding your location…',
       locationAttached:'Location attached. Check the pin: {coords}',
@@ -67,7 +67,7 @@
       mobileNumber:'मोबाइल नंबर', mobileHint:'प्रारूप: +91 9876543210। केवल 10 अंक भरें।',
       house:'मकान / फ्लैट / भवन', locality:'सड़क / मोहल्ला', landmark:'पहचान की जगह (वैकल्पिक)',
       pin:'पिन कोड', addressFormat:'पते का प्रारूप:', deliveryCityLabel:'डिलीवरी शहर:',
-      yourName:'आपका नाम', shareLocation:'अपना स्थान साझा करें',
+      yourName:'आपका नाम', emailOptional:'ईमेल (वैकल्पिक)', housePlaceholder:'मकान 12', localityPlaceholder:'लंका', landmarkPlaceholder:'मुख्य गेट के पास', searchAria:'उत्पाद खोजें', shareLocation:'अपना स्थान साझा करें',
       locationHint:'सही डिलीवरी के लिए स्थान जोड़ सकते हैं। ब्राउज़र अनुमति माँगेगा।',
       locationUnavailable:'इस डिवाइस पर स्थान उपलब्ध नहीं है।', locationFinding:'आपका स्थान खोज रहे हैं…',
       locationAttached:'स्थान जुड़ गया। नक्शे के निर्देशांक: {coords}',
@@ -117,6 +117,7 @@
     document.querySelectorAll('[data-i18n]').forEach(node=> { node.textContent=t(node.dataset.i18n); });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(node=> { node.placeholder=t(node.dataset.i18nPlaceholder); });
     document.querySelectorAll('[data-i18n-title]').forEach(node=> { node.title=t(node.dataset.i18nTitle); });
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(node=> { node.setAttribute('aria-label',t(node.dataset.i18nAriaLabel)); });
     const picker=document.getElementById('siteLanguage');
     if(picker) picker.value=lang;
   }
