@@ -27,6 +27,20 @@ const pale = Color(0xFFF4F8F3);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Deliberate one-time customer reset for the October 2026 fresh start.
+  // Keep the catalog and the application's language preference intact.
+  final prefs=await SharedPreferences.getInstance();
+  const migrationKey='easy-mandi-fresh-start-20261008';
+  if(prefs.getBool(migrationKey)!=true){
+    await AuthService.instance.clearLocalAccountForFreshStart();
+    await LocalStore.instance.clearPersonalData();
+    // Old address migration flags must not apply to new customer IDs.
+    for(final key in prefs.getKeys().where((key)=>key.startsWith('server-address-migration-')).toList()){
+      await prefs.remove(key);
+    }
+    await prefs.remove('cart');
+    await prefs.setBool(migrationKey,true);
+  }
   await EasyMandiLanguage.load();
   runApp(const EasyMandiApp());
 }
