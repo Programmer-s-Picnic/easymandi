@@ -58,10 +58,11 @@ class _DeliveryPageState extends State<DeliveryPage> {
           '${name.isEmpty?'':'Receiver: $name\n'}'
           'Delivery handoff code: $code\n'
           'Please show this QR or code to the delivery partner only after receiving the items.';
-      await SharePlus.instance.share(ShareParams(
+      await Share.shareXFiles(
+        [XFile.fromData(image.buffer.asUint8List(),mimeType:'image/png')],
         text:message,
-        files:[XFile.fromData(image.buffer.asUint8List(),mimeType:'image/png',name:'easymandi-handoff.png')],
-      ));
+        fileNameOverrides:['easymandi-handoff.png'],
+      );
     }catch(_){
       if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content:Text(tr('Could not share delivery code. Try again.','डिलीवरी कोड साझा नहीं हुआ। दोबारा प्रयास करें।'))));
