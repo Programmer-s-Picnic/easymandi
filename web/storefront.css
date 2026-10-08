@@ -287,3 +287,28 @@ footer {
 .delivery-code-warning{color:#744c2b}
 .delivery-empty{margin:0;color:#506b58}
 @media(max-width:460px){.delivery-panel{padding:12px}.delivery-panel-top button{padding:8px 10px;font-size:13px}.delivery-list{grid-template-columns:1fr}}
+
+/* Compact mobile catalog: two product columns, up to 6–8 items within common viewports. */
+@media(max-width:600px){
+ .hero{padding:14px 16px;border-radius:16px}
+ .hero small{font-size:10px}
+ .hero h1{font-size:22px;margin:4px 0}
+ .hero p{font-size:12px;margin:3px 0}
+ .search{margin:12px 0 8px;padding:10px}
+ .filters{gap:5px}
+ .filters button{padding:5px 10px;font-size:12px}
+ .head{margin:12px 0 8px}
+ .head h2{font-size:19px}
+ .head p{font-size:11px}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .card{border-radius:12px;padding:8px;min-width:0}
+ .illustration{height:72px;font-size:39px;border-radius:9px}
+ .card h3{font-size:14px;line-height:1.2;margin:6px 0 3px}
+ .card small{font-size:11px}
+ .card .row{margin-top:6px;gap:3px}
+ .price{font-size:15px}
+ .step{gap:4px}
+ .step button{width:28px;height:28px}
+}
+.account-password-dialog{width:min(450px,94vw);border-radius:18px;padding:22px}
+.customer-inbox-menu{max-width:100%;border:1px solid #dae7de}
