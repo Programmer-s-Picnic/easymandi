@@ -63,6 +63,39 @@
           if(typeof window.QRCode!=='function')throw Error('QR library unavailable');
           new window.QRCode(qr,{text:order.handoff_qr,width:180,height:180,colorDark:'#0d3423',colorLight:'#ffffff',correctLevel:window.QRCode.CorrectLevel.M});
           handoff.append(qr);
+          const buttons=element('div',undefined,'delivery-share-actions');
+          const share=element('button',t('Share code + QR','कोड और QR साझा करें'),'btn');
+          share.type='button';
+          share.onclick=async()=>{
+            const text=t('Easy Mandi order ','Easy Mandi ऑर्डर ')+String(order.external_order_id||order.id)+
+              '\\n'+t('Delivery code: ','डिलीवरी कोड: ')+code+
+              '\\nQR: '+order.handoff_qr+
+              '\\n'+t('Give this to the delivery partner only after physically receiving the order.','सामान मिलने के बाद ही डिलीवरी साथी को यह कोड दें।');
+            try{
+              const canvas=qr.querySelector('canvas'),img=qr.querySelector('img');
+              const blob=canvas?await new Promise(resolve=>canvas.toBlob(resolve,'image/png')):img?await (await fetch(img.src)).blob():null;
+              const file=blob?new File([blob],'easy-mandi-order-'+order.id+'-qr.png',{type:'image/png'}):null;
+              if(navigator.share){
+                const details={title:'Easy Mandi delivery code',text};
+                if(file&&(!navigator.canShare||navigator.canShare({files:[file]})))details.files=[file];
+                await navigator.share(details);
+              }else{
+                await navigator.clipboard.writeText(text);
+                alert(t('Code and QR text copied. You can also save the QR image below.','कोड और QR लिंक कॉपी हो गया। QR चित्र नीचे सहेजें।'));
+              }
+            }catch(error){
+              if(error.name!=='AbortError')alert(t('Could not share. Copy the code instead.','साझा नहीं हो पाया। कृपया कोड कॉपी करें।'));
+            }
+          };
+          const download=element('button',t('Save QR image','QR चित्र सहेजें'),'btn ghost');
+          download.type='button';
+          download.onclick=()=>{
+            const canvas=qr.querySelector('canvas'),img=qr.querySelector('img');
+            const href=canvas?.toDataURL('image/png')||img?.src;
+            if(!href)return;
+            const link=document.createElement('a');link.href=href;link.download='easy-mandi-delivery-'+order.id+'.png';link.click();
+          };
+          buttons.append(share,download);handoff.append(buttons);
         }catch(_){
           handoff.append(element('p',t('QR is unavailable. The six-digit code above can be entered manually.','QR उपलब्ध नहीं है। ऊपर का छह अंकों का कोड डिलीवरी साथी दर्ज कर सकता है।'),'delivery-code-warning'));
         }
