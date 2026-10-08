@@ -13,6 +13,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'account_page.dart';
 import 'auth_service.dart';
+import 'google_customer_sign_in.dart';
 import 'delivery_page.dart';
 import 'local_store.dart';
 import 'product.dart';
@@ -233,15 +234,16 @@ class _StorePageState extends State<StorePage> {
     try{
       final id=await AuthService.instance.googleClientId();
       if(id==null)throw const AuthException('Google sign-in is not configured.');
-      final google=GoogleSignIn.instance;
-      await google.initialize(serverClientId:id);
-      final account=await google.authenticate();
+      final account=await CustomerGoogleSignIn.authenticate(id);
       final token=account.authentication.idToken;
       if(token==null)throw const AuthException('Google token unavailable.');
       await AuthService.instance.linkGoogle(token);
       if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(tr('Google account linked.','Google खाता जोड़ दिया गया।'))));
     }on Exception catch(error){
-      if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(error is AuthException?localizeError(error.message):tr('Could not link Google.','Google खाता नहीं जुड़ा।'))));
+      if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(
+        error is GoogleSignInException ? CustomerGoogleSignIn.safeFailure(error)
+        : error is AuthException ? localizeError(error.message)
+        : tr('Could not link Google.','Google खाता नहीं जुड़ा।'))));
     }
   }
 
