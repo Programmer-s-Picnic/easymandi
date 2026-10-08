@@ -1,5 +1,18 @@
 # Easy Mandi
 
+## Official domain (easymandi.in)
+
+- Customer storefront: **https://easymandi.in/**. The root `index.html` is a complete storefront with `<base href="/web/">`, so the original JS, CSS, and QR assets remain under `web/` without a redirect. Update **both** `index.html` and `web/index.html` whenever the storefront markup changes.
+- Customer legacy path: `https://easymandi.in/web/`. Its canonical SEO URL also points to the root, to avoid duplicate indexing.
+- Catalog and order admin: **https://easymandi.in/admin/**. Delivery admin remains separately hosted at `https://programmer-s-picnic.github.io/delivery-app/web/`; its navigation links back to the new admin domain.
+- GitHub Pages custom domain is configured by the repository-root `CNAME` file. The registrar DNS must point the apex to GitHub Pages and the `www` CNAME to `programmer-s-picnic.github.io`; enable **Enforce HTTPS** in repository Pages settings after verification. Do not change mail MX/SPF records.
+- Production backend API endpoints remain **https://cserver.learnwithchampak.live/easymandi/api/** and **/delivery/api/**. Both allow exact origins `https://easymandi.in`, `https://www.easymandi.in`, and `https://programmer-s-picnic.github.io`.
+- The Easy Mandi Google Web OAuth client must list those three authorized JavaScript origins. The public ID is maintained in `cserver/easymandi/api/google-client-id.php`. OAuth production audience/test-user configuration and Android package signing SHA-1 must be verified separately.
+- Password reset emails now open **https://easymandi.in/?reset=...** and are handled by the main customer page. Old browser-local cart and login sessions cannot transfer automatically from the GitHub Pages origin to the new domain. The server-side user/order database is unchanged.
+- SEO sitemap: **https://easymandi.in/sitemap.xml**, robots: **https://easymandi.in/robots.txt**, OG cover at **https://easymandi.in/web/og-image.svg**. Admin is marked noindex.
+- After changes, check browser login, Google Sign-In, COD/UPI checkout, customer delivery QR, admin catalog/orders, delivery admin, and password-reset links on the actual domain. Do not assume that a GitHub commit proves DNS, GitHub Pages HTTPS, or PHP deployment has completed.
+
+
 The Flutter customer app and GitHub Pages storefront load the live product catalog from `https://cserver.learnwithchampak.live/easymandi/api/catalog.php`. The [admin website](https://easymandi.in/admin/) updates prices, availability and store settings. Flutter includes a packaged catalog for offline browsing.
 
 ## Orders
