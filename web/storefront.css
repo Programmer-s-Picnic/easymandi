@@ -250,3 +250,16 @@ footer {
 .basket-line .btn{padding:8px 10px}
 @media(max-width:640px){header>div{padding:10px 12px;gap:8px}.brand{font-size:20px}.header-actions{gap:6px}.header-actions .btn{padding:9px 10px;font-size:13px}.language-control select{font-size:13px;padding:9px 20px 9px 7px;max-width:100px}.wrap{padding:14px}.hero{padding:24px}.head{align-items:center;gap:8px}.head .btn{padding:9px 10px;font-size:13px}}
 @media(max-width:375px){header>div{flex-wrap:wrap}.header-actions{width:100%;justify-content:space-between}.language-control select{max-width:110px}}
+
+/* Compact, predictable header on narrow phones: brand and language above account/cart. */
+@media (max-width:460px){
+  header>div{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:10px;row-gap:8px;padding:10px 14px}
+  .brand{grid-column:1;grid-row:1;white-space:nowrap;font-size:20px}
+  .header-actions{display:contents}
+  .language-control{grid-column:2;grid-row:1;justify-self:end}
+  .header-actions #accountButton{grid-column:1;grid-row:2;justify-self:start}
+  .header-actions #basketButton{grid-column:2;grid-row:2;justify-self:end}
+  .head{flex-wrap:wrap}
+  .head>div{min-width:145px;flex:1}
+  .head #refresh{white-space:nowrap;margin-left:auto}
+}
