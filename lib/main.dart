@@ -16,6 +16,7 @@ import 'auth_service.dart';
 import 'delivery_page.dart';
 import 'local_store.dart';
 import 'product.dart';
+import 'store_gallery.dart';
 import 'checkout_utils.dart';
 import 'notification_overlay.dart';
 import 'i18n.dart';
@@ -85,6 +86,8 @@ class _StorePageState extends State<StorePage> {
   Map<String, dynamic> store = {};
   Map<String, dynamic> checkoutRules = {};
   List<String> categories = ['All'];
+  final Set<String> favoriteIds = {};
+  bool favoritesOnly = false;
   final Map<String, int> cart = {};
   Future<void> _cartWrite = Future.value();
   String? _pendingOrderKey;
@@ -110,6 +113,7 @@ class _StorePageState extends State<StorePage> {
     };
     loadCatalog();
     loadPopularProducts();
+    loadFavorites();
     restoreAccount();
     notificationTimer=Timer.periodic(const Duration(minutes:5),(_)=>checkNotifications());
   }
@@ -120,6 +124,28 @@ class _StorePageState extends State<StorePage> {
     notificationTimer?.cancel();
     super.dispose();
   }
+  Future<void> loadFavorites() async {
+    try {
+      final prefs=await SharedPreferences.getInstance();
+      if(mounted)setState(()=>favoriteIds
+        ..clear()
+        ..addAll(prefs.getStringList('easy-mandi-favorites')??<String>[]));
+    } catch (_) { /* Browsing and ordering work without local favorites. */ }
+  }
+
+  Future<void> toggleFavorite(Product p) async {
+    setState((){
+      if(!favoriteIds.add(p.id))favoriteIds.remove(p.id);
+    });
+    try {
+      final prefs=await SharedPreferences.getInstance();
+      await prefs.setStringList('easy-mandi-favorites',favoriteIds.toList());
+    }catch(_){
+      if(mounted)ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content:Text(tr('Could not save favorites.','पसंदीदा सहेजे नहीं जा सके।'))));
+    }
+  }
+
   Future<void> saveCustomerAddress(SavedAddress address) async {
     if(signedInUser==null){await LocalStore.instance.saveAddress(address);return;}
     await AuthService.instance.saveServerAddress({...address.toRow(),if(address.id!=null)'id':address.id});
@@ -811,102 +837,170 @@ class _StorePageState extends State<StorePage> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = products.where((p) => (category == 'All' || p.category == category) && '${p.name} ${p.hindi} ${p.category}'.toLowerCase().contains(query.toLowerCase())).toList();
+    final filtered=products.where((p)=>
+      (category=='All'||p.category==category)
+      &&(!favoritesOnly||favoriteIds.contains(p.id))
+      &&'${p.name} ${p.hindi} ${p.category}'.toLowerCase()
+          .contains(query.toLowerCase())).toList();
     if(category=='All'&&query.trim().isEmpty&&popularProductIds.isNotEmpty){
-      final priority={for(var i=0;i<popularProductIds.length;i++)popularProductIds[i]:i};
-      filtered.sort((a,b)=>(priority[a.id]??999).compareTo(priority[b.id]??999));
+      final rank={for(var i=0;i<popularProductIds.length;i++)popularProductIds[i]:i};
+      filtered.sort((a,b)=>(rank[a.id]??999).compareTo(rank[b.id]??999));
     }
+    final freeAbove=store['freeDeliveryAbove'] as num? ?? 499;
+    final remaining=(freeAbove-subtotal).clamp(0,num.infinity);
     return Scaffold(
-      appBar: AppBar(title: const Row(children: [Text('🥬 ', style: TextStyle(fontSize: 28)), Text('Easy Mandi', style: TextStyle(fontWeight: FontWeight.w800))]), actions: [const LanguageButton(), IconButton(tooltip: signedInUser == null ? tr('Register or sign in','रजिस्टर या साइन इन करें') : tr('My account and sign out','मेरा खाता और साइन आउट'), onPressed: openAccount, icon: Icon(signedInUser == null ? Icons.person_outline : Icons.account_circle)), IconButton(tooltip: tr('My deliveries','मेरी डिलीवरी'), onPressed: () async { if (signedInUser == null) { await openAccount(); } if (mounted && signedInUser != null) Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const DeliveryPage())); }, icon: const Icon(Icons.local_shipping_outlined)), IconButton(tooltip: tr('About and developer','जानकारी और डेवलपर'), onPressed: showCredits, icon: const Icon(Icons.info_outline)), IconButton(tooltip: tr('Refresh catalog','कैटलॉग रीफ़्रेश करें'), onPressed: loadCatalog, icon: const Icon(Icons.refresh))]),
-      body: loading ? const Center(child: CircularProgressIndicator()) : message.isNotEmpty ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text(message), TextButton(onPressed: loadCatalog, child: Text(tr('Retry','फिर प्रयास करें')))])) : CustomScrollView(slivers: [
-        SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.fromLTRB(18, 8, 18, 0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(width: double.infinity, padding: const EdgeInsets.all(22), decoration: BoxDecoration(color: forest, borderRadius: BorderRadius.circular(24)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(tr('FRESH FROM THE MANDI','मंडी से ताज़ा'), style: const TextStyle(color: Color(0xFFBCEAD1), fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-            const SizedBox(height: 10),
-            Text(tr('Good food starts fresh.','अच्छा खाना ताज़गी से शुरू होता है।'), style: const TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 7),
-            Text(tr('Vegetables for your everyday kitchen • ${store['city'] ?? 'Varanasi'}','आपकी रोज़ की रसोई के लिए ताज़ी सब्ज़ियाँ • ${store['city'] ?? 'Varanasi'}'), style: const TextStyle(color: Colors.white70)),
-          ])),
-          const SizedBox(height: 12),
-          SizedBox(width: double.infinity, child: FilledButton.icon(
-            onPressed: () async {
-              if (signedInUser == null) await openAccount();
-              if (!mounted || signedInUser == null) return;
-              await Navigator.push(context,
-                MaterialPageRoute<void>(builder: (_) => const DeliveryPage()));
-            },
-            icon: const Icon(Icons.qr_code_2),
-            label: Text(signedInUser == null
-                ? tr('Sign in to see delivery code and QR',
-                    'डिलीवरी कोड और QR देखने के लिए लॉग इन करें')
-                : tr('My deliveries · code and QR',
-                    'मेरी डिलीवरी · कोड और QR')),
-          )),
-          const SizedBox(height: 16),
-          if (recentItems.isNotEmpty) ...[
-            Text(tr('Previously ordered items','पहले मँगाए गए सामान'), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            SizedBox(height: 88, child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: recentItems.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final item = recentItems[index];
-                Product? current;
-                for (final p in products) {
-                  if (p.id == item.productId) { current = p; break; }
+      appBar:AppBar(
+        title:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          const Text('Easy Mandi',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
+          Text(tr('Fruits & Vegetables','फल और सब्ज़ियाँ'),
+            style:const TextStyle(fontSize:12,color:Color(0xFF627389))),
+        ]),
+        actions:[
+          const LanguageButton(),
+          IconButton(
+            tooltip:favoritesOnly?tr('Show all products','सभी उत्पाद दिखाएँ'):tr('Show favorites','पसंदीदा दिखाएँ'),
+            icon:Icon(favoritesOnly?Icons.favorite:Icons.favorite_border,
+              color:favoritesOnly?const Color(0xFFD82971):null),
+            onPressed:()=>setState(()=>favoritesOnly=!favoritesOnly)),
+          IconButton(
+            tooltip:signedInUser==null?tr('Register or sign in','रजिस्टर या साइन इन करें'):tr('My account','मेरा खाता'),
+            onPressed:openAccount,
+            icon:Icon(signedInUser==null?Icons.person_outline:Icons.account_circle)),
+          PopupMenuButton<String>(
+            tooltip:tr('More options','और विकल्प'),
+            onSelected:(choice)async{
+              if(choice=='refresh'){await loadCatalog();return;}
+              if(choice=='about'){showCredits();return;}
+              if(choice=='deliveries'){
+                if(signedInUser==null)await openAccount();
+                if(mounted && signedInUser!=null){
+                  await Navigator.push(context,
+                    MaterialPageRoute<void>(builder:(_)=>const DeliveryPage()));
                 }
-                final available = current != null && current.available;
-                final product = current;
-                return SizedBox(width: 200, child: Card(
-                  color: Colors.white, elevation: 0,
-                  child: InkWell(onTap: product == null ? null : () => showProductDetail(product), child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
-                    Text(item.emoji, style: const TextStyle(fontSize: 29)),
-                    const SizedBox(width: 6),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Text(product == null ? item.name : productName(product.name, product.hindi), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text(available ? '${money(product!.price)} / ${product.unit}' : tr('Unavailable','उपलब्ध नहीं'), style: Theme.of(context).textTheme.bodySmall),
-                    ])),
-                    IconButton(tooltip: available ? tr('Add ${item.name} again','${item.name} फिर जोड़ें') : tr('${item.name} unavailable','${item.name} उपलब्ध नहीं'),
-                      onPressed: available ? () => changeQuantity(product!, 1) : null,
-                      icon: const Icon(Icons.add_circle_outline)),
-                  ])))),
-                );
-              },
+              }
+            },
+            itemBuilder:(ctx)=>[
+              PopupMenuItem(value:'deliveries',child:Text(tr('My deliveries and QR','मेरी डिलीवरी और QR'))),
+              PopupMenuItem(value:'refresh',child:Text(tr('Refresh catalog','कैटलॉग रीफ़्रेश करें'))),
+              PopupMenuItem(value:'about',child:Text(tr('About Easy Mandi','Easy Mandi के बारे में'))),
+            ],
+          ),
+        ],
+      ),
+      body:loading?const Center(child:CircularProgressIndicator())
+        :message.isNotEmpty?Center(child:Column(mainAxisSize:MainAxisSize.min,children:[
+            Text(message,textAlign:TextAlign.center),
+            TextButton(onPressed:loadCatalog,child:Text(tr('Retry','फिर प्रयास करें'))),
+          ]))
+        :Column(children:[
+          Padding(padding:const EdgeInsets.fromLTRB(14,10,14,7),child:Column(children:[
+            Row(children:[
+              Expanded(child:Text(
+                tr('Shop fresh','ताज़ा सामान खरीदें'),
+                style:const TextStyle(fontSize:19,fontWeight:FontWeight.w900,color:Color(0xFF273648)))),
+              Text(tr('${filtered.length} products','${filtered.length} उत्पाद'),
+                style:const TextStyle(fontSize:12,color:Color(0xFF667789))),
+            ]),
+            const SizedBox(height:9),
+            SizedBox(height:45,child:TextField(
+              onChanged:(value)=>setState(()=>query=value),
+              decoration:InputDecoration(
+                contentPadding:const EdgeInsets.symmetric(horizontal:10),
+                hintText:tr('Search fruits, vegetables, essentials…','फल, सब्ज़ी, किराने का सामान खोजें…'),
+                hintStyle:const TextStyle(fontSize:12),
+                prefixIcon:const Icon(Icons.search,size:21),
+                suffixIcon:query.isEmpty?null:IconButton(
+                  tooltip:tr('Clear search','खोज साफ करें'),
+                  onPressed:()=>setState(()=>query=''),
+                  icon:const Icon(Icons.close,size:17)),
+              ),
             )),
-            const SizedBox(height: 16),
-          ],
-          TextField(onChanged: (v) => setState(() => query = v), decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: tr('Search onions, potatoes, tomatoes...','प्याज, आलू, टमाटर खोजें...'))),
-          const SizedBox(height: 14),
-          SizedBox(height: 44, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: categories.length, separatorBuilder: (_, __) => const SizedBox(width: 8), itemBuilder: (_, i) => ChoiceChip(label: Text(categoryText(categories[i])), selected: category == categories[i], onSelected: (_) => setState(() => category = categories[i])))),
-          const SizedBox(height: 18),
-          Text(tr('Shop fresh','ताज़ा खरीदें'), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 5),
-          Text(tr('${filtered.length} products','${filtered.length} उत्पाद'), style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 12),
-        ]))),
-        if (filtered.isEmpty) SliverFillRemaining(child: Center(child: Text(tr('No matching products. Try another search.','कोई मिलते-जुलते उत्पाद नहीं मिले। दूसरी खोज करें।')))),
-        SliverPadding(padding: const EdgeInsets.fromLTRB(18, 0, 18, 16), sliver: SliverLayoutBuilder(builder: (context, constraints) {
-          final columns = constraints.crossAxisExtent >= 700 ? 4 : constraints.crossAxisExtent >= 460 ? 3 : 2;
-          return SliverGrid.builder(itemCount: filtered.length, gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: columns, mainAxisSpacing: 8, crossAxisSpacing: 8, mainAxisExtent: 185), itemBuilder: (_, i) {
-            final p = filtered[i];
-            return Card(elevation: 0, color: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)), clipBehavior: Clip.antiAlias, child: InkWell(onTap: () => showProductDetail(p), child: Padding(padding: const EdgeInsets.all(7), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(child: Container(width: double.infinity, decoration: BoxDecoration(color: const Color(0xFFEAF4E9), borderRadius: BorderRadius.circular(12)), child: Center(child: Text(p.emoji, style: const TextStyle(fontSize: 42))))),
-              const SizedBox(height: 4),
-              Text(productName(p.name, p.hindi), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              Text('${EasyMandiLanguage.hindi.value ? p.name : p.hindi} • ${p.unit}', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
-              const Spacer(),
-              Row(children: [Expanded(child: Text(money(p.price), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: forest))), if (!p.available) Text(tr('Sold out','स्टॉक खत्म')) else if ((cart[p.id] ?? 0) == 0) IconButton.filled(tooltip: 'Add ${p.name}', onPressed: () => changeQuantity(p, 1), icon: const Icon(Icons.add)) else Row(mainAxisSize: MainAxisSize.min, children: [InkWell(onTap: () => changeQuantity(p, -1), child: const Icon(Icons.remove_circle_outline, size: 22)), Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: Text('${cart[p.id]}')), InkWell(onTap: () => changeQuantity(p, 1), child: const Icon(Icons.add_circle, color: forest, size: 22))])]),
-            ]))));
-          });
-        })),
-        SliverToBoxAdapter(child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 6, 18, 110),
-          child: Center(child: TextButton(onPressed: openDeveloperSite, child: Text(tr('Developed and maintained by Champak Roy\nlearnwithchampak.live','विकसित और अनुरक्षित: Champak Roy\nlearnwithchampak.live'), textAlign: TextAlign.center))),
+            if(favoritesOnly)Padding(padding:const EdgeInsets.only(top:5),
+              child:Text(tr('Showing favorites only','केवल पसंदीदा उत्पाद'),
+                style:const TextStyle(color:Color(0xFFD82971),fontSize:11))),
+            if(recentItems.isNotEmpty)ExpansionTile(
+              key:const PageStorageKey('recently-ordered'),
+              tilePadding:EdgeInsets.zero,childrenPadding:EdgeInsets.zero,
+              dense:true,
+              title:Text(tr('Previously ordered items','पहले मँगाए गए सामान'),
+                style:const TextStyle(fontWeight:FontWeight.w700,fontSize:12)),
+              children:[SizedBox(height:80,child:ListView.separated(
+                scrollDirection:Axis.horizontal,
+                itemCount:recentItems.length,
+                separatorBuilder:(_,__)=>const SizedBox(width:6),
+                itemBuilder:(ctx,i){
+                  final item=recentItems[i];
+                  Product? found;
+                  for(final p in products){if(p.id==item.productId){found=p;break;}}
+                  final target=found;
+                  return SizedBox(width:155,child:Card(
+                    color:Colors.white,elevation:0,
+                    child:InkWell(onTap:target==null?null:()=>showProductDetail(target),
+                      child:Padding(padding:const EdgeInsets.all(7),
+                        child:Row(children:[
+                          Text(target?.emoji??item.emoji,style:const TextStyle(fontSize:26)),
+                          const SizedBox(width:5),
+                          Expanded(child:Column(mainAxisAlignment:MainAxisAlignment.center,
+                            crossAxisAlignment:CrossAxisAlignment.start,children:[
+                              Text(target==null?item.name:productName(target.name,target.hindi),
+                                maxLines:1,overflow:TextOverflow.ellipsis,
+                                style:const TextStyle(fontSize:11,fontWeight:FontWeight.w700)),
+                              if(target!=null&&target.available)
+                                InkWell(onTap:()=>changeQuantity(target,1),
+                                  child:Text(tr('Add again +','फिर जोड़ें +'),
+                                    style:const TextStyle(color:forest,fontSize:11))),
+                              if(target==null||!target.available)
+                                Text(tr('Unavailable','उपलब्ध नहीं'),
+                                  style:const TextStyle(fontSize:11,color:Colors.grey)),
+                            ])),
+                          ),
+                        ])),
+                    ),
+                  ));
+                },
+              ))],
+            ),
+          ])),
+          Expanded(child:StoreGallery(
+            products:filtered,categories:categories,
+            selectedCategory:category,quantities:cart,
+            favorites:favoriteIds,
+            onCategorySelected:(selected)=>setState(()=>category=selected),
+            onProductTap:showProductDetail,
+            onQuantityChanged:changeQuantity,
+            onFavoriteTap:toggleFavorite,
+          )),
+        ]),
+      bottomNavigationBar:SafeArea(top:false,
+        child:Container(
+          padding:const EdgeInsets.fromLTRB(13,7,13,9),
+          decoration:const BoxDecoration(color:Color(0xFF273743),
+            borderRadius:BorderRadius.vertical(top:Radius.circular(19))),
+          child:Column(mainAxisSize:MainAxisSize.min,children:[
+            Row(children:[
+              const Icon(Icons.local_shipping_outlined,color:Color(0xFFB9DFE2),size:18),
+              const SizedBox(width:8),
+              Expanded(child:Text(
+                subtotal>=freeAbove
+                  ?tr('Free delivery unlocked','मुफ़्त डिलीवरी मिल गई')
+                  :count==0
+                    ?tr('Free delivery above ₹$freeAbove','₹$freeAbove से ऊपर मुफ़्त डिलीवरी')
+                    :tr('Add ₹$remaining more for free delivery','मुफ़्त डिलीवरी के लिए ₹$remaining और जोड़ें'),
+                maxLines:1,overflow:TextOverflow.ellipsis,
+                style:const TextStyle(color:Colors.white,fontSize:12,fontWeight:FontWeight.w600))),
+            ]),
+            if(count>0)...[
+              const SizedBox(height:6),
+              SizedBox(width:double.infinity,height:42,child:FilledButton.icon(
+                onPressed:showCart,
+                icon:const Icon(Icons.shopping_basket_outlined,size:19),
+                label:Text(tr('View basket · $count items · ${money(subtotal+fee)}',
+                  'टोकरी · $count सामान · ${money(subtotal+fee)}'),
+                  maxLines:1,overflow:TextOverflow.ellipsis),
+              )),
+            ],
+          ]),
         )),
-      ]),
-      bottomNavigationBar: count == 0 ? null : SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(18, 8, 18, 12), child: FilledButton.icon(onPressed: showCart, icon: const Icon(Icons.shopping_basket_outlined), label: Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(tr('View basket • $count items • ${money(subtotal + fee)}','टोकरी देखें • $count सामान • ${money(subtotal + fee)}')))))),
     );
   }
 }
-
