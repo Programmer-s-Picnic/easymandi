@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'account_page.dart';
 import 'auth_service.dart';
 import 'delivery_page.dart';
@@ -166,6 +167,44 @@ class _StorePageState extends State<StorePage> {
     }
   }
 
+  Future<void> changeCustomerPassword() async {
+    final current=TextEditingController(),next=TextEditingController(),confirm=TextEditingController();
+    try{
+      final values=await showDialog<List<String>>(context:context,builder:(ctx)=>AlertDialog(
+        title:Text(tr('Change password','पासवर्ड बदलें')),
+        content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
+          TextField(controller:current,obscureText:true,decoration:InputDecoration(labelText:tr('Current password','पुराना पासवर्ड'))),
+          TextField(controller:next,obscureText:true,decoration:InputDecoration(labelText:tr('New password','नया पासवर्ड'))),
+          TextField(controller:confirm,obscureText:true,decoration:InputDecoration(labelText:tr('Confirm password','पासवर्ड की पुष्टि करें'))),
+        ])),
+        actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:Text(tr('Cancel','रद्द करें'))),
+          FilledButton(onPressed:()=>Navigator.pop(ctx,[current.text,next.text,confirm.text]),child:Text(tr('Change password','बदलें')))],
+      ));
+      if(values==null||!mounted)return;
+      await AuthService.instance.changePassword(currentPassword:values[0],newPassword:values[1],confirmation:values[2]);
+      if(!mounted)return;
+      setState(()=>signedInUser=null);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(tr('Password changed. Sign in again.','पासवर्ड बदल गया। फिर से लॉग इन करें।'))));
+    }on AuthException catch(error){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(localizeError(error.message))));}
+    finally{current.dispose();next.dispose();confirm.dispose();}
+  }
+
+  Future<void> linkCustomerGoogle() async {
+    try{
+      final id=await AuthService.instance.googleClientId();
+      if(id==null)throw const AuthException('Google sign-in is not configured.');
+      final google=GoogleSignIn.instance;
+      await google.initialize(serverClientId:id);
+      final account=await google.authenticate();
+      final token=account.authentication.idToken;
+      if(token==null)throw const AuthException('Google token unavailable.');
+      await AuthService.instance.linkGoogle(token);
+      if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(tr('Google account linked.','Google खाता जोड़ दिया गया।'))));
+    }on Exception catch(error){
+      if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(error is AuthException?localizeError(error.message):tr('Could not link Google.','Google खाता नहीं जुड़ा।'))));
+    }
+  }
+
   Future<void> openAccount() async {
     if (signedInUser == null) {
       final account = await Navigator.push<AuthUser>(context,
@@ -182,6 +221,10 @@ class _StorePageState extends State<StorePage> {
           const SizedBox(height: 12),
           Text(tr('Signing out clears this device. Addresses saved to your account remain available when you sign in again.','साइन आउट करने पर इस डिवाइस का स्थानीय डेटा साफ होगा। खाते में सहेजे पते अगली बार साइन इन करने पर उपलब्ध रहेंगे।'))]),
       actions: [
+        TextButton(onPressed: () async {Navigator.pop(dialogContext);await changeCustomerPassword();},
+          child:Text(tr('Change password','पासवर्ड बदलें'))),
+        TextButton(onPressed: () async {Navigator.pop(dialogContext);await linkCustomerGoogle();},
+          child:Text(tr('Link Google','Google खाता जोड़ें'))),
         TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('Close','बंद करें'))),
         FilledButton(onPressed: () async {
           Navigator.pop(dialogContext);
