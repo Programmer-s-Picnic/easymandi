@@ -178,6 +178,7 @@
       const lastIds=this.lastIds||new Set();
       const newIds=new Set((data.notifications||[]).map(n=>String(n.id)));
       const incoming=(data.notifications||[]).some(n=>!lastIds.has(String(n.id)));
+      const freshIds=new Set(previous===undefined?[]:(data.notifications||[]).filter(n=>!lastIds.has(String(n.id))).map(n=>String(n.id)));
       this.lastFingerprint=fingerprint;
       this.lastIds=newIds;
       if(changed){
@@ -223,6 +224,7 @@
       }
       for(const n of data.notifications){
         const row=document.createElement('article');
+        if(freshIds.has(String(n.id)))row.classList.add('notification-entry-new');
         row.className=n.read_at?'notification-entry':'notification-entry unread';
         row.style.background=n.read_at?'white':'#e8f2fc';
         const p=document.createElement('p');
