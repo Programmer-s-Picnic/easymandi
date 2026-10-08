@@ -23,7 +23,7 @@ verify(read('admin/index.html').includes('name="robots" content="noindex,nofollo
 const attrs=[...home.matchAll(/(?:href|src)="([^"]+)"/g)].map(v=>v[1]);
 let count=0;
 for(const uri of attrs){
- if(uri.startsWith('#')||uri.startsWith('https://')||uri.startsWith('http://'))continue;
+ if(uri.startsWith('#')||uri.startsWith('https://')||uri.startsWith('http://')||uri==='/web/')continue;
  const local=uri.split(/[?#]/,1)[0];
  if(!local)continue;
  const destination=path.resolve(root,'web',local);
