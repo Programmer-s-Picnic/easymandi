@@ -772,7 +772,11 @@ class _StorePageState extends State<StorePage> {
                 Container(
                   height: (bounds.maxHeight * .48).clamp(200.0, 460.0).toDouble(),
                   decoration: BoxDecoration(color: const Color(0xFFEAF4E9), borderRadius: BorderRadius.circular(24)),
-                  child: Center(child: Text(product.emoji, style: const TextStyle(fontSize: 120))),
+                  child: product.imageUrl.isEmpty
+                     ? Center(child:Text(product.emoji,style:const TextStyle(fontSize:120)))
+                     : Image.network(product.imageUrl,fit:BoxFit.cover,
+                         errorBuilder:(_,__,___)=>Center(child:Text(product.emoji,
+                           style:const TextStyle(fontSize:120)))),
                 ),
                 const SizedBox(height: 24),
                 Text(productName(product.name, product.hindi), style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
@@ -847,14 +851,10 @@ class _StorePageState extends State<StorePage> {
       filtered.sort((a,b)=>(rank[a.id]??999).compareTo(rank[b.id]??999));
     }
     final freeAbove=store['freeDeliveryAbove'] as num? ?? 499;
-    final remaining=(freeAbove-subtotal).clamp(0,num.infinity);
+    final remaining=(freeAbove-subtotal).clamp(0,double.infinity);
     return Scaffold(
       appBar:AppBar(
-        title:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          const Text('Easy Mandi',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
-          Text(tr('Fruits & Vegetables','फल और सब्ज़ियाँ'),
-            style:const TextStyle(fontSize:12,color:Color(0xFF627389))),
-        ]),
+        title:const Text('Easy Mandi',style:TextStyle(fontSize:17,fontWeight:FontWeight.w900)),
         actions:[
           const LanguageButton(),
           IconButton(
@@ -896,7 +896,7 @@ class _StorePageState extends State<StorePage> {
           Padding(padding:const EdgeInsets.fromLTRB(14,10,14,7),child:Column(children:[
             Row(children:[
               Expanded(child:Text(
-                tr('Shop fresh','ताज़ा सामान खरीदें'),
+                tr('Fruits & Vegetables','फल और सब्ज़ियाँ'),
                 style:const TextStyle(fontSize:19,fontWeight:FontWeight.w900,color:Color(0xFF273648)))),
               Text(tr('${filtered.length} products','${filtered.length} उत्पाद'),
                 style:const TextStyle(fontSize:12,color:Color(0xFF667789))),
