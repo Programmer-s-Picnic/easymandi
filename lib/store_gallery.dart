@@ -110,7 +110,7 @@ class StoreGallery extends StatelessWidget {
                   Text('$amount',style:const TextStyle(color:_green,fontWeight:FontWeight.w800)),
                   InkWell(onTap:amount>=99?null:()=>onQuantityChanged(p,1),
                     child:const Icon(Icons.add,color:_green,size:20)),
-                ]))))),
+                ])))),
           ])),
           const SizedBox(height:6),
           Wrap(spacing:5,runSpacing:2,crossAxisAlignment:WrapCrossAlignment.center,children:[
