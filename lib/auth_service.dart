@@ -196,6 +196,15 @@ class AuthService {
     }
   }
 
+  // One-time fresh-start upgrade: invalidate persisted credentials without
+  // depending on the old user still existing on the server.
+  Future<void> clearLocalAccountForFreshStart() async {
+    await _storage.delete(key:_key);
+    _token=null;
+    user=null;
+    try { await GoogleSignIn.instance.signOut(); } catch (_) { /* No active Google session. */ }
+  }
+
   Future<bool> logout() async {
     var revoked = false;
     try {
