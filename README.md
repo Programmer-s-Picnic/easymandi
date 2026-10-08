@@ -1,6 +1,6 @@
 # Easy Mandi
 
-The Flutter customer app and GitHub Pages storefront load the live product catalog from `https://cserver.learnwithchampak.live/easymandi/api/catalog.php`. The [admin website](https://programmer-s-picnic.github.io/easymandi/admin/) updates prices, availability and store settings. Flutter includes a packaged catalog for offline browsing.
+The Flutter customer app and GitHub Pages storefront load the live product catalog from `https://cserver.learnwithchampak.live/easymandi/api/catalog.php`. The [admin website](https://easymandi.in/admin/) updates prices, availability and store settings. Flutter includes a packaged catalog for offline browsing.
 
 ## Orders
 
@@ -23,7 +23,7 @@ Run `flutter create --platforms=android --org in.easymandi .`, add Android Inter
 
 ## Customer delivery code and QR
 
-After the delivery administrator imports an Easy Mandi order and assigns a delivery partner, the delivery service issues a six-digit handoff code valid for 24 hours. The customer can sign in on the [customer website](https://programmer-s-picnic.github.io/easymandi/web/) and open **My deliveries · code & QR**, or tap **My deliveries · code and QR** in the Flutter app. Both views use the same authenticated delivery API and display the code and an `easymandi://handoff?delivery=ID&code=XXXXXX` QR that the partner's scanner already understands. Before assignment or after delivery/cancellation/expiry, no active QR is shown; administrators can issue a fresh code if needed. The website bundles its QR renderer locally, without sending handoff codes to third-party QR services. Customers should reveal a code only after physically receiving their order.
+After the delivery administrator imports an Easy Mandi order and assigns a delivery partner, the delivery service issues a six-digit handoff code valid for 24 hours. The customer can sign in on the [customer website](https://easymandi.in/web/) and open **My deliveries · code & QR**, or tap **My deliveries · code and QR** in the Flutter app. Both views use the same authenticated delivery API and display the code and an `easymandi://handoff?delivery=ID&code=XXXXXX` QR that the partner's scanner already understands. Before assignment or after delivery/cancellation/expiry, no active QR is shown; administrators can issue a fresh code if needed. The website bundles its QR renderer locally, without sending handoff codes to third-party QR services. Customers should reveal a code only after physically receiving their order.
 
 Customer deliveries require sign-in with a matching registered mobile. **Security limitation:** existing customer accounts currently do not verify ownership of a mobile number; before deploying this workflow for unrestricted production, add verified phone ownership or an order-specific, strongly authenticated claim mechanism to prevent a user claiming someone else's number and viewing a handoff code.
 
