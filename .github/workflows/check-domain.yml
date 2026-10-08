@@ -1,0 +1,24 @@
+name: Verify Easy Mandi domain
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'web/**'
+      - 'admin/index.html'
+      - 'CNAME'
+      - 'sitemap.xml'
+      - 'robots.txt'
+      - 'scripts/check-domain.cjs'
+      - '.github/workflows/check-domain.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify public domain routing and asset links
+        run: node scripts/check-domain.cjs
