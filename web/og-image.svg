@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+<title id="title">Easy Mandi · Fresh vegetables</title>
+<desc id="desc">Fresh vegetables from the mandi, delivered in Varanasi</desc>
+<defs>
+<linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0d5134"/><stop offset="1" stop-color="#22815b"/></linearGradient>
+</defs>
+<rect width="1200" height="630" rx="18" fill="url(#background)"/>
+<circle cx="989" cy="316" r="205" fill="#ffffff" opacity=".09"/>
+<circle cx="1085" cy="190" r="97" fill="#ffffff" opacity=".09"/>
+<g transform="translate(860 215)">
+<path d="M-55 96 Q75 139 210 92 L180 248 Q78 310 -29 250 Z" fill="#ddaa65" stroke="#fff2d4" stroke-width="10"/>
+<path d="M-24 95 Q58 -15 96 112" fill="none" stroke="#b2e4a4" stroke-width="22" stroke-linecap="round"/>
+<path d="M40 105 Q82 -38 125 90" fill="none" stroke="#63b77a" stroke-width="21" stroke-linecap="round"/>
+<path d="M99 111 Q177 -6 185 98" fill="none" stroke="#c0ea7a" stroke-width="25" stroke-linecap="round"/>
+<circle cx="10" cy="88" r="48" fill="#f5a82b"/><circle cx="133" cy="81" r="51" fill="#f25548"/>
+</g>
+<text x="88" y="218" font-family="Arial,Helvetica,sans-serif" fill="#d8ffe5" font-size="42" font-weight="700">FRESH FROM THE MANDI</text>
+<text x="88" y="327" font-family="Arial,Helvetica,sans-serif" fill="#ffffff" font-size="104" font-weight="800">Easy Mandi</text>
+<text x="88" y="414" font-family="Arial,Helvetica,sans-serif" fill="#ffffff" font-size="43">Fresh vegetables, delivered to your door</text>
+<text x="88" y="508" font-family="Arial,Helvetica,sans-serif" fill="#c8f4d8" font-size="39">Varanasi · English / हिन्दी</text>
+</svg>
