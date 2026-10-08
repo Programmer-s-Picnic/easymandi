@@ -20,6 +20,22 @@ class _DeliveryPageState extends State<DeliveryPage> {
   bool busy = true;
   String? error;
 
+  // Only render a currently active server-issued handoff code.
+  String? codeFor(Map<String, dynamic> order) {
+    final status = order['status'] as String? ?? '';
+    if (!['assigned', 'picked_up', 'out_for_delivery'].contains(status)) return null;
+    final code = order['handoff_code']?.toString();
+    if (code == null || !RegExp(r'^[0-9]{6}$').hasMatch(code)) return null;
+    return code;
+  }
+
+  String qrFor(Map<String, dynamic> order, String code) {
+    final deliveryId = order['id'];
+    final expected = 'easymandi://handoff?delivery=$deliveryId&code=$code';
+    final qr = order['handoff_qr'];
+    return qr == expected ? qr as String : expected;
+  }
+
   void _languageChanged() {
     if (mounted) setState(() {});
   }
@@ -29,7 +45,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
     super.initState();
     EasyMandiLanguage.hindi.addListener(_languageChanged);
     refresh();
-    timer = Timer.periodic(const Duration(minutes: 5), (_) {
+    timer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
         refresh(silent: true);
       }
@@ -139,8 +155,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
                                     Text(tr('Status: ${statusText(status)}',
                                         'स्थिति: ${statusText(status)}')),
                                     Text(o['address_text'] as String? ?? ''),
-                                    if (o['handoff_code'] != null &&
-                                        o['handoff_qr'] != null) ...[
+                                    if (codeFor(o) != null) ...[
                                       const SizedBox(height: 12),
                                       Card(
                                         color: const Color(0xFFF2F8F4),
@@ -169,7 +184,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
                                                         CrossAxisAlignment.start,
                                                     children: [
                                                       SelectableText(
-                                                        '${o['handoff_code']}',
+                                                        codeFor(o)!,
                                                         style: const TextStyle(
                                                           fontSize: 32,
                                                           fontWeight:
@@ -194,7 +209,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
                                                         const EdgeInsets.all(8),
                                                     child: QrImageView(
                                                       data:
-                                                          '${o['handoff_qr']}',
+                                                          qrFor(o, codeFor(o)!),
                                                       size: 150,
                                                     ),
                                                   ),
