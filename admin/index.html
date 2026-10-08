@@ -61,6 +61,7 @@
 <p>Edits are saved as a draft in this browser. Save to server publishes them. Download backup saves a JSON copy without publishing.</p>
 <p>Reload published catalog discards your draft after confirmation. If saving reports a changed server version, review the latest catalog before retrying.</p>
 <p>Choose Lock after reviewing orders on a shared device.</p>
+<p>Use <strong>All records</strong> to inspect customer profiles, saved addresses, complete paginated order/payment history and delivery-partner records. Administrators only.</p>
 </article>
 </div>
 <p>
@@ -71,6 +72,7 @@
 <a href="#categoriesPanel">Categories</a>
 <a href="#productsPanel">Products</a>
 <a href="#ordersPanel">Customer orders</a>
+<a href="#recordsPanel">All records</a>
 <a href="#publishPanel">Publish</a>
 </nav>
 <div class="toolbar">
@@ -142,6 +144,26 @@
 <div id="ordersList" tabindex="0" role="region" aria-label="Scrollable customer orders">
 </div>
 </section>
+<section class="panel" id="recordsPanel">
+<h2>Customer, order, payment and delivery-partner records</h2>
+<p class="hint">Administrator-only, read-only database records. Search every record with pagination; no passwords, tokens or receipt images appear here. Use the Orders panel above to update order status or verify individual payment receipts.</p>
+<div class="row"><button class="btn" id="recordsUnlock" type="button">Open all records</button></div>
+<div id="recordsControls" hidden>
+<div class="row">
+<label class="field"><span>Record type</span><select id="recordsView"><option value="customers">Customers</option><option value="orders">All orders</option><option value="payments">Payments</option><option value="partners">Delivery partners</option></select></label>
+<label class="field"><span>Search name, mobile or order ID</span><input id="recordsSearch" type="search" maxlength="80" autocomplete="off" placeholder="Find records"></label>
+<button class="btn secondary" id="recordsRefresh" type="button">Refresh records</button>
+</div>
+</div>
+<p id="recordsMessage" class="hint" role="status" aria-live="polite">Sign in as administrator to view records.</p>
+<div class="grid-scroll records-scroll" id="recordsBody" role="region" tabindex="0" aria-label="Customer and order records"><table class="product-grid" id="recordsTable"></table></div>
+<div class="row records-paging">
+<button class="btn secondary" id="recordsPrevious" type="button" disabled>Previous</button>
+<span class="hint" id="recordsSummary"></span>
+<button class="btn secondary" id="recordsNext" type="button" disabled>Next</button>
+</div>
+<div class="records-detail" id="recordsDetail" hidden></div>
+</section>
 <section class="panel" id="publishPanel">
 <h2>Review and publish</h2>
 <p class="hint">Saving here updates the live catalog on cserver. The page keeps unsaved edits in this browser until you reload. A backup download does not publish changes.</p>
@@ -183,6 +205,7 @@
 <script src="packing.js?v=20261008-checklist" defer></script>
 <script src="orders.js?v=20261008-client12" defer>
 </script>
+<script src="records.js?v=20261008-admin-records" defer></script>
 <script src="../shared/password-ui.js?v=20261001-access" defer></script>
 </body>
 </html>
