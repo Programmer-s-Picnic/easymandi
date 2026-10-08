@@ -92,6 +92,7 @@
     for(const key of ['name','house','locality','landmark','pin'])form.elements[key].value=address[key]||'';
     form.elements.phone.value=address.phone||'';
     deliveryLocation=null;
+    by('locationStatus').dataset.locationState='hint';
     by('locationStatus').textContent=t('locationHint');
   });
 
