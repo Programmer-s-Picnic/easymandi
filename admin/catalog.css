@@ -352,3 +352,17 @@ dialog::backdrop {
 .order-items { background:#f1f6fb; padding:14px; border-radius:9px; }
 .order-card[open] .order-card-heading { background:#eaf4ff; }
 #ordersCount { font-weight:700; }
+
+/* Sensitive records remain hidden unless a valid administrator session is active. */
+#recordsPanel .records-scroll{overflow:auto;max-height:min(70vh,660px);min-height:90px}
+#recordsPanel .product-grid{min-width:780px}
+#recordsPanel .product-grid thead{position:sticky;top:0;background:#eef5fb;z-index:1}
+#recordsPanel .product-grid button{margin:2px;white-space:nowrap;font-size:12px}
+#recordsPanel #recordsControls .row{align-items:end}
+#recordsPanel #recordsSearch{min-width:220px;width:min(100%,330px)}
+#recordsPanel .records-paging{margin-top:12px;justify-content:center;align-items:center;gap:16px}
+#recordsPanel .records-detail{padding:18px;border:1px solid #d7e5f1;border-radius:12px;background:#fff;margin-top:16px}
+#recordsPanel .records-detail[hidden]{display:none!important}
+#recordsPanel .records-detail ul{margin:8px 0 16px;padding-left:22px;line-height:1.7;overflow-wrap:anywhere}
+#recordsPanel .records-detail h3,#recordsPanel .records-detail h4{margin:12px 0 6px}
+@media(max-width:640px){#recordsPanel #recordsSearch{width:100%}#recordsPanel .records-paging{flex-wrap:wrap}}
