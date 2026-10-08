@@ -4,9 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#176b46">
-<meta name="description" content="Easy Mandi: fresh onions, potatoes and vegetables delivered in Varanasi.">
+<meta name="description" content="Shop fresh vegetables in Varanasi with Easy Mandi. Browse daily essentials, choose delivery and pay by cash or UPI. Available in English and Hindi.">
+<link rel="canonical" href="https://programmer-s-picnic.github.io/easymandi/web/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Easy Mandi | Fresh vegetables delivered">
+<meta property="og:description" content="Shop fresh vegetables in Varanasi. English and Hindi ordering with doorstep delivery.">
+<meta property="og:url" content="https://programmer-s-picnic.github.io/easymandi/web/">
+<meta property="og:image" content="https://programmer-s-picnic.github.io/easymandi/web/og-image.svg">
 <title>Easy Mandi | Fresh vegetables</title>
-<link rel="stylesheet" href="storefront.css?v=20261004-payments">
+<link rel="stylesheet" href="storefront.css?v=20261008-bilingual">
+<script src="i18n.js?v=20261008-bilingual" defer></script>
 <link rel="stylesheet" href="../shared/notifications.css?v=20260930-cleanup">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
 </script>
@@ -17,35 +24,36 @@
 <header>
 <div>
 <span class="brand">🥬 Easy Mandi</span>
-<span>
-<button class="btn ghost" id="accountButton" type="button">Sign in</button>
+<span class="header-actions">
+<label class="language-control" for="siteLanguage"><span class="sr-only" data-i18n="chooseLanguage">Choose language</span><select id="siteLanguage" aria-label="Language / भाषा"><option value="en">English</option><option value="hi">हिन्दी</option></select></label>
+<button class="btn ghost" id="accountButton" type="button" data-i18n="signIn">Sign in</button>
 <button class="btn" id="basketButton">Basket · 0</button>
 </span>
 </div>
 </header>
 <main class="wrap">
 <section class="hero">
-<small>FRESH FROM THE MANDI</small>
-<h1>Good food starts fresh.</h1>
-<p>Onions, potatoes and vegetables for your everyday kitchen · Varanasi</p>
+<small data-i18n="eyebrow">FRESH FROM THE MANDI</small>
+<h1 data-i18n="heroTitle">Good food starts fresh.</h1>
+<p data-i18n="heroText">Onions, potatoes and vegetables for your everyday kitchen · Varanasi</p>
 </section>
 <p id="status" class="status" role="status">
 </p>
-<input class="search" id="search" type="search" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products">
+<input class="search" id="search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products">
 <div class="filters" id="filters">
 </div>
 <div class="head">
 <div>
-<h2>Shop fresh</h2>
-<p id="count">Indicative demo prices</p>
+<h2 data-i18n="shopFresh">Shop fresh</h2>
+<p id="count" role="status">Current catalog prices</p>
 </div>
-<button class="btn ghost" id="refresh">Refresh catalog</button>
+<button class="btn ghost" id="refresh" data-i18n="refreshCatalog">Refresh catalog</button>
 </div>
 <div class="grid" id="products">
 </div>
 </main>
 <dialog id="basket">
-<h2>Your basket</h2>
+<h2 data-i18n="yourBasket">Your basket</h2>
 <div id="items">
 </div>
 <div id="totals">
@@ -57,30 +65,30 @@
 <p class="note" id="deliveryNote">
 </p>
 <form class="form" id="orderForm">
-<input name="name" placeholder="Your name" minlength="2" maxlength="100" required>
-<label for="mobile">Mobile number (<span id="countryCode">+91</span>)</label>
+<input name="name" data-i18n-placeholder="yourName" placeholder="Your name" minlength="2" maxlength="100" required>
+<label for="mobile"><span data-i18n="mobileNumber">Mobile number</span> (<span id="countryCode">+91</span>)</label>
 <input id="mobile" name="phone" type="tel" placeholder="9876543210" pattern="[6-9][0-9]{9}" maxlength="10" inputmode="numeric" autocomplete="tel-national" title="10 digits starting with 6, 7, 8 or 9" required>
-<p class="note">Format: +91 9876543210. Enter only the 10 digits.</p>
-<label for="house">House / flat / building</label>
+<p class="note" data-i18n="mobileHint">Format: +91 9876543210. Enter only the 10 digits.</p>
+<label for="house" data-i18n="house">House / flat / building</label>
 <input id="house" name="house" placeholder="House 12" minlength="2" required>
-<label for="locality">Street / locality</label>
+<label for="locality" data-i18n="locality">Street / locality</label>
 <input id="locality" name="locality" placeholder="Lanka" minlength="5" required>
-<label for="landmark">Landmark (optional)</label>
+<label for="landmark" data-i18n="landmark">Landmark (optional)</label>
 <input id="landmark" name="landmark" placeholder="Near the main gate">
-<label for="pin">PIN code</label>
+<label for="pin" data-i18n="pin">PIN code</label>
 <input id="pin" name="pin" placeholder="221005" pattern="[1-9][0-9]{5}" maxlength="6" inputmode="numeric" title="6-digit Indian PIN code" required>
-<p class="note">Address format: <span id="addressExample">House 12, Lanka, Varanasi, Uttar Pradesh 221005</span>. Delivery city: <strong id="deliveryCity">Varanasi</strong>.</p>
-<button type="button" class="btn ghost" id="shareLocation">Share current location</button>
-<p class="note" id="locationStatus">Optional map pin for accurate delivery. Your browser will ask for permission.</p>
+<p class="note"><span data-i18n="addressFormat">Address format:</span> <span id="addressExample">House 12, Lanka, Varanasi, Uttar Pradesh 221005</span>. <span data-i18n="deliveryCityLabel">Delivery city:</span> <strong id="deliveryCity">Varanasi</strong>.</p>
+<button type="button" class="btn ghost" id="shareLocation" data-i18n="shareLocation">Share current location</button>
+<p class="note" id="locationStatus" data-i18n="locationHint">Optional map pin for accurate delivery. Your browser will ask for permission.</p>
 <fieldset class="payment-choice">
-<legend>Payment method</legend>
-<label><input type="radio" name="paymentMethod" value="cod" checked> Cash on Delivery</label>
-<label><input type="radio" name="paymentMethod" value="upi"> UPI / QR payment</label>
+<legend data-i18n="paymentMethod">Payment method</legend>
+<label><input type="radio" name="paymentMethod" value="cod" checked> <span data-i18n="cod">Cash on Delivery</span></label>
+<label><input type="radio" name="paymentMethod" value="upi"> <span data-i18n="upiMethod">UPI / QR payment</span></label>
 </fieldset>
-<p class="note">For UPI, the exact saved order total is used. Upload the payment screenshot/receipt after paying so the admin can verify it.</p>
+<p class="note" data-i18n="upiHint">For UPI, the exact saved order total is used. Upload the payment screenshot/receipt after paying so the admin can verify it.</p>
 <div class="actions">
-<button type="button" class="btn ghost" id="close">Close</button>
-<button class="btn" id="send">Place order</button>
+<button type="button" class="btn ghost" id="close" data-i18n="close">Close</button>
+<button class="btn" id="send" data-i18n="placeOrder">Place order</button>
 </div>
 </form>
 </dialog>
@@ -89,7 +97,7 @@
 <div class="detail-top">
 <h2 id="detailTitle">
 </h2>
-<button type="button" class="btn ghost" id="detailClose" aria-label="Close product details">Close</button>
+<button type="button" class="btn ghost" id="detailClose" data-i18n="close" aria-label="Close product details">Close</button>
 </div>
 <div id="detailArt" class="detail-art" aria-hidden="true">
 </div>
@@ -100,7 +108,7 @@
 <p id="detailDescription">
 </p>
 <div class="detail-controls">
-<strong>Quantity</strong>
+<strong data-i18n="quantity">Quantity</strong>
 <div class="step">
 <button type="button" id="detailMinus" aria-label="Remove one">−</button>
 <span id="detailQuantity">
@@ -113,48 +121,48 @@
 </div>
 </dialog>
 <dialog id="accountDialog">
-<h2 id="accountTitle">Sign in</h2>
+<h2 id="accountTitle" data-i18n="accountTitle">Sign in</h2>
 <p class="status" id="accountError" role="alert">
 </p>
 <form class="form" id="accountForm">
 <div id="registerFields" hidden>
-<label>Full name<input name="name" autocomplete="name" minlength="2" maxlength="100">
+<label><span data-i18n="fullName">Full name</span><input name="name" autocomplete="name" minlength="2" maxlength="100">
 </label>
-<label>Mobile number (+91)<input name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" pattern="[6-9][0-9]{9}" maxlength="10" placeholder="9876543210">
+<label><span data-i18n="mobileNumber">Mobile number</span> (+91)<input name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" pattern="[6-9][0-9]{9}" maxlength="10" placeholder="9876543210">
 </label>
 <label>Email (optional)<input name="email" type="email" autocomplete="email">
 </label>
 </div>
 <div id="loginFields">
-<label>Mobile number or email<input name="login" autocomplete="username">
+<label><span data-i18n="loginLabel">Mobile number or email</span><input name="login" autocomplete="username">
 </label>
 </div>
-<label>Password<input name="password" type="password" autocomplete="current-password" required minlength="8">
+<label><span data-i18n="password">Password</span><input name="password" type="password" autocomplete="current-password" required minlength="8">
 </label>
-<label id="confirmPasswordField" hidden>Confirm password<input name="password_confirmation" type="password" autocomplete="new-password" minlength="8">
+<label id="confirmPasswordField" hidden><span data-i18n="confirmPassword">Confirm password</span><input name="password_confirmation" type="password" autocomplete="new-password" minlength="8">
 </label>
 <div class="actions">
-<button class="btn ghost" type="button" id="accountClose">Close</button>
-<button class="btn" type="submit" id="accountSubmit">Sign in</button>
+<button class="btn ghost" type="button" id="accountClose" data-i18n="close">Close</button>
+<button class="btn" type="submit" id="accountSubmit" data-i18n="signIn">Sign in</button>
 </div>
 </form>
 <div id="googleSignIn">
 </div>
-<button class="btn ghost" id="googleComplete" type="button" hidden>Complete Google sign-in</button>
-<button class="btn ghost" id="accountSwitch" type="button">Create an account</button>
+<button class="btn ghost" id="googleComplete" type="button" hidden data-i18n="completeGoogle">Complete Google sign-in</button>
+<button class="btn ghost" id="accountSwitch" type="button" data-i18n="createAccount">Create an account</button>
 <div id="accountProfile" hidden>
 <p id="accountIdentity">
 </p>
-<p class="note">Signing out removes the basket from this browser.</p>
-<button class="btn" id="logoutButton" type="button">Sign out</button>
+<p class="note" data-i18n="signOutNotice">Signing out removes the basket from this browser.</p>
+<button class="btn" id="logoutButton" type="button" data-i18n="signOut">Sign out</button>
 </div>
 </dialog>
-<footer>Easy Mandi · Varanasi · Client demonstration</footer>
-<script src="storefront.js?v=20261004-payments" defer>
+<footer data-i18n="customerFooter">Easy Mandi · Varanasi</footer>
+<script src="storefront.js?v=20261008-bilingual" defer>
 </script>
-<script src="auth.js?v=20261001-addresses" defer>
+<script src="auth.js?v=20261008-bilingual" defer>
 </script>
-<script src="customer-data.js?v=20261001-addresses" defer></script>
+<script src="customer-data.js?v=20261008-bilingual" defer></script>
 </body>
 </html>
 
