@@ -21,6 +21,7 @@ class _AccountPageState extends State<AccountPage> {
   final _confirmPassword = TextEditingController();
   bool _register = false, _busy = false, _showPassword = false;
   String? _googleClientId;
+  bool _checkingGoogle=true;
   String? _error;
 
   void _languageChanged() {
@@ -31,14 +32,35 @@ class _AccountPageState extends State<AccountPage> {
   void initState() {
     super.initState();
     EasyMandiLanguage.hindi.addListener(_languageChanged);
-    AuthService.instance.googleClientId().then((id) {
-      if (mounted) setState(() => _googleClientId = id);
-    }).catchError((Object _) {});
+    _loadGoogleClientId();
+  }
+
+  Future<void> _loadGoogleClientId() async {
+    if(mounted)setState(()=>_checkingGoogle=true);
+    try{
+      final id=await AuthService.instance.googleClientId();
+      if(mounted)setState(()=>_googleClientId=id);
+    }catch(_){
+      if(mounted)setState(()=>_googleClientId=null);
+    }finally{
+      if(mounted)setState(()=>_checkingGoogle=false);
+    }
   }
 
   Future<void> _googleLogin() async {
-    final clientId = _googleClientId;
-    if (clientId == null) return;
+    if(_checkingGoogle)return;
+    var clientId=_googleClientId;
+    if(clientId==null){
+      await _loadGoogleClientId();
+      if(!mounted)return;
+      clientId=_googleClientId;
+      if(clientId==null){
+        setState(()=>_error=tr(
+          'Google Sign-In is not configured on the Easy Mandi server. Use password login or contact support.',
+          'Easy Mandi सर्वर पर Google साइन-इन सेट नहीं है। पासवर्ड से लॉग इन करें या सहायता लें।'));
+        return;
+      }
+    }
     setState(() { _busy = true; _error = null; });
     try {
       final google = GoogleSignIn.instance;
@@ -334,14 +356,24 @@ class _AccountPageState extends State<AccountPage> {
                         icon:const Icon(Icons.lock_reset),
                         label:Text(tr('Forgot password?','पासवर्ड भूल गए?')),
                       ),
-                    if (_googleClientId != null) ...[
-                      const SizedBox(height: 12),
-                      OutlinedButton(
-                        onPressed: _busy ? null : _googleLogin,
-                        child: Text(tr(
-                            'Continue with Google', 'Google से आगे बढ़ें')),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: _busy || _checkingGoogle ? null : _googleLogin,
+                      icon: const Icon(Icons.account_circle_outlined),
+                      label: Text(_checkingGoogle
+                          ? tr('Checking Google Sign-In…', 'Google साइन-इन जाँच रहे हैं…')
+                          : tr('Continue with Google', 'Google से आगे बढ़ें')),
+                    ),
+                    if (!_checkingGoogle && _googleClientId == null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          tr('Google Sign-In is not configured yet. Tap the button to retry.',
+                            'Google साइन-इन अभी सेट नहीं है। दोबारा कोशिश के लिए बटन दबाएँ।'),
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ),
-                    ],
                     TextButton(
                       onPressed: _busy
                           ? null
