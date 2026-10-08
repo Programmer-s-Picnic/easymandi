@@ -58,8 +58,9 @@
      const result=await post({view:mode,page,search});
      if(request!==pending||!session.token)return;
      const {rows=[],total=0,pageSize=25}=result;
-     const table=id('recordsTable');
-     table.replaceChildren();
+     const table=document.createElement('table');
+     table.className='product-grid';
+     table.id='recordsTable';
      const head=document.createElement('thead'),headRow=document.createElement('tr');
      for(const [label] of modes[mode].fields){const th=document.createElement('th');th.scope='col';th.textContent=label;headRow.append(th);}
      if(mode==='customers'){const th=document.createElement('th');th.scope='col';th.textContent='Actions';headRow.append(th);}
