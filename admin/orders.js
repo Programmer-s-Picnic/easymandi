@@ -241,6 +241,7 @@
       row.append(select, save, delivery);
       const content=document.createElement('div');content.className='order-card-body';
       content.append(date, progress, customer, address, map, items, totals, payment, row);
+      window.EasyMandiPacking?.append(order,content,payload=>request('admin-order-notes',payload));
       card.append(title,content);
       root.append(card);
     }
