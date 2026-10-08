@@ -9,6 +9,12 @@ const t=(key,vars={})=>window.EMI18n?.t(key,vars)||key;
 const productLabel=p=>window.EMI18n?.lang==='hi'?(p.hindi||p.name):p.name;
 let catalogLoading=false;
 let confirmationLanguageRefresh=null;
+function showLocationStatus(state){
+  const names={hint:'locationHint',unavailable:'locationUnavailable',finding:'locationFinding',attached:'locationAttached',denied:'locationDenied'};
+  const element=el('locationStatus');
+  element.dataset.locationState=state;
+  element.textContent=t(names[state]||names.hint,{coords:deliveryLocation?deliveryLocation.locationLat.toFixed(5)+', '+deliveryLocation.locationLng.toFixed(5):''});
+}
 async function load(silent=false){
   if(catalogLoading)return;
   catalogLoading=true;
@@ -188,16 +194,16 @@ el('itemDetail').onclose=()=>{
 };
 el('shareLocation').onclick=()=>{
   if(!navigator.geolocation){
-    el('locationStatus').textContent=t('locationUnavailable');
+    showLocationStatus('unavailable');
     return
-  }el('locationStatus').textContent=t('locationFinding');
+  }showLocationStatus('finding');
   navigator.geolocation.getCurrentPosition(p=>{
     deliveryLocation={
       locationLat:p.coords.latitude,locationLng:p.coords.longitude
     };
-    el('locationStatus').textContent=t('locationAttached',{coords:p.coords.latitude.toFixed(5)+', '+p.coords.longitude.toFixed(5)})
+    showLocationStatus('attached')
   },()=>{
-    el('locationStatus').textContent=t('locationDenied')
+    showLocationStatus('denied')
   },{
     enableHighAccuracy:true,timeout:15000,maximumAge:0
   })
@@ -266,7 +272,7 @@ el('orderForm').onsubmit=async e=>{
     }window.dispatchEvent(new Event('customer-order-placed'));
     const paymentMethod=String(form.get('paymentMethod')||'cod');
     deliveryLocation=null;
-    el('locationStatus').textContent=t('locationHint');
+    showLocationStatus('hint');
     const address=[house,locality,...(landmark?['Near '+landmark]:[]),(data.store.city||'Varanasi')+', '+(data.checkout?.state||'Uttar Pradesh')+' - '+pin].join(', ');
     const lines=data.products.filter(p=>cart[p.id]).map(p=>'• '+p.name+' ('+p.unit+') × '+cart[p.id]).join('\n');
     const message=t('welcomeWhatsapp',{id:result.orderId})+'\n\n'+lines+'\n\nName: '+form.get('name')+'\nMobile: +91 '+phone+'\nAddress: '+address+'\n\nPlease confirm availability and delivery time.';
@@ -344,6 +350,7 @@ el('orderForm').onsubmit=async e=>{
 };
 window.addEventListener('languagechange',()=>{
   if(data){render();if(el('basket').open)renderBasket();if(el('itemDetail').open)renderItemDetail();}
+  showLocationStatus(el('locationStatus').dataset.locationState||'hint');
   if(confirmationLanguageRefresh)confirmationLanguageRefresh();
 });
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(true);});
