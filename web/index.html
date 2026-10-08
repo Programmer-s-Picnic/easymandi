@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#176b46">
+<meta name="referrer" content="no-referrer">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta name="description" content="Shop fresh vegetables in Varanasi with Easy Mandi. Browse daily essentials, choose delivery and pay by cash or UPI. Available in English and Hindi.">
 <link rel="canonical" href="https://programmer-s-picnic.github.io/easymandi/web/">
@@ -13,12 +14,12 @@
 <meta property="og:url" content="https://programmer-s-picnic.github.io/easymandi/web/">
 <meta property="og:image" content="https://programmer-s-picnic.github.io/easymandi/web/og-image.svg">
 <title>Easy Mandi | Fresh vegetables</title>
-<link rel="stylesheet" href="storefront.css?v=20261008-handoff-qr">
-<script src="i18n.js?v=20261008-bilingual" defer></script>
-<link rel="stylesheet" href="../shared/notifications.css?v=20260930-cleanup">
+<link rel="stylesheet" href="storefront.css?v=20261008-feedback12">
+<script src="i18n.js?v=20261008-feedback12" defer></script>
+<link rel="stylesheet" href="../shared/notifications.css?v=20261008-animate">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
 </script>
-<script src="../shared/notifications.js?v=20260930-cleanup" defer>
+<script src="../shared/notifications.js?v=20261008-animate" defer>
 </script>
 </head>
 <body>
@@ -89,6 +90,8 @@
 <p class="note"><span data-i18n="addressFormat">Address format:</span> <span id="addressExample">House 12, Lanka, Varanasi, Uttar Pradesh 221005</span>. <span data-i18n="deliveryCityLabel">Delivery city:</span> <strong id="deliveryCity">Varanasi</strong>.</p>
 <button type="button" class="btn ghost" id="shareLocation" data-i18n="shareLocation">Share current location</button>
 <p class="note" id="locationStatus" data-i18n="locationHint" data-location-state="hint">Optional map pin for accurate delivery. Your browser will ask for permission.</p>
+<label class="checkout-instructions" for="customerNote" data-i18n="customerNoteLabel">Delivery instructions (optional)</label>
+<textarea id="customerNote" name="customerNote" maxlength="500" rows="2" data-i18n-placeholder="customerNoteHint" placeholder="Gate number, preferred delivery time, etc."></textarea>
 <fieldset class="payment-choice">
 <legend data-i18n="paymentMethod">Payment method</legend>
 <label><input type="radio" name="paymentMethod" value="cod" checked> <span data-i18n="cod">Cash on Delivery</span></label>
@@ -167,9 +170,9 @@
 </div>
 </dialog>
 <footer data-i18n="customerFooter">Easy Mandi · Varanasi</footer>
-<script src="storefront.js?v=20261008-bilingual" defer>
+<script src="storefront.js?v=20261008-feedback12" defer>
 </script>
-<script src="auth.js?v=20261008-handoff-qr" defer>
+<script src="auth.js?v=20261008-feedback12" defer>
 </script>
 <script src="customer-data.js?v=20261008-bilingual" defer></script>
 <script src="vendor/qrcode.min.js?v=20261008" defer></script>
