@@ -362,6 +362,7 @@ class _StorePageState extends State<StorePage> {
     final locality = TextEditingController();
     final landmark = TextEditingController();
     final pin = TextEditingController();
+    final instructions = TextEditingController();
     final countryCode = checkoutRules['countryCode'] as String? ?? '+91';
     final mobilePattern = RegExp(checkoutRules['mobilePattern'] as String? ?? r'^[6-9][0-9]{9}$');
     final pinPattern = RegExp(checkoutRules['pinPattern'] as String? ?? r'^[1-9][0-9]{5}$');
@@ -448,6 +449,13 @@ class _StorePageState extends State<StorePage> {
             if (deliveryPosition != null) Text(tr('Map pin: ${deliveryPosition!.latitude.toStringAsFixed(5)}, ${deliveryPosition!.longitude.toStringAsFixed(5)}','मैप पिन: ${deliveryPosition!.latitude.toStringAsFixed(5)}, ${deliveryPosition!.longitude.toStringAsFixed(5)}')),
             Text(tr('Delivery city: $city, $state','डिलीवरी शहर: $city, $state'), style: Theme.of(dialogContext).textTheme.bodySmall),
             const SizedBox(height: 12),
+            TextFormField(
+              controller: instructions,
+              maxLength: 500,
+              maxLines: 2,
+              decoration: InputDecoration(labelText: tr('Delivery instructions (optional)','डिलीवरी निर्देश (वैकल्पिक)')),
+            ),
+            const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: paymentMethod,
               decoration: InputDecoration(labelText: tr('Payment method','भुगतान का तरीका')),
@@ -514,6 +522,7 @@ class _StorePageState extends State<StorePage> {
         'requestKey': _pendingOrderKey,
         'source': 'android',
         'paymentMethod': paymentMethod,
+        'customerNote': instructions.text.trim(),
         'name': name.text.trim(),
         'mobile': phone.text.trim(),
         'house': house.text.trim(),
@@ -567,6 +576,32 @@ class _StorePageState extends State<StorePage> {
     if (paymentMethod == 'upi') {
       await showUpiPayment(orderId: orderId, total: savedTotal, requestKey: orderAccessKey);
       if (!mounted) return;
+    }
+    final shareReference = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('Order received · $orderId','ऑर्डर दर्ज हुआ · $orderId')),
+        content: Column(mainAxisSize: MainAxisSize.min,crossAxisAlignment: CrossAxisAlignment.start,children:[
+          Text(tr('Saved total: ${money(savedTotal)}','सहेजी गई कुल राशि: ${money(savedTotal)}')),
+          const SizedBox(height: 8),
+          Text(paymentMethod=='cod'
+            ?tr('Cash on Delivery selected. Your order is saved; delivery time and stock confirmation are pending.',
+                'डिलीवरी पर नकद चुना गया। ऑर्डर दर्ज है, उपलब्धता व समय की पुष्टि बाकी है।')
+            :tr('UPI order saved. Payment requires receipt verification.','UPI ऑर्डर दर्ज है। रसीद का सत्यापन आवश्यक है।')),
+        ]),
+        actions:[
+          TextButton(onPressed:()=>Navigator.pop(ctx,false),child:Text(tr('Done','ठीक है'))),
+          FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:Text(tr('Share on WhatsApp','व्हाट्सऐप पर साझा करें'))),
+        ],
+      ),
+    );
+    if(!mounted)return;
+    if(shareReference!=true){
+      for(final id in cart.keys.toList()){
+        _cartWrite=_cartWrite.then((_)=>LocalStore.instance.setQuantity(id,0));
+      }
+      if(mounted)setState(cart.clear);
+      return;
     }
     final uri = whatsappOrderUri(store['supportPhone'] as String? ?? '', body);
     var opened = false;
