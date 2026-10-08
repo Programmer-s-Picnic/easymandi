@@ -5,20 +5,10 @@ final notificationNavigator = GlobalKey<NavigatorState>();
 final notificationFeed = ValueNotifier<List<Map<String,dynamic>>>([]);
 Future<void> Function(Map<String,dynamic>?)? notificationMark;
 
-Widget notificationOverlay(BuildContext context, Widget? child) => Column(children:[
-  Expanded(child:child ?? const SizedBox.shrink()),
-  SafeArea(top:false,child:Padding(padding:const EdgeInsets.fromLTRB(12,0,12,8),child:Material(
-    elevation:8,borderRadius:BorderRadius.circular(14),color:const Color(0xFFE8F2FC),
-    child:ValueListenableBuilder<List<Map<String,dynamic>>>(valueListenable:notificationFeed,builder:(context,items,_) {
-      final unread=items.where((n)=>n['read_at']==null).length;
-      final latest=items.isEmpty?tr('No notifications yet.','अभी कोई सूचना नहीं।'):(items.first['message'] as String? ?? tr('Update','अपडेट'));
-      return Padding(padding:const EdgeInsets.all(12),child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
-        Row(children:[Expanded(child:Text(tr('Notifications · $unread unread','सूचनाएँ · $unread अपठित'),style:const TextStyle(fontWeight:FontWeight.bold))),
-          TextButton(onPressed:showNotificationModal,child:Text(tr('View all','सभी देखें')))]),
-        Text(latest,maxLines:2,overflow:TextOverflow.ellipsis)
-      ]));
-    }))))
-]);
+// Customer notifications are opened from My Account instead of taking
+// permanent space at the bottom of every shopping screen.
+Widget notificationOverlay(BuildContext context, Widget? child) =>
+    child ?? const SizedBox.shrink();
 
 Future<void> showNotificationModal() async {
   final context=notificationNavigator.currentContext;
