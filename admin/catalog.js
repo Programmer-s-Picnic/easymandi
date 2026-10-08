@@ -72,7 +72,7 @@ function renderStore(){
 }
 let productPage=1, productSort='name', productAscending=true, editingProduct=null, productMode='insert';
 const pageSize=10;
-const productSpecs=[['ID','id'],['English name','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price (₹)','price'],['Emoji','emoji'],['Description','description']];
+const productSpecs=[['ID','id'],['English name','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price (₹)','price'],['Emoji','emoji'],['Photo HTTPS URL (optional)','imageUrl'],['Compare-at price ₹ (optional)','compareAtPrice'],['Description','description']];
 function productErrors(p, original){
   const errors={};
   if(!/^[a-z0-9_-]{1,64}$/.test(p.id||''))errors.id='Use 1–64 lowercase letters, numbers, underscores or hyphens.';
@@ -82,22 +82,27 @@ function productErrors(p, original){
   if(!data.categories.includes(p.category)||p.category==='All')errors.category='Select an existing product category.';
   if(p.price===''||!Number.isFinite(Number(p.price))||Number(p.price)<0)errors.price='Enter a price of zero or greater.';
   else if(Math.abs(Number(p.price)*100-Math.round(Number(p.price)*100))>0.000001)errors.price='Use no more than two decimal places.';
-  for(const [,key] of productSpecs){const limit=key==='id'?64:key==='name'?150:key==='unit'?80:300;if(Array.from(String(p[key]||'')).length>limit)errors[key]='Use no more than '+limit+' characters.';}
+  for(const [,key] of productSpecs){const limit=key==='id'?64:key==='name'?150:key==='unit'?80:key==='imageUrl'?500:300;if(Array.from(String(p[key]||'')).length>limit)errors[key]='Use no more than '+limit+' characters.';}
   if(Number(p.price)>1000000)errors.price='Price cannot exceed ₹1,000,000.';
+  if(p.imageUrl && (!/^https:\/\/[^\s/]+\/[^\s]*$/i.test(p.imageUrl)||p.imageUrl.length>500))
+    errors.imageUrl='Use an HTTPS image link (up to 500 characters).';
+  if(p.compareAtPrice!=='' && p.compareAtPrice!=null &&
+      (!Number.isFinite(Number(p.compareAtPrice))||Number(p.compareAtPrice)<=Number(p.price)||Number(p.compareAtPrice)>1000000))
+    errors.compareAtPrice='Comparison price must be greater than the actual price.';
   if(!original&&data.products.length>=500)errors.id='The catalog supports at most 500 products.';
   return errors;
 }
 function openProduct(original=null, mode='insert'){
   if(!data){notify('Load the catalog first.','error');return;}
   editingProduct=original;productMode=mode;
-  const value=original||{id:'',name:'',hindi:'',category:data.categories.find(x=>x!=='All')||'',unit:'1 kg',price:'',emoji:'🥬',description:'',available:false};
+  const value=original||{id:'',name:'',hindi:'',category:data.categories.find(x=>x!=='All')||'',unit:'1 kg',price:'',emoji:'🥬',imageUrl:'',compareAtPrice:'',description:'',available:false};
   $('productTitle').textContent=mode==='delete'?'Delete product':mode==='insert'?'Insert product':'Update product';
   $('productSubmit').textContent=mode==='delete'?'Delete from draft':mode==='insert'?'Insert into draft':'Update draft';
   $('productSubmit').className=mode==='delete'?'btn danger':'btn';
   $('productFormMessage').textContent=mode==='delete'?'Review this record. Confirm deletion to remove it from the draft.':'';
   const root=$('productFields');root.replaceChildren();
   for(const [label,key] of productSpecs){
-    const wrap=field(label,value[key],()=>{},key==='category'?{choices:data.categories.filter(x=>x!=='All')}:key==='description'?{multiline:true,wide:true}:key==='price'?{type:'number'}:{});
+    const wrap=field(label,value[key],()=>{},key==='category'?{choices:data.categories.filter(x=>x!=='All')}:key==='description'?{multiline:true,wide:true}:(key==='price'||key==='compareAtPrice')?{type:'number'}:{});
     const input=wrap.children[1];input.id='product_'+key;input.disabled=mode==='delete';
     input.setAttribute('aria-describedby','product_error_'+key);
     const error=document.createElement('small');error.id='product_error_'+key;error.className='field-error';wrap.append(error);root.append(wrap);
@@ -154,6 +159,9 @@ $('productForm').onsubmit=event=>{
     for(const [,key] of productSpecs){$('product_error_'+key).textContent=errors[key]||'';$('product_'+key).setAttribute('aria-invalid',errors[key]?'true':'false');}
     if(Object.keys(errors).length){$('productFormMessage').textContent='Please correct the highlighted fields.';$('product_'+Object.keys(errors)[0]).focus();return;}
     value.price=Number(value.price);
+    if(value.compareAtPrice==='')delete value.compareAtPrice;
+    else value.compareAtPrice=Number(value.compareAtPrice);
+    if(!value.imageUrl)delete value.imageUrl;
     if(editingProduct)Object.assign(editingProduct,value);else data.products.push(value);
   }
   persist();renderProducts();renderCategories();$('productDialog').close();
@@ -232,7 +240,11 @@ function validate(){
     ids.add(p.id);
     if(!p.name?.trim()||!p.unit?.trim())errors.push(prefix+'name and unit are required');
     if(!data.categories.includes(p.category)||p.category==='All')errors.push(prefix+'select a category');
-    if(!Number.isFinite(p.price)||p.price<0)errors.push(prefix+'price must be zero or greater')
+    if(!Number.isFinite(p.price)||p.price<0)errors.push(prefix+'price must be zero or greater');
+    if(p.imageUrl && (!/^https:\/\/[^\s/]+\/[^\s]*$/i.test(p.imageUrl)||p.imageUrl.length>500))
+      errors.push(prefix+'photo URL must be HTTPS');
+    if(p.compareAtPrice!=null && (!Number.isFinite(p.compareAtPrice)||p.compareAtPrice<=p.price))
+      errors.push(prefix+'comparison price must exceed selling price');
   }if(errors.length){
     notify(errors.slice(0,8).join(' · ')+(errors.length>8?' · More errors remain.':''),'error');
     return false
