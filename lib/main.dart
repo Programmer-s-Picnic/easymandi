@@ -953,7 +953,6 @@ class _StorePageState extends State<StorePage> {
                                 Text(tr('Unavailable','उपलब्ध नहीं'),
                                   style:const TextStyle(fontSize:11,color:Colors.grey)),
                             ])),
-                          ),
                         ])),
                     ),
                   ));
