@@ -221,6 +221,8 @@ class _StorePageState extends State<StorePage> {
           const SizedBox(height: 12),
           Text(tr('Signing out clears this device. Addresses saved to your account remain available when you sign in again.','साइन आउट करने पर इस डिवाइस का स्थानीय डेटा साफ होगा। खाते में सहेजे पते अगली बार साइन इन करने पर उपलब्ध रहेंगे।'))]),
       actions: [
+        TextButton(onPressed: () async {Navigator.pop(dialogContext);await showNotificationModal();},
+          child:Text(tr('Notifications','सूचनाएँ'))),
         TextButton(onPressed: () async {Navigator.pop(dialogContext);await changeCustomerPassword();},
           child:Text(tr('Change password','पासवर्ड बदलें'))),
         TextButton(onPressed: () async {Navigator.pop(dialogContext);await linkCustomerGoogle();},
