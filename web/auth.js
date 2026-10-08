@@ -94,6 +94,96 @@
     if(!response.ok)throw Error(result.error||'Could not load deliveries.');
     return result;
   }
+  // Customer notifications belong to My Account, not a floating overlay.
+  byId('accountProfile').append(inbox.dock);
+  inbox.dock.classList.add('customer-inbox-menu');
+  inbox.dock.style.position='static';
+  inbox.dock.style.width='100%';
+  inbox.dock.style.boxShadow='none';
+  inbox.dock.style.marginTop='14px';
+  const notificationsHeading=document.createElement('h3');
+  notificationsHeading.textContent='Notifications / सूचनाएँ';
+  byId('accountProfile').insertBefore(notificationsHeading,inbox.dock);
+  const forgot=document.createElement('button');
+  forgot.type='button';forgot.className='btn ghost';forgot.textContent='Forgot password? / पासवर्ड भूल गए?';
+  byId('accountSwitch').before(forgot);
+  const changeButton=document.createElement('button');
+  changeButton.type='button';changeButton.className='btn ghost';changeButton.textContent='Change password / पासवर्ड बदलें';
+  byId('accountProfile').append(changeButton);
+
+  function accountNotice(text,failed=false){
+    byId('accountError').textContent=text;
+    byId('accountError').style.color=failed?'#a33222':'#176b46';
+  }
+  function showPasswordForm(title,fields,onSubmit){
+    const dialog=document.createElement('dialog');dialog.className='account-password-dialog';
+    const form=document.createElement('form');form.className='form';form.noValidate=false;
+    const heading=document.createElement('h2');heading.textContent=title;
+    const feedback=document.createElement('p');feedback.setAttribute('role','status');
+    form.append(heading,feedback);
+    const controls={};
+    for(const f of fields){
+      const label=document.createElement('label');
+      label.textContent=f.label;
+      const input=document.createElement('input');
+      input.name=f.name;input.type=f.type||'password';input.required=true;
+      input.autocomplete=f.autocomplete||'off';
+      if(input.type==='password')input.minLength=8;
+      label.append(input);form.append(label);controls[f.name]=input;
+    }
+    const actions=document.createElement('div');actions.className='actions';
+    const close=document.createElement('button');close.type='button';close.className='btn ghost';close.textContent='Cancel / रद्द करें';close.onclick=()=>dialog.close();
+    const save=document.createElement('button');save.type='submit';save.className='btn';save.textContent='Continue / आगे बढ़ें';
+    actions.append(close,save);form.append(actions);
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();save.disabled=true;feedback.textContent='';
+      try{
+        const data=Object.fromEntries(Object.entries(controls).map(([key,input])=>[key,input.value]));
+        const result=await onSubmit(data);
+        feedback.textContent=result?.message||'Done.';
+        feedback.style.color='#176b46';
+        if(result?.changed){
+          setTimeout(()=>dialog.close(),1000);
+        }
+      }catch(error){
+        feedback.textContent=error.message||'Please try again.';
+        feedback.style.color='#a33222';
+      }finally{save.disabled=false;}
+    });
+    dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+    document.body.append(dialog);dialog.showModal();return dialog;
+  }
+  forgot.addEventListener('click',()=>{
+    byId('accountDialog').close();
+    showPasswordForm('Reset password / पासवर्ड रीसेट',[
+      {name:'email',label:'Registered email / पंजीकृत ईमेल',type:'email',autocomplete:'email'}
+    ],async({email})=>request('password-reset',{method:'POST',payload:{operation:'request',email}}));
+  });
+  changeButton.addEventListener('click',()=>{
+    byId('accountDialog').close();
+    showPasswordForm('Change password / पासवर्ड बदलें',[
+      {name:'current_password',label:'Current password',autocomplete:'current-password'},
+      {name:'new_password',label:'New password',autocomplete:'new-password'},
+      {name:'password_confirmation',label:'Confirm new password',autocomplete:'new-password'}
+    ],async(payload)=>{
+      const response=await request('password-change',{method:'POST',authorized:true,payload});
+      token=null;user=null;sessionStorage.removeItem(tokenKey);
+      refresh();
+      return response;
+    });
+  });
+  const resetParams=new URLSearchParams(location.search);
+  const resetToken=resetParams.get('reset');
+  if(resetToken && /^[a-f0-9]{64}$/i.test(resetToken)){
+    showPasswordForm('Set new password / नया पासवर्ड',[
+      {name:'password',label:'New password',autocomplete:'new-password'},
+      {name:'password_confirmation',label:'Confirm new password',autocomplete:'new-password'}
+    ],async(values)=>{
+      const response=await request('password-reset',{method:'POST',payload:{operation:'complete',token:resetToken,...values}});
+      history.replaceState(null,'',location.pathname);
+      return response;
+    });
+  }
   window.CustomerAccount={get user(){return user;},request,customerDeliveries};
   function refresh() {
     window.dispatchEvent(new Event('customer-account-changed'));
