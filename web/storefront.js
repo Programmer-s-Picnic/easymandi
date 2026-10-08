@@ -272,7 +272,7 @@ el('orderForm').onsubmit=async e=>{
       method:'POST',headers:{
         'Content-Type':'application/json'
       },body:JSON.stringify({
-        requestKey:key,source:'web',paymentMethod:String(form.get('paymentMethod')||'cod'),name:String(form.get('name')||'').trim(),mobile:phone,house,locality,landmark,pin,...deliveryLocation,items:chosen
+        requestKey:key,source:'web',customerNote:String(form.get('customerNote')||'').trim(),paymentMethod:String(form.get('paymentMethod')||'cod'),name:String(form.get('name')||'').trim(),mobile:phone,house,locality,landmark,pin,...deliveryLocation,items:chosen
       })
     });
     let result;
@@ -297,6 +297,12 @@ el('orderForm').onsubmit=async e=>{
     const note=document.createElement('p');
     note.textContent=t('savedTotal',{total:money(result.total),method:t(paymentMethod==='upi'?'upiSelected':'codSelected')});
     box.append(title,note);
+    const acknowledgement=document.createElement('p');
+    acknowledgement.className='note';
+    acknowledgement.textContent=paymentMethod==='cod'
+      ?(window.EMI18n?.lang==='hi'?'आपका COD ऑर्डर दर्ज हो गया है। डिलीवरी और उपलब्धता की पुष्टि अभी बाकी है।':'Your COD order was saved. Availability and delivery time are pending seller confirmation.')
+      :(window.EMI18n?.lang==='hi'?'ऑर्डर दर्ज हो गया है। भुगतान रसीद सत्यापन के बाद ही भुगतान की पुष्टि होगी।':'Order saved. Your payment is confirmed only after receipt verification.');
+    box.append(acknowledgement);
     if(paymentMethod==='upi'){
       const payWrap=document.createElement('section');
       payWrap.className='payment-panel';
@@ -342,6 +348,9 @@ el('orderForm').onsubmit=async e=>{
     confirmationLanguageRefresh=()=>{
       title.textContent=t('orderPlaced',{id:result.orderId});
       note.textContent=t('savedTotal',{total:money(result.total),method:t(paymentMethod==='upi'?'upiSelected':'codSelected')});
+      acknowledgement.textContent=paymentMethod==='cod'
+        ?(window.EMI18n?.lang==='hi'?'आपका COD ऑर्डर दर्ज हो गया है। डिलीवरी की पुष्टि अभी बाकी है।':'Your COD order was saved. Delivery confirmation is pending.')
+        :(window.EMI18n?.lang==='hi'?'रसीद सत्यापन के बाद भुगतान की पुष्टि होगी।':'Payment confirmation follows receipt verification.');
       link.textContent=t('sendWhatsapp');
       const panel=box.querySelector('.payment-panel');
       if(panel){
