@@ -200,10 +200,16 @@
     byId('googleSignIn').hidden = !!user;
     byId('googleComplete').hidden = !!user || !googleCredential || !registering;
     if (user) {
-      if(googleReady){
+      if(googleReady)renderGoogleButtons();
+      else{
         const googleRoot=byId('googleLink');
         googleRoot.replaceChildren();
-        google.accounts.id.renderButton(googleRoot,{theme:'outline',size:'large',text:'continue_with',locale:window.EMI18n?.lang||'en'});
+        const linkButton=document.createElement('button');
+        linkButton.type='button';
+        linkButton.className='btn ghost';
+        linkButton.textContent='Connect Google / Google खाता जोड़ें';
+        linkButton.onclick=initializeGoogle;
+        googleRoot.append(linkButton);
       }
       byId('accountTitle').textContent = t('myAccount');
       byId('accountIdentity').textContent = `${user.name} · +91 ${user.mobile}${user.email ? ` · ${
@@ -236,37 +242,78 @@
   });
   byId('accountClose').addEventListener('click', () => byId('accountDialog').close());
   byId('accountSwitch').addEventListener('click', () => mode(!registering));
-  request('google-config').then(({
-    clientId
-  }) => {
-    if (!clientId) return;
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.onload = () => {
-      googleReady=true;
-      google.accounts.id.initialize({
-        client_id: clientId, callback: async ({
-          credential
-        }) => {
+  // Keep Google sign-in visible even when the backend is not configured.
+  // Never ship a guessed OAuth client ID or suppress configuration errors.
+  let googleLoading=false;
+  const googleStatus=byId('googleStatus');
+  const googleRetry=byId('googleRetry');
+  function showGoogleStatus(message, error=false){
+    googleStatus.textContent=message;
+    googleStatus.style.color=error?'#a33222':'#49675c';
+  }
+  function renderGoogleButtons(){
+    if(!googleReady||!window.google?.accounts?.id)return;
+    const options={theme:'outline',size:'large',text:'continue_with',locale:window.EMI18n?.lang||'en'};
+    const root=byId('googleSignIn');
+    root.replaceChildren();
+    window.google.accounts.id.renderButton(root,options);
+    if(user){
+      const linked=byId('googleLink');
+      linked.replaceChildren();
+      window.google.accounts.id.renderButton(linked,options);
+    }
+  }
+  async function initializeGoogle(){
+    if(googleLoading)return;
+    googleLoading=true;
+    googleRetry.disabled=true;
+    showGoogleStatus('Checking Google Sign-In… / Google साइन-इन जाँचा जा रहा है…');
+    try{
+      const {clientId}=await request('google-config');
+      if(typeof clientId!=='string'||!/^\\d+-[a-zA-Z0-9_-]+\\.apps\\.googleusercontent\\.com$/.test(clientId)){
+        throw Error('Google Sign-In is not configured on the Easy Mandi server. Use your password for now or contact support.');
+      }
+      if(!window.google?.accounts?.id){
+        await new Promise((resolve,reject)=>{
+          const sdk=document.createElement('script');
+          sdk.src='https://accounts.google.com/gsi/client';
+          sdk.async=true;
+          const timeout=setTimeout(()=>reject(Error('Google Sign-In took too long to load. Check network or browser privacy settings.')),15000);
+          sdk.onload=()=>{clearTimeout(timeout);window.google?.accounts?.id?resolve():reject(Error('Google Sign-In could not start.'));};
+          sdk.onerror=()=>{clearTimeout(timeout);reject(Error('Could not load Google Sign-In. Check your connection or browser settings.'));};
+          document.head.append(sdk);
+        });
+      }
+      window.google.accounts.id.initialize({
+        client_id:clientId,
+        callback:async ({credential})=>{
           if(user){
             try{
               await request('google',{method:'POST',authorized:true,payload:{operation:'link',id_token:credential}});
               accountNotice('Google account linked successfully / Google खाता जुड़ गया।');
-            }catch(error){accountNotice(error.message||'Google linking failed',true);}
+            }catch(error){accountNotice(error.message||'Google account linking failed',true);}
           }else{
             googleCredential=credential;
             await completeGoogle();
           }
         }
       });
-      google.accounts.id.renderButton(byId('googleSignIn'), {
-        theme: 'outline', size: 'large', text: 'continue_with', locale: window.EMI18n?.lang || 'en'
-      });
-    };
-    document.head.append(script);
-  }).catch(() => {
-  });
+      googleReady=true;
+      renderGoogleButtons();
+      googleRetry.hidden=true;
+      showGoogleStatus('');
+    }catch(error){
+      googleReady=false;
+      googleRetry.hidden=false;
+      googleRetry.textContent='Retry Google Sign-In / दोबारा कोशिश करें';
+      showGoogleStatus(error.message||'Google Sign-In is currently unavailable.',true);
+    }finally{
+      googleLoading=false;
+      googleRetry.disabled=false;
+    }
+  }
+  googleRetry.addEventListener('click',initializeGoogle);
+  initializeGoogle();
   async function completeGoogle() {
     if (!googleCredential) return;
     byId('accountError').textContent = '';
@@ -363,11 +410,7 @@
       mode(registering);
       byId('accountButton').textContent=t('signIn');
     }
-    if(window.google?.accounts?.id){
-      const googleRoot=byId('googleSignIn');
-      googleRoot.replaceChildren();
-      google.accounts.id.renderButton(googleRoot,{theme:'outline',size:'large',text:'continue_with',locale:window.EMI18n?.lang||'en'});
-    }
+    if(googleReady)renderGoogleButtons();
   });
   mode(false);
   if (token) request('me', {
