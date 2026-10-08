@@ -122,6 +122,28 @@ class AuthService {
         }),
       );
 
+  Future<void> requestPasswordReset(String email) async {
+    await _request('password-reset',method:'POST',
+      body:{'operation':'request','email':email.trim()});
+  }
+
+  Future<void> changePassword({required String currentPassword,required String newPassword,
+      required String confirmation}) async {
+    await _request('password-change',method:'POST',authenticated:true,body:{
+      'current_password':currentPassword,
+      'new_password':newPassword,
+      'password_confirmation':confirmation,
+    });
+    await _storage.delete(key:_key);
+    _token=null;
+    user=null;
+  }
+
+  Future<void> linkGoogle(String idToken) async {
+    await _request('google',method:'POST',authenticated:true,
+      body:{'operation':'link','id_token':idToken});
+  }
+
   Future<Map<String,dynamic>> customerData() => _request('customer-data', authenticated:true);
   Future<void> saveServerAddress(Map<String,Object?> address) async { await _request('customer-data',method:'POST',body:address,authenticated:true); }
   Future<void> deleteServerAddress(int id) async { await _request('customer-data',method:'POST',body:{'operation':'delete','id':id},authenticated:true); }
