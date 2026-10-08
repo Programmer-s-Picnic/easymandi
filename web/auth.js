@@ -3,6 +3,7 @@
   const api = 'https://cserver.learnwithchampak.live/easymandi/api';
   const tokenKey = 'easy-mandi-auth-token';
   const byId = id => document.getElementById(id);
+  const t=(key,vars={})=>window.EMI18n?.t(key,vars)||key;
   let token = sessionStorage.getItem(tokenKey);
   let user = null;
   let registering = false;
@@ -89,14 +90,14 @@
     if(user)inbox.refresh().catch(()=>{
     });
     else inbox.stop();
-    byId('accountButton').textContent = user ? `Hi, ${user.name}` : 'Sign in';
+    byId('accountButton').textContent = user ? t('hiUser',{name:user.name}) : t('signIn');
     byId('accountProfile').hidden = !user;
     byId('accountForm').hidden = !!user;
     byId('accountSwitch').hidden = !!user;
     byId('googleSignIn').hidden = !!user;
     byId('googleComplete').hidden = !!user || !googleCredential || !registering;
     if (user) {
-      byId('accountTitle').textContent = 'My account';
+      byId('accountTitle').textContent = t('myAccount');
       byId('accountIdentity').textContent = `${user.name} · +91 ${user.mobile}${user.email ? ` · ${
         user.email
       }` : ''}`;
@@ -107,7 +108,7 @@
   }
   function mode(register) {
     registering = register;
-    byId('accountTitle').textContent = register ? 'Create account' : 'Sign in';
+    byId('accountTitle').textContent = t(register?'createAccountAction':'signIn');
     byId('registerFields').hidden = !register;
     byId('loginFields').hidden = register;
     for (const name of ['name', 'mobile', 'login']) {
@@ -116,8 +117,8 @@
     byId('accountForm').elements.password.autocomplete = register ? 'new-password' : 'current-password';
     byId('confirmPasswordField').hidden = !register;
     byId('accountForm').elements.password_confirmation.required = register;
-    byId('accountSubmit').textContent = register ? 'Create account' : 'Sign in';
-    byId('accountSwitch').textContent = register ? 'Already registered? Sign in' : 'Create an account';
+    byId('accountSubmit').textContent = t(register?'createAccountAction':'signIn');
+    byId('accountSwitch').textContent = t(register?'alreadyAccount':'createAccount');
     byId('googleComplete').hidden = !register || !googleCredential;
     byId('accountError').textContent = '';
   }
@@ -144,7 +145,7 @@
         }
       });
       google.accounts.id.renderButton(byId('googleSignIn'), {
-        theme: 'outline', size: 'large', text: 'continue_with'
+        theme: 'outline', size: 'large', text: 'continue_with', locale: window.EMI18n?.lang || 'en'
       });
     };
     document.head.append(script);
@@ -171,7 +172,7 @@
     } catch (error) {
       if (/mobile number to complete/i.test(error.message)) {
         mode(true);
-        byId('accountError').textContent = 'Enter your mobile number, then choose Complete Google sign-in.';
+        byId('accountError').textContent = t('accountGoogleMobile');
         byId('googleComplete').hidden = false;
       } else byId('accountError').textContent = error.message || 'Could not sign in with Google.';
     }
@@ -184,7 +185,7 @@
     byId('accountError').textContent = '';
     const fields = new FormData(event.currentTarget);
     if (registering && fields.get('password') !== fields.get('password_confirmation')) {
-      byId('accountError').textContent = 'Passwords do not match.';
+      byId('accountError').textContent = t('passwordsMismatch');
       button.disabled = false;
       return;
     }
@@ -233,6 +234,20 @@
     mode(false);
     refresh();
     byId('accountDialog').close();
+  });
+  window.addEventListener('languagechange',()=>{
+    if(user){
+      byId('accountTitle').textContent=t('myAccount');
+      byId('accountButton').textContent=t('hiUser',{name:user.name});
+    }else{
+      mode(registering);
+      byId('accountButton').textContent=t('signIn');
+    }
+    if(window.google?.accounts?.id){
+      const googleRoot=byId('googleSignIn');
+      googleRoot.replaceChildren();
+      google.accounts.id.renderButton(googleRoot,{theme:'outline',size:'large',text:'continue_with',locale:window.EMI18n?.lang||'en'});
+    }
   });
   mode(false);
   if (token) request('me', {
