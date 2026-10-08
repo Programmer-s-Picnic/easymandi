@@ -127,6 +127,29 @@ class _AccountPageState extends State<AccountPage> {
     super.dispose();
   }
 
+  Future<void> _forgotPassword() async {
+    final email=TextEditingController(text:_login.text.contains('@')?_login.text:'');
+    try{
+      final value=await showDialog<String>(context:context,builder:(ctx)=>AlertDialog(
+        title:Text(tr('Reset password','पासवर्ड रीसेट करें')),
+        content:TextField(controller:email,keyboardType:TextInputType.emailAddress,
+          decoration:InputDecoration(labelText:tr('Registered email','पंजीकृत ईमेल'))),
+        actions:[
+          TextButton(onPressed:()=>Navigator.pop(ctx),child:Text(tr('Cancel','रद्द करें'))),
+          FilledButton(onPressed:()=>Navigator.pop(ctx,email.text.trim()),child:Text(tr('Send reset link','रीसेट लिंक भेजें')))
+        ],
+      ));
+      if(value==null||!mounted)return;
+      if(!RegExp(r'^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$').hasMatch(value)){
+        setState(()=>_error=tr('Enter a valid email address','मान्य ईमेल पता दर्ज करें'));return;
+      }
+      await AuthService.instance.requestPasswordReset(value);
+      if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(
+        tr('If the email is registered, a reset link will be sent.','ईमेल पंजीकृत है तो रीसेट लिंक भेजा जाएगा।'))));
+    }on AuthException catch(error){if(mounted)setState(()=>_error=localizeError(error.message));}
+    finally{email.dispose();}
+  }
+
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
     setState(() { _busy = true; _error = null; });
@@ -305,6 +328,12 @@ class _AccountPageState extends State<AccountPage> {
                                 : tr('Sign in', 'साइन इन')),
                       ),
                     ),
+                    if (!_register)
+                      TextButton.icon(
+                        onPressed:_busy?null:_forgotPassword,
+                        icon:const Icon(Icons.lock_reset),
+                        label:Text(tr('Forgot password?','पासवर्ड भूल गए?')),
+                      ),
                     if (_googleClientId != null) ...[
                       const SizedBox(height: 12),
                       OutlinedButton(
