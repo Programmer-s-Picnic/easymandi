@@ -205,6 +205,7 @@ el('shareLocation').onclick=()=>{
 el('basketButton').onclick=()=>{
   if(!data)return;
   el('orderConfirmation').replaceChildren();
+  confirmationLanguageRefresh=null;
   el('orderError').textContent='';
   renderBasket();
   el('basket').showModal()
@@ -216,9 +217,9 @@ el('mobile').oninput=()=>el('mobile').setCustomValidity('');
 el('pin').oninput=()=>el('pin').setCustomValidity('');
 el('orderForm').onsubmit=async e=>{
   e.preventDefault();
-  const t=totals();
-  if(t.subtotal<data.store.minimumOrder){
-    alert(t('minimumError',{minimum:money(data.store.minimumOrder),difference:money(data.store.minimumOrder-t.subtotal)}));
+  const orderTotals=totals();
+  if(orderTotals.subtotal<data.store.minimumOrder){
+    alert(t('minimumError',{minimum:money(data.store.minimumOrder),difference:money(data.store.minimumOrder-orderTotals.subtotal)}));
     return
   }const form=new FormData(e.target);
   const phone=String(form.get('phone')||'').trim(),pin=String(form.get('pin')||'').trim(),mobileRule=new RegExp(data.checkout?.mobilePattern||'^[6-9][0-9]{9}$'),pinRule=new RegExp(data.checkout?.pinPattern||'^[1-9][0-9]{5}$');
@@ -318,6 +319,18 @@ el('orderForm').onsubmit=async e=>{
     link.rel='noopener noreferrer';
     link.textContent=t('sendWhatsapp');
     box.append(link);
+    confirmationLanguageRefresh=()=>{
+      title.textContent=t('orderPlaced',{id:result.orderId});
+      note.textContent=t('savedTotal',{total:money(result.total),method:t(paymentMethod==='upi'?'upiSelected':'codSelected')});
+      link.textContent=t('sendWhatsapp');
+      const panel=box.querySelector('.payment-panel');
+      if(panel){
+        panel.querySelector('h4').textContent=t('upiPayment');
+        panel.querySelector('p').textContent=t('payInfo',{total:money(result.total),name:'ABHISHEK KUMAR SINGH',upi:'7398564033@kotakbank'});
+        panel.querySelector('a').textContent=t('openUpi');
+        panel.querySelector('input').placeholder=t('upiReference');
+      }
+    };
     e.target.hidden=true;
     for(const id of Object.keys(cart))delete cart[id];
     save();
