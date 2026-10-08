@@ -50,8 +50,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
       ));
       if(name==null||!mounted)return;
       final qr=qrFor(order,code);
-      final painter=QrPainter(data:qr,version:QrVersions.auto,gapless:true,
-          color:Colors.black,emptyColor:Colors.white);
+      final painter=QrPainter(data:qr,version:QrVersions.auto,gapless:true);
       final image=await painter.toImageData(640,format:ui.ImageByteFormat.png);
       if(image==null)throw Exception('QR image unavailable');
       final message='Easy Mandi order ${order['external_order_id']}\n'
