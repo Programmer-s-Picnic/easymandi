@@ -312,3 +312,14 @@ footer {
 }
 .account-password-dialog{width:min(450px,94vw);border-radius:18px;padding:22px}
 .customer-inbox-menu{max-width:100%;border:1px solid #dae7de}
+
+/* Google customer login is discoverable even before OAuth SDK initialization. */
+.google-customer-section{margin:16px 0;padding:14px;border:1px solid #d6e6dc;border-radius:14px;background:#f7fcf9;text-align:center}
+.google-separator{margin:0 0 13px;font-size:13px;font-weight:650;color:#547160}
+#googleSignIn{display:flex;align-items:center;justify-content:center;min-height:0}
+.google-continue{display:inline-flex;align-items:center;justify-content:center;gap:11px;min-height:42px;max-width:100%;background:#fff!important;color:#24332c!important;border:1px solid #abbeb1!important}
+.google-g{font:800 19px/1 Arial,sans-serif;color:#4285f4}
+.google-status{font-size:12px;line-height:1.5;margin:9px auto 0;max-width:340px}
+.google-status:empty{display:none}
+.google-customer-section [hidden]{display:none!important}
+#googleLink{margin-top:10px;display:flex;justify-content:flex-start}
