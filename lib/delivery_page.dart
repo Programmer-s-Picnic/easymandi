@@ -55,7 +55,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
       final image=await painter.toImageData(640,format:ui.ImageByteFormat.png);
       if(image==null)throw Exception('QR image unavailable');
       final message='Easy Mandi order ${order['external_order_id']}\n'
-          '${name.isEmpty?'':'Receiver: $name\\n'}'
+          '${name.isEmpty?'':'Receiver: $name\n'}'
           'Delivery handoff code: $code\n'
           'Please show this QR or code to the delivery partner only after receiving the items.';
       await SharePlus.instance.share(ShareParams(
