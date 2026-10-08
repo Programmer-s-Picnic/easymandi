@@ -198,6 +198,7 @@
     byId('accountForm').hidden = !!user;
     byId('accountSwitch').hidden = !!user;
     byId('googleSignIn').hidden = !!user;
+    byId('googleCustomerSection').hidden=!!user;
     byId('googleComplete').hidden = !!user || !googleCredential || !registering;
     if (user) {
       if(googleReady)renderGoogleButtons();
