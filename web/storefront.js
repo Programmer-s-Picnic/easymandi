@@ -7,6 +7,16 @@ try{
 }const el=id=>document.getElementById(id),money=n=>'₹'+n,save=()=>localStorage.setItem('easy-mandi-cart',JSON.stringify(cart));
 const t=(key,vars={})=>window.EMI18n?.t(key,vars)||key;
 const productLabel=p=>window.EMI18n?.lang==='hi'?(p.hindi||p.name):p.name;
+let popularIds=[];
+async function loadPopularity(){
+  try{
+    const response=await AppHttp.fetch('https://cserver.learnwithchampak.live/easymandi/api/popular-products.php',{cache:'no-store'});
+    if(!response.ok)return;
+    const result=await response.json();
+    popularIds=Array.isArray(result.products)?result.products.map(x=>String(x.id)):[];
+    if(data)render();
+  }catch(_){/* Catalog remains usable without sales statistics. */}
+}
 let catalogLoading=false;
 let confirmationLanguageRefresh=null;
 function showLocationStatus(state){
@@ -76,6 +86,10 @@ function render(){
   });
   const q=el('search').value.toLocaleLowerCase();
   let list=data.products.filter(p=>(category==='All'||p.category===category)&&(p.name+' '+p.hindi+' '+p.category).toLocaleLowerCase().includes(q));
+  if(category==='All'&&!q&&popularIds.length){
+    const ranks=new Map(popularIds.map((id,index)=>[id,index]));
+    list=[...list].sort((a,b)=>(ranks.get(String(a.id))??999)-(ranks.get(String(b.id))??999));
+  }
   el('count').textContent=t('productsCount',{count:list.length});
   el('products').innerHTML='';
   for(const p of list){
@@ -356,4 +370,5 @@ window.addEventListener('languagechange',()=>{
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(true);});
 window.addEventListener('focus',()=>{if(!document.hidden)load(true);});
 setInterval(()=>{if(!document.hidden)load(true);},120000);
+loadPopularity();
 load();
