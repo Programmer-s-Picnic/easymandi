@@ -64,6 +64,7 @@ class StorePage extends StatefulWidget {
 
 class _StorePageState extends State<StorePage> {
   List<Product> products = [];
+  List<String> popularProductIds = [];
   List<RecentItem> recentItems = [];
   AuthUser? signedInUser;
   Map<String, dynamic> store = {};
@@ -93,6 +94,7 @@ class _StorePageState extends State<StorePage> {
       await checkNotifications();
     };
     loadCatalog();
+    loadPopularProducts();
     restoreAccount();
     notificationTimer=Timer.periodic(const Duration(minutes:5),(_)=>checkNotifications());
   }
@@ -197,6 +199,19 @@ class _StorePageState extends State<StorePage> {
         }, child: Text(tr('Sign out','साइन आउट'))),
       ],
     ));
+  }
+
+  Future<void> loadPopularProducts() async {
+    final client=HttpClient()..connectionTimeout=const Duration(seconds:8);
+    try{
+      final request=await client.getUrl(Uri.parse('https://cserver.learnwithchampak.live/easymandi/api/popular-products.php'));
+      final response=await request.close().timeout(const Duration(seconds:8));
+      if(response.statusCode!=200)return;
+      final data=jsonDecode(await response.transform(utf8.decoder).join()) as Map<String,dynamic>;
+      final entries=data['products'] as List<dynamic>? ?? [];
+      if(mounted)setState(()=>popularProductIds=entries.map((p)=>'${p['id']}').toList());
+    }catch(_){ /* Browsing still works without rankings. */ }
+    finally{client.close(force:true);}
   }
 
   Future<void> loadCatalog() async {
@@ -722,6 +737,10 @@ class _StorePageState extends State<StorePage> {
   @override
   Widget build(BuildContext context) {
     final filtered = products.where((p) => (category == 'All' || p.category == category) && '${p.name} ${p.hindi} ${p.category}'.toLowerCase().contains(query.toLowerCase())).toList();
+    if(category=='All'&&query.trim().isEmpty&&popularProductIds.isNotEmpty){
+      final priority={for(var i=0;i<popularProductIds.length;i++)popularProductIds[i]:i};
+      filtered.sort((a,b)=>(priority[a.id]??999).compareTo(priority[b.id]??999));
+    }
     return Scaffold(
       appBar: AppBar(title: const Row(children: [Text('🥬 ', style: TextStyle(fontSize: 28)), Text('Easy Mandi', style: TextStyle(fontWeight: FontWeight.w800))]), actions: [const LanguageButton(), IconButton(tooltip: signedInUser == null ? tr('Register or sign in','रजिस्टर या साइन इन करें') : tr('My account and sign out','मेरा खाता और साइन आउट'), onPressed: openAccount, icon: Icon(signedInUser == null ? Icons.person_outline : Icons.account_circle)), IconButton(tooltip: tr('My deliveries','मेरी डिलीवरी'), onPressed: () async { if (signedInUser == null) { await openAccount(); } if (mounted && signedInUser != null) Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const DeliveryPage())); }, icon: const Icon(Icons.local_shipping_outlined)), IconButton(tooltip: tr('About and developer','जानकारी और डेवलपर'), onPressed: showCredits, icon: const Icon(Icons.info_outline)), IconButton(tooltip: tr('Refresh catalog','कैटलॉग रीफ़्रेश करें'), onPressed: loadCatalog, icon: const Icon(Icons.refresh))]),
       body: loading ? const Center(child: CircularProgressIndicator()) : message.isNotEmpty ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text(message), TextButton(onPressed: loadCatalog, child: Text(tr('Retry','फिर प्रयास करें')))])) : CustomScrollView(slivers: [
