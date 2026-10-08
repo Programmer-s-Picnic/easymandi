@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:ui' as ui;
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'auth_service.dart';
@@ -27,6 +29,43 @@ class _DeliveryPageState extends State<DeliveryPage> {
     final code = order['handoff_code']?.toString();
     if (code == null || !RegExp(r'^[0-9]{6}$').hasMatch(code)) return null;
     return code;
+  }
+
+  Future<void> shareForAlternateReceiver(Map<String,dynamic> order) async {
+    final code=codeFor(order);
+    if(code==null)return;
+    final receiver=TextEditingController();
+    try {
+      final name=await showDialog<String>(context:context,builder:(ctx)=>AlertDialog(
+        title:Text(tr('Share delivery with another receiver','किसी और को डिलीवरी लेने के लिए भेजें')),
+        content:Column(mainAxisSize:MainAxisSize.min,children:[
+          Text(tr('The person you share with can complete this delivery. Share only with someone you trust.','जिसके पास यह कोड होगा वह डिलीवरी प्राप्त कर सकेगा। केवल भरोसेमंद व्यक्ति से साझा करें।')),
+          const SizedBox(height:12),
+          TextField(controller:receiver,decoration:InputDecoration(labelText:tr('Receiver name (optional)','प्राप्तकर्ता का नाम (वैकल्पिक)')),maxLength:80),
+        ]),
+        actions:[
+          TextButton(onPressed:()=>Navigator.pop(ctx),child:Text(tr('Cancel','रद्द करें'))),
+          FilledButton(onPressed:()=>Navigator.pop(ctx,receiver.text.trim()),child:Text(tr('Share code and QR','कोड और QR भेजें')))
+        ],
+      ));
+      if(name==null||!mounted)return;
+      final qr=qrFor(order,code);
+      final painter=QrPainter(data:qr,version:QrVersions.auto,gapless:true,
+          color:Colors.black,emptyColor:Colors.white);
+      final image=await painter.toImageData(640,format:ui.ImageByteFormat.png);
+      if(image==null)throw Exception('QR image unavailable');
+      final message='Easy Mandi order ${order['external_order_id']}\n'
+          '${name.isEmpty?'':'Receiver: $name\\n'}'
+          'Delivery handoff code: $code\n'
+          'Please show this QR or code to the delivery partner only after receiving the items.';
+      await SharePlus.instance.share(ShareParams(
+        text:message,
+        files:[XFile.fromData(image.buffer.asUint8List(),mimeType:'image/png',name:'easymandi-handoff.png')],
+      ));
+    }catch(_){
+      if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content:Text(tr('Could not share delivery code. Try again.','डिलीवरी कोड साझा नहीं हुआ। दोबारा प्रयास करें।'))));
+    }finally{receiver.dispose();}
   }
 
   String qrFor(Map<String, dynamic> order, String code) {
@@ -215,6 +254,9 @@ class _DeliveryPageState extends State<DeliveryPage> {
                                                   ),
                                                 ],
                                               ),
+                                              if (codeFor(o) != null) Padding(padding:const EdgeInsets.only(top:12),child:FilledButton.icon(
+                                                onPressed:()=>shareForAlternateReceiver(o),icon:const Icon(Icons.share),
+                                                label:Text(tr('Share code + QR with receiver','प्राप्तकर्ता को कोड और QR भेजें')))),
                                               if (o['code_expires_at'] != null)
                                                 Padding(
                                                   padding:
