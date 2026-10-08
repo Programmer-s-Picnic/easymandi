@@ -8,6 +8,7 @@
   let user = null;
   let registering = false;
   let googleCredential = null;
+  let googleReady=false;
   async function request(path, {
     method = 'GET', payload = null, authorized = false
   } = {
@@ -107,6 +108,7 @@
   const forgot=document.createElement('button');
   forgot.type='button';forgot.className='btn ghost';forgot.textContent='Forgot password? / पासवर्ड भूल गए?';
   byId('accountSwitch').before(forgot);
+  const googleLink=document.createElement('div');googleLink.id='googleLink';byId('accountProfile').append(googleLink);
   const changeButton=document.createElement('button');
   changeButton.type='button';changeButton.className='btn ghost';changeButton.textContent='Change password / पासवर्ड बदलें';
   byId('accountProfile').append(changeButton);
@@ -198,6 +200,11 @@
     byId('googleSignIn').hidden = !!user;
     byId('googleComplete').hidden = !!user || !googleCredential || !registering;
     if (user) {
+      if(googleReady){
+        const googleRoot=byId('googleLink');
+        googleRoot.replaceChildren();
+        google.accounts.id.renderButton(googleRoot,{theme:'outline',size:'large',text:'continue_with',locale:window.EMI18n?.lang||'en'});
+      }
       byId('accountTitle').textContent = t('myAccount');
       byId('accountIdentity').textContent = `${user.name} · +91 ${user.mobile}${user.email ? ` · ${
         user.email
@@ -237,12 +244,20 @@
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.onload = () => {
+      googleReady=true;
       google.accounts.id.initialize({
         client_id: clientId, callback: async ({
           credential
         }) => {
-          googleCredential = credential;
-          await completeGoogle();
+          if(user){
+            try{
+              await request('google',{method:'POST',authorized:true,payload:{operation:'link',id_token:credential}});
+              accountNotice('Google account linked successfully / Google खाता जुड़ गया।');
+            }catch(error){accountNotice(error.message||'Google linking failed',true);}
+          }else{
+            googleCredential=credential;
+            await completeGoogle();
+          }
         }
       });
       google.accounts.id.renderButton(byId('googleSignIn'), {
