@@ -698,6 +698,21 @@ class _StorePageState extends State<StorePage> {
             const SizedBox(height: 7),
             Text(tr('Vegetables for your everyday kitchen • ${store['city'] ?? 'Varanasi'}','आपकी रोज़ की रसोई के लिए ताज़ी सब्ज़ियाँ • ${store['city'] ?? 'Varanasi'}'), style: const TextStyle(color: Colors.white70)),
           ])),
+          const SizedBox(height: 12),
+          SizedBox(width: double.infinity, child: FilledButton.icon(
+            onPressed: () async {
+              if (signedInUser == null) await openAccount();
+              if (!mounted || signedInUser == null) return;
+              await Navigator.push(context,
+                MaterialPageRoute<void>(builder: (_) => const DeliveryPage()));
+            },
+            icon: const Icon(Icons.qr_code_2),
+            label: Text(signedInUser == null
+                ? tr('Sign in to see delivery code and QR',
+                    'डिलीवरी कोड और QR देखने के लिए लॉग इन करें')
+                : tr('My deliveries · code and QR',
+                    'मेरी डिलीवरी · कोड और QR')),
+          )),
           const SizedBox(height: 16),
           if (recentItems.isNotEmpty) ...[
             Text(tr('Previously ordered items','पहले मँगाए गए सामान'), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
