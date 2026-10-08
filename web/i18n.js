@@ -110,7 +110,7 @@
   try { lang = localStorage.getItem(key) === 'hi' ? 'hi' : 'en'; } catch { lang = 'en'; }
   const t=(id,vars={}) => {
     const phrase=(messages[lang][id] || messages.en[id] || id);
-    return phrase.replace(/\\{([a-zA-Z]+)\\}/g,(_,k)=>String(vars[k] ?? ''));
+    return phrase.replace(/\{([a-zA-Z]+)\}/g,(_,k)=>String(vars[k] ?? ''));
   };
   function apply() {
     document.documentElement.lang=lang;
