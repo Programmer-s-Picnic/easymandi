@@ -40,7 +40,7 @@
 </section>
 <p id="status" class="status" role="status">
 </p>
-<input class="search" id="search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products">
+<input class="search" id="search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products" data-i18n-aria-label="searchAria">
 <div class="filters" id="filters">
 </div>
 <div class="head">
@@ -71,16 +71,16 @@
 <input id="mobile" name="phone" type="tel" placeholder="9876543210" pattern="[6-9][0-9]{9}" maxlength="10" inputmode="numeric" autocomplete="tel-national" title="10 digits starting with 6, 7, 8 or 9" required>
 <p class="note" data-i18n="mobileHint">Format: +91 9876543210. Enter only the 10 digits.</p>
 <label for="house" data-i18n="house">House / flat / building</label>
-<input id="house" name="house" placeholder="House 12" minlength="2" required>
+<input id="house" name="house" data-i18n-placeholder="housePlaceholder" placeholder="House 12" minlength="2" required>
 <label for="locality" data-i18n="locality">Street / locality</label>
-<input id="locality" name="locality" placeholder="Lanka" minlength="5" required>
+<input id="locality" name="locality" data-i18n-placeholder="localityPlaceholder" placeholder="Lanka" minlength="5" required>
 <label for="landmark" data-i18n="landmark">Landmark (optional)</label>
-<input id="landmark" name="landmark" placeholder="Near the main gate">
+<input id="landmark" name="landmark" data-i18n-placeholder="landmarkPlaceholder" placeholder="Near the main gate">
 <label for="pin" data-i18n="pin">PIN code</label>
 <input id="pin" name="pin" placeholder="221005" pattern="[1-9][0-9]{5}" maxlength="6" inputmode="numeric" title="6-digit Indian PIN code" required>
 <p class="note"><span data-i18n="addressFormat">Address format:</span> <span id="addressExample">House 12, Lanka, Varanasi, Uttar Pradesh 221005</span>. <span data-i18n="deliveryCityLabel">Delivery city:</span> <strong id="deliveryCity">Varanasi</strong>.</p>
 <button type="button" class="btn ghost" id="shareLocation" data-i18n="shareLocation">Share current location</button>
-<p class="note" id="locationStatus" data-i18n="locationHint">Optional map pin for accurate delivery. Your browser will ask for permission.</p>
+<p class="note" id="locationStatus" data-i18n="locationHint" data-location-state="hint">Optional map pin for accurate delivery. Your browser will ask for permission.</p>
 <fieldset class="payment-choice">
 <legend data-i18n="paymentMethod">Payment method</legend>
 <label><input type="radio" name="paymentMethod" value="cod" checked> <span data-i18n="cod">Cash on Delivery</span></label>
@@ -131,7 +131,7 @@
 </label>
 <label><span data-i18n="mobileNumber">Mobile number</span> (+91)<input name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" pattern="[6-9][0-9]{9}" maxlength="10" placeholder="9876543210">
 </label>
-<label>Email (optional)<input name="email" type="email" autocomplete="email">
+<label><span data-i18n="emailOptional">Email (optional)</span><input name="email" type="email" autocomplete="email">
 </label>
 </div>
 <div id="loginFields">
