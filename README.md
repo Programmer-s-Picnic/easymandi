@@ -19,3 +19,12 @@ Customer authentication uses the plain PHP API at `https://cserver.learnwithcham
 ## Development
 
 Run `flutter create --platforms=android --org in.easymandi .`, add Android Internet permission, then `flutter pub get` and `flutter run`. The build workflow creates the Android project and builds split APKs.
+
+
+## Customer delivery code and QR
+
+After the delivery administrator imports an Easy Mandi order and assigns a delivery partner, the delivery service issues a six-digit handoff code valid for 24 hours. The customer can sign in on the [customer website](https://programmer-s-picnic.github.io/easymandi/web/) and open **My deliveries · code & QR**, or tap **My deliveries · code and QR** in the Flutter app. Both views use the same authenticated delivery API and display the code and an `easymandi://handoff?delivery=ID&code=XXXXXX` QR that the partner's scanner already understands. Before assignment or after delivery/cancellation/expiry, no active QR is shown; administrators can issue a fresh code if needed. The website bundles its QR renderer locally, without sending handoff codes to third-party QR services. Customers should reveal a code only after physically receiving their order.
+
+Customer deliveries require sign-in with a matching registered mobile. **Security limitation:** existing customer accounts currently do not verify ownership of a mobile number; before deploying this workflow for unrestricted production, add verified phone ownership or an order-specific, strongly authenticated claim mechanism to prevent a user claiming someone else's number and viewing a handoff code.
+
+The Flutter APK build is triggered by `lib/**` changes and uploads an artifact to the **Build Easy Mandi APK** GitHub Actions workflow. That workflow does **not** automatically update `easymandidata/releases/EasyMandi-64.apk` or `EasyMandi-32.apk`; do not advertise those fixed URLs as containing the new version until the APKs have been built, checked, and uploaded separately.
