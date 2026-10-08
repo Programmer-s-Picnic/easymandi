@@ -760,6 +760,21 @@ class _StorePageState extends State<StorePage> {
 
   Widget _totalRow(String label, String value, {bool bold = false}) => Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label, style: TextStyle(fontWeight: bold ? FontWeight.bold : null)), Text(value, style: TextStyle(fontWeight: bold ? FontWeight.bold : null))]));
 
+  Future<void> openOfficialStore() async {
+    const link='https://easymandi.in/';
+    try {
+      if (!await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication) && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(
+          'Could not open easymandi.in. Please try your browser.',
+          'easymandi.in नहीं खुल सका। कृपया ब्राउज़र में खोलें।'))));
+      }
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(
+        'The Easy Mandi website is unavailable right now.',
+        'Easy Mandi वेबसाइट अभी उपलब्ध नहीं है।'))));
+    }
+  }
+
   Future<void> openDeveloperSite() async {
     final uri = Uri.parse('https://learnwithchampak.live');
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
@@ -773,6 +788,7 @@ class _StorePageState extends State<StorePage> {
       title: const Text('Easy Mandi'),
       content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(tr('Developed and maintained by Champak Roy','विकसित और अनुरक्षित: Champak Roy')),
+        TextButton.icon(onPressed: openOfficialStore, icon: const Icon(Icons.storefront_outlined), label: const Text('easymandi.in')),
         TextButton.icon(onPressed: openDeveloperSite, icon: const Icon(Icons.open_in_new), label: const Text('learnwithchampak.live')),
       ]),
       actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: Text(tr('Close','बंद करें')))],
