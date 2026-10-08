@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'auth_service.dart';
+import 'google_customer_sign_in.dart';
 import 'i18n.dart';
 
 class AccountPage extends StatefulWidget {
@@ -63,9 +64,7 @@ class _AccountPageState extends State<AccountPage> {
     }
     setState(() { _busy = true; _error = null; });
     try {
-      final google = GoogleSignIn.instance;
-      await google.initialize(serverClientId: clientId);
-      final account = await google.authenticate();
+      final account = await CustomerGoogleSignIn.authenticate(clientId);
       final idToken = account.authentication.idToken;
       if (idToken == null) {
         throw const AuthException('Google did not return a sign-in token.');
@@ -83,10 +82,7 @@ class _AccountPageState extends State<AccountPage> {
       if (mounted) Navigator.pop(context, user);
     } on GoogleSignInException catch (error) {
       if (mounted) {
-        setState(() => _error = error.code == GoogleSignInExceptionCode.canceled
-            ? null
-            : tr('Google sign-in failed. Please try again.',
-                'Google साइन-इन असफल रहा। कृपया फिर प्रयास करें।'));
+        setState(() => _error = CustomerGoogleSignIn.safeFailure(error));
       }
     } on AuthException catch (error) {
       if (mounted) setState(() => _error = localizeError(error.message));
