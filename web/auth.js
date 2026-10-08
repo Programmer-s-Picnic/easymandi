@@ -271,7 +271,7 @@
     showGoogleStatus('Checking Google Sign-In… / Google साइन-इन जाँचा जा रहा है…');
     try{
       const {clientId}=await request('google-config');
-      if(typeof clientId!=='string'||!/^\\d+-[a-zA-Z0-9_-]+\\.apps\\.googleusercontent\\.com$/.test(clientId)){
+      if(typeof clientId!=='string'||!/^\d+-[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com$/.test(clientId)){
         throw Error('Google Sign-In is not configured on the Easy Mandi server. Use your password for now or contact support.');
       }
       if(!window.google?.accounts?.id){
