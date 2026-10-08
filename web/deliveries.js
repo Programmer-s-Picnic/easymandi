@@ -68,9 +68,9 @@
           share.type='button';
           share.onclick=async()=>{
             const text=t('Easy Mandi order ','Easy Mandi ऑर्डर ')+String(order.external_order_id||order.id)+
-              '\\n'+t('Delivery code: ','डिलीवरी कोड: ')+code+
+              '\n'+t('Delivery code: ','डिलीवरी कोड: ')+code+
               '\\nQR: '+order.handoff_qr+
-              '\\n'+t('Give this to the delivery partner only after physically receiving the order.','सामान मिलने के बाद ही डिलीवरी साथी को यह कोड दें।');
+              '\n'+t('Give this to the delivery partner only after physically receiving the order.','सामान मिलने के बाद ही डिलीवरी साथी को यह कोड दें।');
             try{
               const canvas=qr.querySelector('canvas'),img=qr.querySelector('img');
               const blob=canvas?await new Promise(resolve=>canvas.toBlob(resolve,'image/png')):img?await (await fetch(img.src)).blob():null;
