@@ -454,18 +454,8 @@ class _StorePageState extends State<StorePage> {
           SelectableText('${payment['upiId']}', style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           QrImageView(data: payment['upiUri'] as String, size: 220),
-          const SizedBox(height: 10),
-          FilledButton.icon(
-            onPressed: () async {
-              final uri=Uri.parse(payment['upiUri'] as String);
-              final opened=await launchUrl(uri, mode: LaunchMode.externalApplication);
-              if(!opened && dialogContext.mounted) {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content: Text(tr('No UPI app could be opened. Scan the QR instead.','कोई UPI ऐप नहीं खुला। इसके बजाय QR स्कैन करें।'))));
-              }
-            },
-            icon: const Icon(Icons.account_balance_wallet_outlined),
-            label: Text(tr('Open UPI app','UPI ऐप खोलें')),
-          ),
+          // Payment is made using the QR in a separate UPI app.
+          // No deep-link launcher: customers can stay on this receipt screen.
           const SizedBox(height: 14),
           TextField(controller: reference, maxLength: 80, decoration: InputDecoration(labelText: tr('UPI transaction/reference (optional)','UPI ट्रांज़ैक्शन/रेफरेंस (वैकल्पिक)'))),
           OutlinedButton.icon(
