@@ -113,7 +113,9 @@
       render();
     }catch(error){
       if(serial===nonce)notice.textContent=error.message||t('Could not load orders.','ऑर्डर लोड नहीं हो सके।');
-    }finally{loading=false;refreshButton.disabled=moreButton.disabled=false;}
+    }finally{
+      if(serial===nonce){loading=false;refreshButton.disabled=moreButton.disabled=false;}
+    }
   }
   async function loadMore(){
     if(!hasMore||loading||!window.CustomerAccount?.user)return;
@@ -136,6 +138,9 @@
     if(accountId!==null)fetchPage(true);
   });
   window.addEventListener('customer-order-placed',()=>fetchPage(true));
+  window.addEventListener('customer-section-opened',event=>{
+    if(event.detail?.section==='orders')fetchPage(true);
+  });
   window.addEventListener('languagechange',render);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&window.CustomerAccount?.user)fetchPage(true);});
   render();
