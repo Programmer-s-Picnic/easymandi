@@ -15,6 +15,7 @@ import 'account_page.dart';
 import 'auth_service.dart';
 import 'google_customer_sign_in.dart';
 import 'delivery_page.dart';
+import 'my_orders_page.dart';
 import 'local_store.dart';
 import 'product.dart';
 import 'store_gallery.dart';
@@ -263,6 +264,11 @@ class _StorePageState extends State<StorePage> {
           const SizedBox(height: 12),
           Text(tr('Signing out clears this device. Addresses saved to your account remain available when you sign in again.','साइन आउट करने पर इस डिवाइस का स्थानीय डेटा साफ होगा। खाते में सहेजे पते अगली बार साइन इन करने पर उपलब्ध रहेंगे।'))]),
       actions: [
+        TextButton(onPressed: () async {
+          Navigator.pop(dialogContext);
+          if(mounted)await Navigator.push(context,MaterialPageRoute<void>(
+            builder:(_)=>const MyOrdersPage()));
+        },child:Text(tr('My orders','मेरे ऑर्डर'))),
         TextButton(onPressed: () async {Navigator.pop(dialogContext);await showNotificationModal();},
           child:Text(tr('Notifications','सूचनाएँ'))),
         TextButton(onPressed: () async {Navigator.pop(dialogContext);await changeCustomerPassword();},
@@ -873,6 +879,12 @@ class _StorePageState extends State<StorePage> {
             onSelected:(choice)async{
               if(choice=='refresh'){await loadCatalog();return;}
               if(choice=='about'){showCredits();return;}
+              if(choice=='orders'){
+                if(signedInUser==null)await openAccount();
+                if(mounted&&signedInUser!=null)await Navigator.push(context,
+                  MaterialPageRoute<void>(builder:(_)=>const MyOrdersPage()));
+                return;
+              }
               if(choice=='deliveries'){
                 if(signedInUser==null)await openAccount();
                 if(mounted && signedInUser!=null){
@@ -882,6 +894,7 @@ class _StorePageState extends State<StorePage> {
               }
             },
             itemBuilder:(ctx)=>[
+              PopupMenuItem(value:'orders',child:Text(tr('My orders · all statuses','मेरे सभी ऑर्डर'))),
               PopupMenuItem(value:'deliveries',child:Text(tr('My deliveries and QR','मेरी डिलीवरी और QR'))),
               PopupMenuItem(value:'refresh',child:Text(tr('Refresh catalog','कैटलॉग रीफ़्रेश करें'))),
               PopupMenuItem(value:'about',child:Text(tr('About Easy Mandi','Easy Mandi के बारे में'))),
