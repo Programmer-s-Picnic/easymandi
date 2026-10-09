@@ -111,15 +111,18 @@
 <p class="note" id="deliveryNote">
 </p>
 <form class="form" id="orderForm">
+<div class="service-locality-group">
+<label for="locality" data-i18n="locality">Select delivery locality · डिलीवरी क्षेत्र चुनें</label>
+<select id="locality" name="locality" required aria-describedby="serviceLocalityStatus"><option value="">Loading service localities…</option></select>
+<div class="service-locality-actions"><a class="btn ghost" id="localityMap" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true" data-i18n="viewLocalityMap">Display locality on map</a><span class="note" id="serviceLocalityStatus" role="status">Checking available areas…</span></div>
+</div>
 <input name="name" data-i18n-placeholder="yourName" placeholder="Your name" minlength="2" maxlength="100" required>
 <label for="mobile"><span data-i18n="mobileNumber">Mobile number</span> (<span id="countryCode">+91</span>)</label>
 <input id="mobile" name="phone" type="tel" placeholder="9876543210" pattern="[6-9][0-9]{9}" maxlength="10" inputmode="numeric" autocomplete="tel-national" title="10 digits starting with 6, 7, 8 or 9" required>
 <p class="note" data-i18n="mobileHint">Format: +91 9876543210. Enter only the 10 digits.</p>
 <label for="house" data-i18n="house">House / flat / building</label>
 <input id="house" name="house" data-i18n-placeholder="housePlaceholder" placeholder="House 12" minlength="2" required>
-<label for="locality" data-i18n="locality">Select delivery locality · डिलीवरी क्षेत्र चुनें</label>
-<select id="locality" name="locality" required aria-describedby="serviceLocalityStatus"><option value="">Loading service localities…</option></select>
-<div class="service-locality-actions"><a class="btn ghost" id="localityMap" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true" data-i18n="viewLocalityMap">Display locality on map</a><span class="note" id="serviceLocalityStatus" role="status">Checking available areas…</span></div>
+
 <label for="landmark" data-i18n="landmark">Landmark (optional)</label>
 <input id="landmark" name="landmark" data-i18n-placeholder="landmarkPlaceholder" placeholder="Near the main gate">
 <label for="pin" data-i18n="pin">PIN code</label>
