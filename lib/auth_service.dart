@@ -40,7 +40,10 @@ class AuthService {
       {String method = 'GET', Map<String, Object?>? body, bool authenticated = false}) async {
     final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
     try {
-      final url = Uri.parse('$authApiBase/$endpoint.php');
+      final path = endpoint.contains('?')
+          ? endpoint.replaceFirst('?', '.php?')
+          : '$endpoint.php';
+      final url = Uri.parse('$authApiBase/$path');
       final request = await client.openUrl(method, url).timeout(const Duration(seconds: 12));
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
       if (authenticated) {
@@ -143,6 +146,9 @@ class AuthService {
     await _request('google',method:'POST',authenticated:true,
       body:{'operation':'link','id_token':idToken});
   }
+
+  Future<Map<String,dynamic>> myOrders({int page=1}) =>
+    _request('my-orders?page=$page',authenticated:true);
 
   Future<Map<String,dynamic>> customerData() => _request('customer-data', authenticated:true);
   Future<void> saveServerAddress(Map<String,Object?> address) async { await _request('customer-data',method:'POST',body:address,authenticated:true); }
