@@ -508,6 +508,19 @@ class _StorePageState extends State<StorePage> {
   }
 
   Future<void> checkout() async {
+    // Catalogue browsing is public, but no guest may submit an order.
+    if (AuthService.instance.user == null) {
+      if (signedInUser != null && mounted) setState(() => signedInUser = null);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(
+        'Sign in or register to place your order. Your basket will be kept.',
+        'ऑर्डर करने के लिए लॉग इन या रजिस्टर करें। आपकी टोकरी सुरक्षित रहेगी।'))));
+      await openAccount();
+      if (mounted && signedInUser != null && AuthService.instance.user != null) {
+        await checkout();
+      }
+      return;
+    }
     final minimum = (store['minimumOrder'] as num? ?? 99);
     if (subtotal < minimum) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Minimum order is ${money(minimum)}. Add ${money(minimum - subtotal)} more.','न्यूनतम ऑर्डर ${money(minimum)} है। ${money(minimum - subtotal)} और जोड़ें।'))));
@@ -533,8 +546,8 @@ class _StorePageState extends State<StorePage> {
         'वाराणसी के डिलीवरी क्षेत्र लोड नहीं हुए। कृपया पुनः प्रयास करें।'))));
       return;
     }
-    final name = TextEditingController(text: signedInUser?.name ?? '');
-    final phone = TextEditingController(text: signedInUser?.mobile ?? '');
+    final name = TextEditingController(text: AuthService.instance.user!.name);
+    final phone = TextEditingController(text: AuthService.instance.user!.mobile);
     final house = TextEditingController();
     final locality = TextEditingController();
     final landmark = TextEditingController();
@@ -604,7 +617,8 @@ class _StorePageState extends State<StorePage> {
               onChanged: (id) => updateDialog(() {
                 selectedAddress = id == null ? null : savedAddresses.firstWhere((a) => a.id == id);
                 final a = selectedAddress;
-                name.text = a?.name ?? ''; phone.text = a?.phone ?? '';
+                name.text = a?.name ?? AuthService.instance.user!.name;
+                phone.text = AuthService.instance.user!.mobile;
                 house.text = a?.house ?? ''; locality.text = a?.locality ?? '';
                 landmark.text = a?.landmark ?? ''; pin.text = a?.pin ?? '';
               }),
@@ -614,7 +628,8 @@ class _StorePageState extends State<StorePage> {
             const SizedBox(height: 10),
             TextFormField(
               controller: phone,
-              decoration: InputDecoration(labelText: tr('Mobile number','मोबाइल नंबर'), prefixText: '$countryCode ', hintText: checkoutRules['mobileExample'] as String? ?? '9876543210', helperText: tr('10 digits, starting with 6, 7, 8 or 9','10 अंक, 6, 7, 8 या 9 से शुरू')),
+              readOnly: true,
+              decoration: InputDecoration(labelText: tr('Registered mobile number','पंजीकृत मोबाइल नंबर'), prefixText: '$countryCode ', hintText: checkoutRules['mobileExample'] as String? ?? '9876543210', helperText: tr('Orders use your signed-in account number.','ऑर्डर आपके लॉग इन खाते के नंबर से होंगे।')),
               keyboardType: TextInputType.phone,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
               validator: (v) => mobilePattern.hasMatch(v?.trim() ?? '') ? null : tr('Enter a valid 10-digit Indian mobile number','मान्य 10 अंकों का भारतीय मोबाइल नंबर दर्ज करें'),
@@ -743,9 +758,12 @@ class _StorePageState extends State<StorePage> {
         'items': orderItems,
       });
       _pendingOrderKey = null;
-    } on AuthException catch (error) {
+     } on AuthException catch (error) {
       if(error.statusCode==409&&error.message.startsWith('Order request already used'))_pendingOrderKey=null;
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      if (mounted) {
+        if (error.statusCode == 401) setState(() => signedInUser = null);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(localizeError(error.message))));
+      }
       return;
     }
     if (!mounted) return;
