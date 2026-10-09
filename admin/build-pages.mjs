@@ -10,6 +10,7 @@ const dir=dirname(fileURLToPath(import.meta.url));
 const source=await readFile(join(dir,'index.html'),'utf8');
 const pages=[
  {page:'products',file:'products.html',title:'Products Master',description:'Easy Mandi product catalog and store settings for authorized administrators.'},
+ {page:'localities',file:'localities.html',title:'Localities Master',description:'Varanasi delivery areas and service coverage for authorized administrators.'},
  {page:'customers',file:'customers.html',title:'Customers Master',description:'Easy Mandi customer records and order history for authorized administrators.'},
  {page:'partners',file:'delivery-partners.html',title:'Delivery Partners Master',description:'Easy Mandi delivery partner records for authorized administrators.'},
  {page:'help',file:'how-to.html',title:'How to Work',description:'Daily operating instructions for the Easy Mandi administration team.'}

@@ -525,3 +525,16 @@ header>div{max-width:1200px;padding:12px 22px;gap:12px}
 .filters button{display:inline-flex;align-items:center;gap:7px}
 .filters .category-photo{height:30px;width:30px;border-radius:7px;object-fit:cover;flex-shrink:0;background:#f1f6f3}
 @media(max-width:600px){.filters .category-photo{height:25px;width:25px}.filters button{gap:5px}}
+
+/* Locality-first delivery address, available areas from the administrator. */
+.service-locality-group{
+  background:#ecf7ff;border:1px solid #b7d9eb;padding:14px 15px;
+  border-radius:14px;display:grid;gap:8px;margin-bottom:12px;
+}
+.service-locality-group>label{font-weight:800;color:#174960}
+.service-locality-group select{width:100%;min-height:46px;border:1px solid #8bafc5;border-radius:9px;background:white;padding:10px 12px;font:inherit}
+.service-locality-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#localityMap{font-size:12px;text-decoration:none;white-space:nowrap}
+#localityMap[aria-disabled="true"]{opacity:.45;pointer-events:none}
+#serviceLocalityStatus{font-size:12px;line-height:1.5}
+@media(max-width:500px){.service-locality-group{padding:11px}.service-locality-actions{align-items:stretch}.service-locality-actions .btn{width:100%;justify-content:center;text-align:center}}

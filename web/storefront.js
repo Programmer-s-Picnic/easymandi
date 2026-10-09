@@ -388,7 +388,11 @@ el('orderForm').onsubmit=async e=>{
     el('pin').reportValidity();
     return
   }const house=String(form.get('house')||'').trim(),locality=String(form.get('locality')||'').trim(),landmark=String(form.get('landmark')||'').trim();
-  if(house.length<2||locality.length<5||!/[A-Za-z0-9\u0900-\u097F]/.test(house)||!/[A-Za-z0-9\u0900-\u097F]/.test(locality)){
+  if(!window.EasyMandiLocalities?.valid(locality)){
+    alert('Please choose a served Varanasi locality from the list. / कृपया उपलब्ध क्षेत्र चुनें।');
+    el('locality').focus();return;
+  }
+  if(house.length<2||locality.length<2||!/[A-Za-z0-9\u0900-\u097F]/.test(house)||!/[A-Za-z0-9\u0900-\u097F]/.test(locality)){
     alert(t('addressError'));
     return
   }const chosen=data.products.filter(p=>p.available&&cart[p.id]).map(p=>({

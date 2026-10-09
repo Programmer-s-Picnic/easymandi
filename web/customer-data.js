@@ -16,7 +16,7 @@
   const message=document.createElement('p');
   message.setAttribute('role','status');
   controls.append(title,select,save,remove,message);
-  by('orderForm').prepend(controls);
+  by('orderForm').querySelector('.service-locality-group').after(controls);
   const history=document.createElement('section');
   history.className='panel previously-purchased';
   history.setAttribute('aria-labelledby','previouslyOrderedHeading');
@@ -132,7 +132,8 @@
     const address=addresses.find(a=>Number(a.id)===selected);
     if(!address)return;
     const form=by('orderForm');
-    for(const key of ['name','house','locality','landmark','pin'])form.elements[key].value=address[key]||'';
+    for(const key of ['name','house','landmark','pin'])form.elements[key].value=address[key]||'';
+    window.EasyMandiLocalities?.choose(address.locality||'');
     form.elements.phone.value=address.phone||'';
     deliveryLocation=null;
     by('locationStatus').dataset.locationState='hint';
@@ -158,6 +159,10 @@
     const payload={operation:'save',...(selected!==null?{id:selected}:{})};
     for(const key of ['name','house','locality','landmark','pin'])payload[key]=form.elements[key].value.trim();
     payload.phone=form.elements.phone.value.trim();
+    if(!window.EasyMandiLocalities?.valid(payload.locality)){
+      message.textContent='Choose a currently served Varanasi locality before saving this address.';
+      return;
+    }
     mutate(payload,'savedAddressOk');
   });
   remove.addEventListener('click',()=>{

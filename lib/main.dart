@@ -34,7 +34,7 @@ Future<void> main() async {
   // Deliberate one-time customer reset for the October 2026 fresh start.
   // Keep the catalog and the application's language preference intact.
   final prefs=await SharedPreferences.getInstance();
-  const migrationKey='easy-mandi-fresh-start-20261008';
+  const migrationKey='easy-mandi-fresh-start-20261009';
   if(prefs.getBool(migrationKey)!=true){
     await AuthService.instance.clearLocalAccountForFreshStart();
     await LocalStore.instance.clearPersonalData();
@@ -43,6 +43,7 @@ Future<void> main() async {
       await prefs.remove(key);
     }
     await prefs.remove('cart');
+    await prefs.remove('easy-mandi-favorites');
     await prefs.setBool(migrationKey,true);
   }
   await EasyMandiLanguage.load();
@@ -512,6 +513,26 @@ class _StorePageState extends State<StorePage> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Minimum order is ${money(minimum)}. Add ${money(minimum - subtotal)} more.','न्यूनतम ऑर्डर ${money(minimum)} है। ${money(minimum - subtotal)} और जोड़ें।'))));
       return;
     }
+    // Server-authoritative Varanasi service areas; never permit free-text
+    // fallback when the endpoint is unavailable.
+    late final List<Map<String,dynamic>> serviceAreas;
+    try {
+      final client=HttpClient()..connectionTimeout=const Duration(seconds: 8);
+      try {
+        final request=await client.getUrl(Uri.parse(
+          'https://cserver.learnwithchampak.live/easymandi/api/localities.php'));
+        final response=await request.close().timeout(const Duration(seconds: 8));
+        if(response.statusCode!=200)throw const HttpException('Service areas unavailable');
+        final body=jsonDecode(await response.transform(utf8.decoder).join()) as Map<String,dynamic>;
+        serviceAreas=(body['localities'] as List).map((e)=>Map<String,dynamic>.from(e as Map)).toList();
+        if(serviceAreas.isEmpty)throw const FormatException('No localities enabled');
+      } finally { client.close(force:true); }
+    }catch(_){
+      if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(tr(
+        'Could not load serviced Varanasi localities. Please retry.',
+        'वाराणसी के डिलीवरी क्षेत्र लोड नहीं हुए। कृपया पुनः प्रयास करें।'))));
+      return;
+    }
     final name = TextEditingController(text: signedInUser?.name ?? '');
     final phone = TextEditingController(text: signedInUser?.mobile ?? '');
     final house = TextEditingController();
@@ -546,6 +567,34 @@ class _StorePageState extends State<StorePage> {
           child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
             Text(tr('Your order will be saved for the Easy Mandi team. You can also send its reference by WhatsApp. Confirm final price and delivery before payment.','आपका ऑर्डर Easy Mandi टीम के लिए सहेजा जाएगा। आप इसका रेफरेंस WhatsApp पर भी भेज सकते हैं। भुगतान से पहले अंतिम कीमत और डिलीवरी की पुष्टि करें।')),
             const SizedBox(height: 16),
+            // Locality MUST be selected before entering the detailed address.
+            DropdownButtonFormField<String>(
+              key: ValueKey('service-locality-${locality.text}'),
+              initialValue: serviceAreas.any((a)=>a['name']==locality.text) ? locality.text : null,
+              isExpanded:true,
+              decoration:InputDecoration(labelText:tr('Select delivery locality','डिलीवरी क्षेत्र चुनें')),
+              items:serviceAreas.map((a)=>DropdownMenuItem<String>(
+                value:a['name'] as String,
+                child:Text(a['name'] as String,overflow:TextOverflow.ellipsis))).toList(),
+              onChanged:(value)=>updateDialog(()=>locality.text=value??''),
+              validator:(value)=>value!=null&&serviceAreas.any((a)=>a['name']==value)
+                ? null : tr('Choose an available Varanasi locality','वाराणसी का उपलब्ध क्षेत्र चुनें'),
+            ),
+            const SizedBox(height: 7),
+            OutlinedButton.icon(
+              onPressed:locality.text.isEmpty?null:() async{
+                final matches=serviceAreas.where((a)=>a['name']==locality.text);
+                if(matches.isEmpty)return;
+                final query=(matches.first['mapQuery'] as String?)??'${locality.text}, Varanasi, India';
+                final url=Uri.https('www.google.com','/maps/search/',{'api':'1','query':query});
+                if(!await launchUrl(url,mode:LaunchMode.externalApplication)&&dialogContext.mounted){
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content:Text(tr(
+                    'Could not display this locality on the map.','मानचित्र पर क्षेत्र नहीं खुल सका।'))));
+                }
+              },
+              icon:const Icon(Icons.map_outlined),
+              label:Text(tr('Display locality on map','मानचित्र पर क्षेत्र दिखाएँ'))),
+            const SizedBox(height: 12),
             if (savedAddresses.isNotEmpty) DropdownButtonFormField<int?>(
               key: ValueKey(selectedAddress?.id),
               initialValue: selectedAddress?.id,
@@ -572,8 +621,6 @@ class _StorePageState extends State<StorePage> {
             ),
             const SizedBox(height: 10),
             TextFormField(controller: house, decoration: InputDecoration(labelText: tr('House / flat / building','मकान / फ्लैट / बिल्डिंग'), hintText: tr('House 12','मकान 12')), textCapitalization: TextCapitalization.words, validator: (v) => (v?.trim().length ?? 0) >= 2 && RegExp(r'[A-Za-z0-9\u0900-\u097F]').hasMatch(v!.trim()) ? null : tr('Enter a house or building number/name','मकान या बिल्डिंग का नंबर/नाम दर्ज करें')),
-            const SizedBox(height: 10),
-            TextFormField(controller: locality, decoration: InputDecoration(labelText: tr('Street / locality','गली / मोहल्ला'), hintText: 'Lanka'), textCapitalization: TextCapitalization.words, validator: (v) => (v?.trim().length ?? 0) >= 5 && RegExp(r'[A-Za-z0-9\u0900-\u097F]').hasMatch(v!.trim()) ? null : tr('Enter a street/locality (at least 5 characters)','गली/मोहल्ला दर्ज करें (कम से कम 5 अक्षर)')),
             const SizedBox(height: 10),
             TextFormField(controller: landmark, decoration: InputDecoration(labelText: tr('Landmark (optional)','लैंडमार्क (वैकल्पिक)')), textCapitalization: TextCapitalization.words),
             const SizedBox(height: 10),
@@ -649,6 +696,12 @@ class _StorePageState extends State<StorePage> {
       )),
     );
     if (submitted != true || !mounted) return;
+    if(!serviceAreas.any((a)=>a['name']==locality.text)){
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(tr(
+        'This locality is not currently served. Choose an available area.',
+        'यह क्षेत्र अभी सेवा में नहीं है। उपलब्ध क्षेत्र चुनें।'))));
+      return;
+    }
     if (saveNewAddress && selectedAddress == null) {
       try {
         await saveCustomerAddress(SavedAddress(name: name.text.trim(), phone: phone.text.trim(),

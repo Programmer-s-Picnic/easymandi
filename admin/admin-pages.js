@@ -3,7 +3,7 @@
 (()=>{
  'use strict';
  const page=document.documentElement.dataset.adminPage||'operations';
- const known=['operations','products','customers','partners','help'];
+ const known=['operations','products','localities','customers','partners','help'];
  if(!known.includes(page))return;
  document.querySelectorAll('[data-admin-link]').forEach(a=>{
    if(a.getAttribute('data-admin-link')===page)a.setAttribute('aria-current','page');
