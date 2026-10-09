@@ -113,9 +113,11 @@
   }
   async function refresh(){
     const account=window.CustomerAccount?.user;
-    const serial=++requestNumber;
-    if(!account){lastOrders=[];loading=false;render();return;}
+    if(!account){requestNumber++;lastOrders=[];loading=false;render();return;}
+    // Do not invalidate a running response merely because the user reopened
+    // this tab. The in-flight request is already going to populate the view.
     if(loading)return;
+    const serial=++requestNumber;
     loading=true;
     refreshButton.disabled=true;
     notice.textContent=t('Updating delivery status…','डिलीवरी स्थिति अपडेट हो रही है…');
@@ -130,11 +132,16 @@
         notice.textContent=error.message||t('Could not load deliveries. Try again.','डिलीवरी नहीं खुली। दोबारा प्रयास करें।');
       }
     }finally{
-      loading=false;
-      refreshButton.disabled=false;
+      if(serial===requestNumber){
+        loading=false;
+        refreshButton.disabled=false;
+      }
     }
   }
   refreshButton.addEventListener('click',refresh);
+  window.addEventListener('customer-section-opened',event=>{
+    if(event.detail?.section==='deliveries')refresh();
+  });
   window.addEventListener('customer-account-changed',()=>{
     requestNumber++;
     loading=false;
