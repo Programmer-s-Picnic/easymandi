@@ -1,5 +1,6 @@
 (() => {
   'use strict';
+  if(document.documentElement.dataset.adminPage!=='operations')return;
   const api = 'https://cserver.learnwithchampak.live/easymandi/api/';
   const byId = id => document.getElementById(id);
   const session=window.AdminSession;
