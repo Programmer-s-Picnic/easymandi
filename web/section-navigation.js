@@ -40,6 +40,9 @@
     });
     document.body.dataset.customerSection=id;
     syncAccount();
+    // Activating a section must refresh its own data loader without reloading the page.
+    // This is also fired on startup when restoring the last selected section.
+    window.dispatchEvent(new CustomEvent('customer-section-opened',{detail:{section:id}}));
     if(remember){try{localStorage.setItem(key,id);}catch{}}
     if(updateUrl){
       const next='#'+id;
