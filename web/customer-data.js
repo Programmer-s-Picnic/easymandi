@@ -66,6 +66,7 @@
   function renderPreviouslyOrdered(){
     const personal=!!window.CustomerAccount?.user;
     history.hidden=!personal&&!previousItems.length;
+    by('recentSection').hidden=history.hidden;
     history.replaceChildren();
     if(!personal&&!previousItems.length)return;
     if(previousError){
@@ -185,9 +186,14 @@
       render();
     }catch(error){
       if(request===refreshSerial&&window.CustomerAccount?.user?.id===account.id){
+        try{
+          previousItems=await fallbackPreviousItems();
+          if(request!==refreshSerial||window.CustomerAccount?.user?.id!==account.id)return;
+          window.EasyMandiCatalog?.setPreviousIds(previousItems.map(item=>item.product_id));
+          previousError='';
+        }catch(other){previousError=other.message||error.message||t('addressLoadError');}
         previousLoading=false;
-        previousError=error.message||t('addressLoadError');
-        message.textContent=previousError;
+        message.textContent=previousError||t('addressLoadError');
         renderPreviouslyOrdered();
       }
     }
@@ -224,6 +230,17 @@
       save.disabled=remove.disabled=false;
     }
   }
+  window.EasyMandiCustomerData=Object.freeze({
+    saveCheckoutAddress:async fields=>{
+      const payload={operation:'save',...(selected!==null?{id:selected}:{})};
+      for(const field of ['name','house','locality','landmark','pin'])payload[field]=String(fields[field]||'').trim();
+      payload.phone=String(fields.phone||'').trim();
+      if(signedIn())await window.CustomerAccount.request('customer-data',{method:'POST',authorized:true,payload});
+      else guestAddressSave(payload);
+      await refresh();
+    }
+  });
+  by('refreshRecent')?.addEventListener('click',refresh);
   save.addEventListener('click',()=>{
     const form=by('orderForm');
     const payload={operation:'save',...(selected!==null?{id:selected}:{})};
