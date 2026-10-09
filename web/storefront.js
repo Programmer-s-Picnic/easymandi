@@ -66,6 +66,57 @@ function totals(){
     subtotal,fee,total:subtotal+fee
   }
 }
+
+/* One product-card renderer for the live catalog and previously ordered items.
+   Reusing the same component keeps prices, language and cart controls in sync. */
+function createProductCard(p){
+  const card=document.createElement('article');
+  card.className='card';
+  card.dataset.productId=String(p.id);
+  const art=document.createElement('div');
+  art.className='illustration';
+  art.textContent=p.emoji||'🛒';
+  art.setAttribute('aria-hidden','true');
+  const title=document.createElement('h3');
+  title.textContent=productLabel(p);
+  const unit=document.createElement('small');
+  unit.textContent=(window.EMI18n?.lang==='hi'?p.name:(p.hindi||p.name))+' · '+p.unit;
+  const row=document.createElement('div');
+  row.className='row';
+  const price=document.createElement('span');
+  price.className='price';
+  price.textContent=money(p.price);
+  const step=document.createElement('span');
+  step.className='step';
+  if(!p.available){
+    step.textContent=t('soldOut');
+  }else if(!cart[p.id]){
+    const add=document.createElement('button');
+    add.type='button';
+    add.textContent='+';
+    add.setAttribute('aria-label',t('add')+' '+productLabel(p));
+    add.onclick=()=>change(p.id,1);
+    step.append(add);
+  }else{
+    for(const [label,delta] of [['−',-1],['+',1]]){
+      const button=document.createElement('button');
+      button.type='button';
+      button.textContent=label;
+      button.setAttribute('aria-label',t(delta>0?'add':'removeOne')+' '+productLabel(p));
+      button.onclick=()=>change(p.id,delta);
+      if(delta>0)step.append(String(cart[p.id]));
+      step.append(button);
+    }
+  }
+  row.append(price,step);
+  card.append(art,title,unit,row);
+  return card;
+}
+window.EasyMandiCatalog=Object.freeze({
+  ready:()=>!!data,
+  getProduct:id=>data?.products.find(p=>String(p.id)===String(id))||null,
+  createCard:createProductCard
+});
 function render(){
   if(!data)return;
   const valid=new Set(data.products.filter(p=>p.available).map(p=>p.id));
@@ -92,44 +143,10 @@ function render(){
   }
   el('count').textContent=t('productsCount',{count:list.length});
   el('products').innerHTML='';
-  for(const p of list){
-    const card=document.createElement('article');
-    card.className='card';
-    const art=document.createElement('div');
-    art.className='illustration';
-    art.textContent=p.emoji;
-    const title=document.createElement('h3');
-    title.textContent=productLabel(p);
-    const unit=document.createElement('small');
-    unit.textContent=(window.EMI18n?.lang==='hi'?p.name:p.hindi)+' · '+p.unit;
-    const row=document.createElement('div');
-    row.className='row';
-    const price=document.createElement('span');
-    price.className='price';
-    price.textContent=money(p.price);
-    const step=document.createElement('span');
-    step.className='step';
-    if(!p.available)step.textContent=t('soldOut');
-    else if(!cart[p.id]){
-      const add=document.createElement('button');
-      add.textContent='+';
-      add.setAttribute('aria-label',t('add')+' '+productLabel(p));
-      add.onclick=()=>change(p.id,1);
-      step.append(add)
-    }else{
-      for(const [label,delta] of [['−',-1],['+',1]]){
-        const b=document.createElement('button');
-        b.textContent=label;
-        b.setAttribute('aria-label',t(delta>0?'add':'removeOne')+' '+productLabel(p));
-        b.onclick=()=>change(p.id,delta);
-        if(delta>0)step.append(String(cart[p.id]));
-        step.append(b)
-      }
-    }row.append(price,step);
-    card.append(art,title,unit,row);
-    el('products').append(card)
-  }if(!list.length)el('products').textContent=t('noProducts');
-  el('basketButton').textContent=t('basket')+' · '+Object.values(cart).reduce((a,b)=>a+b,0)
+  for(const p of list)el('products').append(createProductCard(p));
+  if(!list.length)el('products').textContent=t('noProducts');
+  el('basketButton').textContent=t('basket')+' · '+Object.values(cart).reduce((a,b)=>a+b,0);
+  window.dispatchEvent(new Event('easy-mandi-catalog-rendered'));
 }
 function renderBasket(){
   const chosen=data.products.filter(p=>p.available&&cart[p.id]);
