@@ -266,8 +266,8 @@
   window.addEventListener('languagechange',render);
   window.addEventListener('easy-mandi-catalog-rendered',renderPreviouslyOrdered);
   by('basketButton').addEventListener('click',refresh);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
-  window.addEventListener('focus',()=>{if(!document.hidden)refresh();});
+
+
   setInterval(()=>{if(!document.hidden&&window.CustomerAccount?.user)refresh();},120000);
   refresh();
 })();
