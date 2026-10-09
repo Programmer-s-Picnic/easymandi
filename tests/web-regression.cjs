@@ -102,6 +102,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
     }
   };
   c.run('shared/api-client.js');c.run('web/storefront.js');await tick();await tick();vm.runInContext(`change(${JSON.stringify(id)},1)`,c.ctx);
+  await c.nodes.basketButton.fire('click');
   c.nodes.orderForm.values={name:'Test User',phone:'9876543210',house:'House 12',locality:'Lanka',landmark:'',pin:'221005'};
   await c.nodes.orderForm.fire('submit');
   assert.equal(savedOrders,0,'guest checkout must not save orders');
