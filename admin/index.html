@@ -14,7 +14,7 @@
 <meta property="og:image" content="https://easymandi.in/web/og-image.svg">
 <meta name="theme-color" content="#176b46">
 <title>Easy Mandi · Admin workspace</title>
-<link rel="stylesheet" href="catalog.css?v=20261009-ops-v1">
+<link rel="stylesheet" href="catalog.css?v=20261009-ops-help">
 <link rel="stylesheet" href="../shared/notifications.css?v=20261008-animated">
 <script src="../shared/api-client.js?v=20261001-icons" defer>
 </script>
@@ -32,6 +32,27 @@
 <main>
 <section class="ops-workspace" id="opsDesk" aria-labelledby="opsTitle">
  <div class="ops-heading"><div><p class="ops-kicker">EASY MANDI · LIVE OPERATIONS</p><h2 id="opsTitle">Operations Desk</h2><p class="ops-muted">Orders, payments, packing and delivery in one workspace · Times in IST</p></div><div class="ops-top-actions"><span id="opsLastSync" class="ops-muted">Not connected</span><button class="btn secondary" id="opsRefresh" type="button">Refresh</button><button class="btn" id="opsSignIn" type="button">Unlock operations</button></div></div>
+ <details class="ops-guide" id="opsHowTo">
+  <summary><span class="ops-guide-icon" aria-hidden="true">?</span><span><strong>How to Work · काम कैसे करें</strong><small>Step-by-step daily guide for processing orders and deliveries</small></span><span class="ops-guide-chevron" aria-hidden="true">▾</span></summary>
+  <div class="ops-guide-content">
+   <p class="ops-guide-intro">Start at <strong>New orders</strong>, work through payments and packing, then assign and track deliveries. The work queues show different views of the same saved orders: moving between queues does not create, duplicate, or delete an order.</p>
+   <h3>Process a customer order</h3>
+   <ol class="ops-guide-steps">
+    <li><strong>Unlock the desk</strong><span>Choose <em>Unlock operations</em> and enter the admin password. Your secure session lasts 30 minutes; you can unlock again when it expires.</span><span class="ops-guide-hi" lang="hi">पहले एडमिन लॉगिन करें।</span></li>
+    <li><strong>Receive and review</strong><span>Open <em>New orders</em>. Select an order and check the customer's items, quantities, address, mobile, notes and total. Change the order status to <em>Confirmed</em> after reviewing it.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="new">Open New orders →</button></li>
+    <li><strong>Handle payment</strong><span>For UPI, open the submitted receipt, inspect its details and verify or reject it. For COD, mark payment paid <strong>only after money has actually been collected</strong>. Never mark an unpaid order as paid.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="payment">Open UPI verification →</button></li>
+    <li><strong>Prepare and pack</strong><span>Use <em>Preparing / packing</em>, check every item, and choose <em>Print packing checklist</em>. Print or save the checklist as a PDF. Add packing/delivery notes with the existing order tools if needed.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="packing">Open Packing →</button></li>
+    <li><strong>Import and assign delivery</strong><span>In <em>Awaiting assignment</em>, choose <em>Import for delivery</em> if the order has no delivery record. Select an active delivery partner and choose <em>Assign delivery partner</em>. Assignment sends a handoff code to the customer through the established notification flow.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="unassigned">Open Unassigned →</button></li>
+    <li><strong>Track the delivery</strong><span>Use <em>Active deliveries</em> to see partner assignment, pickup and out-for-delivery states. The delivery partner completes the handoff with the customer's code/QR through the partner app. Use Advanced delivery management for resend-code and other specialist actions.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="active">Open Active deliveries →</button></li>
+    <li><strong>Resolve and close</strong><span>Review <em>Exceptions</em> for rejected receipts and long-unassigned orders. Use <em>Completed</em> to check finished or cancelled orders. Delivery completion should normally follow the partner's verified handoff, not a premature manual status change.</span><div class="ops-guide-action-row"><button type="button" class="ops-guide-action" data-ops-guide-queue="exceptions">Open Exceptions →</button><button type="button" class="ops-guide-action" data-ops-guide-queue="completed">View Completed →</button></div></li>
+   </ol>
+   <div class="ops-guide-bottom">
+    <section aria-labelledby="opsShiftHeading"><h3 id="opsShiftHeading">Daily routine</h3><p><strong>Morning:</strong> review pending UPI, new orders and old unassigned deliveries.<br><strong>During the day:</strong> keep the queue open, confirm orders, pack, assign partners and follow exceptions.<br><strong>Before closing:</strong> check incomplete deliveries, COD collections, receipts and finished orders.</p></section>
+    <section aria-labelledby="opsTipsHeading"><h3 id="opsTipsHeading">Useful controls and safety</h3><p><strong>Search:</strong> enter order ID, name, mobile or locality (Ctrl+K focuses search). <strong>Refresh:</strong> the desk checks updates about every 30 seconds while visible; use Refresh anytime. <strong>Dates:</strong> shown in IST. <strong>Privacy:</strong> lock the admin on a shared computer. <strong>Fallback:</strong> legacy order and delivery administration remain available below.</p></section>
+   </div>
+   <p class="ops-guide-note">Queue counts cover the stored records; each queue displays paginated results. Actions require an authenticated administrator and can be subject to server-side payment and delivery rules. No report here authorizes giving the delivery code before handing over the goods.</p>
+  </div>
+ </details>
  <div class="ops-kpis" id="opsKpis" aria-label="Operation queue totals"></div>
  <div class="ops-layout">
   <div class="ops-list-column"><div class="ops-list-top"><h3>Work queue</h3><label class="ops-search-label"><span class="sr-only">Search orders</span><input type="search" id="opsSearch" placeholder="Order ID, name, mobile or locality" autocomplete="off"></label><div class="ops-filter-line"><label for="opsQueue">Show</label><select id="opsQueue"><option value="new">New orders</option><option value="payment">UPI verification</option><option value="packing">Preparing / packing</option><option value="unassigned">Awaiting assignment</option><option value="active">Active deliveries</option><option value="exceptions">Exceptions</option><option value="completed">Completed</option><option value="all">All orders</option></select></div><p id="opsCount" class="ops-muted" role="status"></p></div><div id="opsList" class="ops-queue-list" role="list" aria-label="Orders awaiting work"></div><div class="ops-paging"><button id="opsPrev" type="button" class="btn secondary" disabled>Previous</button><span id="opsPage">Page 1</span><button id="opsNext" type="button" class="btn secondary" disabled>Next</button></div></div>
@@ -78,6 +99,7 @@
 </details>
 <nav class="section-nav" aria-label="Workspace sections">
 <a href="#opsDesk">Operations Desk</a>
+<a href="#opsHowTo">How to Work</a>
 <a href="#storePanel">Store settings</a>
 <a href="#categoriesPanel">Categories</a>
 <a href="#productsPanel">Products</a>
@@ -216,7 +238,7 @@
 <script src="orders.js?v=20261008-client12" defer>
 </script>
 <script src="records.js?v=20261008-admin-records" defer></script>
-<script src="operations-desk.js?v=20261009-ops-v1" defer></script>
+<script src="operations-desk.js?v=20261009-ops-help" defer></script>
 <script src="../shared/password-ui.js?v=20261001-access" defer></script>
 </body>
 </html>
