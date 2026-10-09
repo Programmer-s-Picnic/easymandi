@@ -154,8 +154,8 @@
   });
   window.addEventListener('customer-order-placed',()=>refresh());
   window.addEventListener('languagechange',()=>{render();});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
-  window.addEventListener('focus',()=>{if(!document.hidden)refresh();});
+
+
   setInterval(()=>{if(!document.hidden&&window.CustomerAccount?.user)refresh();},60000);
   render();
   if(window.CustomerAccount?.user)refresh();
