@@ -22,3 +22,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify public domain routing and asset links
         run: node scripts/check-domain.cjs
+      - name: Validate customer website JavaScript
+        run: |
+          node --check web/order-history.js
+          node --check web/auth.js
+          node --check web/i18n.js
+          node --check web/storefront.js
+          node --check web/deliveries.js
