@@ -129,7 +129,7 @@
   }
   refreshButton.onclick=()=>fetchPage(true);
   moreButton.onclick=loadMore;
-  topButton.onclick=()=>panel.scrollIntoView({behavior:'smooth',block:'start'});
+  topButton.onclick=()=>window.EasyMandiSections?.select('orders')||panel.scrollIntoView({behavior:'smooth',block:'start'});
   window.addEventListener('customer-account-changed',()=>{
     accountId=window.CustomerAccount?.user?.id??null;
     rows=[];page=0;hasMore=false;nonce++;render();
