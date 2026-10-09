@@ -64,10 +64,14 @@
           new window.QRCode(qr,{text:order.handoff_qr,width:180,height:180,colorDark:'#0d3423',colorLight:'#ffffff',correctLevel:window.QRCode.CorrectLevel.M});
           handoff.append(qr);
           const buttons=element('div',undefined,'delivery-share-actions');
-          const share=element('button',t('Share code + QR','कोड और QR साझा करें'),'btn');
+          const share=element('button',t('Share code + QR with receiver','प्राप्तकर्ता को कोड और QR भेजें'),'btn');
           share.type='button';
           share.onclick=async()=>{
+            const name=prompt(t('Receiver name (optional). Share only with somebody you trust.','प्राप्तकर्ता का नाम (वैकल्पिक)। केवल भरोसेमंद व्यक्ति से साझा करें।'),'');
+            if(name===null)return;
+            const receiver=String(name).trim().slice(0,80);
             const text=t('Easy Mandi order ','Easy Mandi ऑर्डर ')+String(order.external_order_id||order.id)+
+              (receiver?'\n'+t('Receiver: ','प्राप्तकर्ता: ')+receiver:'')+
               '\n'+t('Delivery code: ','डिलीवरी कोड: ')+code+
               '\\nQR: '+order.handoff_qr+
               '\n'+t('Give this to the delivery partner only after physically receiving the order.','सामान मिलने के बाद ही डिलीवरी साथी को यह कोड दें।');
