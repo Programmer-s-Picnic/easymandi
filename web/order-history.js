@@ -143,7 +143,7 @@
   window.EasyMandiOrders=Object.freeze({refresh:()=>{render();return fetchPage(true);}});
   // Navigation invokes the refresh entry point instead of relying on a transient event.
   window.addEventListener('languagechange',render);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&window.CustomerAccount?.user)fetchPage(true);});
+
   render();
   if(window.CustomerAccount.user)fetchPage(true);
 })();
