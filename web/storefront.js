@@ -342,6 +342,19 @@ el('basketButton').onclick=()=>{
 };
 el('close').onclick=()=>el('basket').close();
 el('refresh').onclick=()=>load(false);
+// Market is an in-page shortcut. Intercept its fallback URL so the root
+// storefront's <base href="/web/"> never triggers an unwanted reload.
+el('marketButton')?.addEventListener('click',event=>{
+  const target=el('shopCatalog');
+  if(!target)return;
+  event.preventDefault();
+  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  target.scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'});
+  if(window.history?.replaceState){
+    window.history.replaceState(window.history.state,'',
+      location.pathname+location.search+'#shopCatalog');
+  }
+});
 el('search').oninput=render;
 el('favoritesFilter')?.addEventListener('click',()=>{favoritesOnly=!favoritesOnly;render();});
 el('closeAbout')?.addEventListener('click',()=>el('aboutDialog')?.close());

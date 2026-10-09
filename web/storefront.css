@@ -461,3 +461,62 @@ header>div{max-width:1200px;padding:12px 22px;gap:12px}
 .previously-purchased-grid .price{color:#6243a2}
 .previously-purchased-grid .step button{background:#7051b2}
 @media(max-width:600px){.catalog-search-tools .search{flex-basis:100%}.catalog-search-tools .btn{flex:1;padding:8px 7px;font-size:11px}.previously-purchased{padding:12px;border-left-width:4px}}
+
+/* Market header shortcut — native in-page navigation, no extra router. */
+.market-nav{
+  display:inline-flex;align-items:center;justify-content:center;
+  text-decoration:none;white-space:nowrap;min-height:38px;
+}
+.market-nav:hover,.market-nav:focus-visible{background:#d5ecdd;color:#125c3a}
+.market-nav:focus-visible{outline:3px solid #52a8ff;outline-offset:2px}
+#shopCatalog{scroll-margin-top:110px}
+#forgotPasswordButton,#changePasswordButton{display:none!important}
+@media(max-width:900px){
+ header>div{flex-wrap:wrap;gap:8px 12px}
+ .header-actions{max-width:100%;flex-wrap:wrap;gap:7px}
+ .header-actions .market-nav,.header-actions .my-orders-nav{font-size:13px;padding:9px 11px}
+}
+@media(max-width:600px){
+ header>div{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  grid-template-rows:auto auto auto;gap:7px 8px;
+  padding:8px 10px;
+ }
+ header .brand{
+  grid-column:1;grid-row:1;align-self:center;
+  min-width:0;font-size:17px;gap:5px;
+  overflow:hidden;
+ }
+ header .brand-mark{width:35px;height:35px;flex-shrink:0}
+ header .brand-text{min-width:0}
+ header .brand-text strong{font-size:15px}
+ header .brand-text small{font-size:7px;letter-spacing:.35px}
+ header .header-actions{display:contents}
+ header .language-control{
+  grid-column:2;grid-row:1;min-width:0;width:100%;
+  justify-self:stretch;
+ }
+ header .language-control select{width:100%;max-width:none;padding:8px 21px 8px 7px;font-size:12px}
+ header #myOrdersButton{grid-column:1;grid-row:2}
+ header .market-nav{grid-column:2;grid-row:2}
+ header #myOrdersButton[hidden]+.market-nav{grid-column:1/-1;grid-row:2}
+ header #accountButton{grid-column:1;grid-row:3}
+ header #basketButton{grid-column:2;grid-row:3}
+ header .header-actions .btn{
+  min-width:0;width:100%;min-height:36px;
+  padding:8px 6px;font-size:11px;
+  justify-self:stretch;text-align:center;
+ }
+ header #accountButton{
+  overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;
+ }
+ header .market-nav{display:inline-flex}
+ #shopCatalog{scroll-margin-top:185px}
+}
+@media(max-width:355px){
+ header .brand-text strong{font-size:14px}
+ header .brand-mark{width:30px;height:30px}
+ header .header-actions .btn{font-size:10px;padding:8px 4px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
