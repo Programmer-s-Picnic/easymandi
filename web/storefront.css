@@ -520,3 +520,8 @@ header>div{max-width:1200px;padding:12px 22px;gap:12px}
  header .header-actions .btn{font-size:10px;padding:8px 4px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* Optional catalog category pictures. Plain category labels remain if none is set. */
+.filters button{display:inline-flex;align-items:center;gap:7px}
+.filters .category-photo{height:30px;width:30px;border-radius:7px;object-fit:cover;flex-shrink:0;background:#f1f6f3}
+@media(max-width:600px){.filters .category-photo{height:25px;width:25px}.filters button{gap:5px}}
