@@ -105,7 +105,22 @@ function openProduct(original=null, mode='insert'){
     const wrap=field(label,value[key],()=>{},key==='category'?{choices:data.categories.filter(x=>x!=='All')}:key==='description'?{multiline:true,wide:true}:(key==='price'||key==='compareAtPrice')?{type:'number'}:{});
     const input=wrap.children[1];input.id='product_'+key;input.disabled=mode==='delete';
     input.setAttribute('aria-describedby','product_error_'+key);
-    const error=document.createElement('small');error.id='product_error_'+key;error.className='field-error';wrap.append(error);root.append(wrap);
+    const error=document.createElement('small');error.id='product_error_'+key;error.className='field-error';wrap.append(error);
+    if(key==='imageUrl'&&mode!=='delete'){
+      const choose=document.createElement('button');
+      choose.className='btn secondary media-choose';choose.type='button';
+      choose.textContent='Choose uploaded picture';
+      choose.onclick=()=>window.EasyMandiMedia?.pick(url=>{
+        input.value=url;
+        photo.src=url;photo.hidden=false;
+      });
+      const photo=document.createElement('img');
+      photo.className='media-inline-preview';photo.alt='Product photo preview';
+      photo.hidden=!value.imageUrl;if(value.imageUrl)photo.src=value.imageUrl;
+      input.addEventListener('input',()=>{photo.hidden=!input.value.trim();if(input.value.trim())photo.src=input.value.trim();});
+      wrap.append(choose,photo);
+    }
+    root.append(wrap);
   }
   const wrap=document.createElement('label');wrap.className='row';
   const check=document.createElement('input');check.id='product_available';check.type='checkbox';check.checked=!!value.available;check.disabled=mode==='delete';
@@ -174,6 +189,12 @@ function renderCategories(){
   for(const category of data.categories.filter(name=>name!=='All')){
     const row=document.createElement('div');
     row.className='row category-row';
+    const picture=document.createElement('img');
+    picture.className='media-category-thumb';
+    picture.alt='Photo for '+category;
+    const currentUrl=data.categoryImages?.[category];
+    if(currentUrl)picture.src=currentUrl;
+    else picture.classList.add('media-placeholder');
     const input=document.createElement('input');
     input.value=category;
     input.maxLength=80;
@@ -192,8 +213,13 @@ function renderCategories(){
         notify('Enter a unique category name (up to 80 characters).','error');
         input.value=category;
         return
-      }data.categories[data.categories.indexOf(category)]=next;
+      }
+      data.categories[data.categories.indexOf(category)]=next;
       for(const p of data.products)if(p.category===category)p.category=next;
+      if(data.categoryImages?.[category]){
+        const url=data.categoryImages[category];delete data.categoryImages[category];
+        data.categoryImages[next]=url;
+      }
       persist();
       renderCategories();
       renderProducts();
@@ -208,12 +234,27 @@ function renderCategories(){
     remove.onclick=()=>{
       if(!confirm('Delete '+category+' from this draft?'))return;
       data.categories=data.categories.filter(name=>name!==category);
+      if(data.categoryImages)delete data.categoryImages[category];
       persist();
       renderCategories();
       renderProducts();
       notify('Category deleted from the draft. Save to server to publish.')
     };
-    row.append(input,count,rename,remove);
+    const choose=document.createElement('button');choose.className='btn secondary media-choose';
+    choose.type='button';choose.textContent='Choose picture';
+    choose.onclick=()=>window.EasyMandiMedia?.pick(url=>{
+      data.categoryImages ||= {};
+      data.categoryImages[category]=url;
+      persist();renderCategories();
+      notify('Category photo set in draft. Save to server to publish.');
+    });
+    const clear=document.createElement('button');clear.className='btn secondary';
+    clear.type='button';clear.textContent='Remove picture';clear.disabled=!currentUrl;
+    clear.onclick=()=>{
+      if(data.categoryImages)delete data.categoryImages[category];
+      persist();renderCategories();notify('Category photo removed from draft. Save to server to publish.');
+    };
+    row.append(picture,input,count,rename,choose,clear,remove);
     root.append(row)
   }
 }
@@ -230,6 +271,16 @@ function validate(){
     return false
   }if(!data.store.name?.trim())errors.push('Store name is required');
   if(data.categories[0]!=='All'||data.categories.length>30||data.categories.some((name,i)=>typeof name!=='string'||!name.trim()||name.length>80||data.categories.findIndex(v=>v.toLowerCase()===name.toLowerCase())!==i))errors.push('Categories must be unique, nonempty, and start with All');
+  if(data.categoryImages!==undefined){
+    if(!data.categoryImages||typeof data.categoryImages!=='object'||Array.isArray(data.categoryImages))
+      errors.push('Category image mapping must be an object');
+    else{
+      for(const [name,url] of Object.entries(data.categoryImages)){
+        if(name==='All'||!data.categories.includes(name)||!/^https:\/\/[^\s/]+\/[^\s]*$/i.test(url)||url.length>500)
+          errors.push('Invalid image URL for category '+name);
+      }
+    }
+  }
   if(!/^\+?[0-9 ()-]{10,20}$/.test(data.store.supportPhone||''))errors.push('Enter a valid support number');
   for(const key of ['deliveryFee','freeDeliveryAbove','minimumOrder'])if(!Number.isFinite(data.store[key])||data.store[key]<0)errors.push(key+' must be zero or greater');
   const ids=new Set();
