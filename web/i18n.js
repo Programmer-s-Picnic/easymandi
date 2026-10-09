@@ -6,6 +6,7 @@
     en: {
       chooseLanguage:'Choose language', signIn:'Sign in', basket:'Basket', eyebrow:'FRESH FROM THE MANDI',
       heroTitle:'Good food starts fresh.', heroText:'Onions, potatoes and vegetables for your everyday kitchen · Varanasi',
+      browseCatalog:"Browse today's catalog",freshEssentials:'Fresh essentials',paymentChoices:'UPI & Cash on Delivery',yourAccountKicker:'YOUR EASY MANDI ACCOUNT',ordersDescription:'Every saved order, including those awaiting delivery assignment.',
       shopFresh:'Shop fresh', refreshCatalog:'Refresh catalog', searchPlaceholder:'Search onions, potatoes, tomatoes...',
       loading:'Loading catalog…', offlineCatalog:'Showing saved catalog · connect to refresh prices',
       catalogError:'Could not load catalog. Please retry.', productsCount:'{count} products · Current catalog prices',
@@ -57,6 +58,7 @@
     hi: {
       chooseLanguage:'भाषा चुनें', signIn:'लॉग इन', basket:'टोकरी', eyebrow:'मंडी से सीधे आपके घर',
       heroTitle:'ताज़ी सब्ज़ियाँ, बेहतर भोजन।', heroText:'आपकी रसोई के लिए प्याज़, आलू और ताज़ी सब्ज़ियाँ · वाराणसी',
+      browseCatalog:'आज का सामान देखें',freshEssentials:'ताज़ी ज़रूरी चीज़ें',paymentChoices:'UPI और कैश ऑन डिलीवरी',yourAccountKicker:'आपका ईज़ी मंडी खाता',ordersDescription:'आपके सभी दर्ज ऑर्डर, जिनके लिए अभी डिलीवरी साथी तय नहीं हुआ है वे भी।',
       shopFresh:'ताज़ी सब्ज़ियाँ खरीदें', refreshCatalog:'सामान अपडेट करें', searchPlaceholder:'प्याज़, आलू, टमाटर खोजें...',
       loading:'सामान की सूची लोड हो रही है…', offlineCatalog:'सहेजी गई सूची दिखाई जा रही है · नए दामों के लिए इंटरनेट जोड़ें',
       catalogError:'सामान की सूची नहीं खुली। दोबारा कोशिश करें।', productsCount:'{count} उत्पाद · वर्तमान सूची के दाम',
