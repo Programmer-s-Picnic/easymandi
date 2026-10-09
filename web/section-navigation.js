@@ -72,8 +72,8 @@
   window.addEventListener('customer-account-changed',syncAccount);
   window.addEventListener('pageshow',()=>{positionNav();syncAccount();});
   window.addEventListener('resize',positionNav);
-  window.addEventListener('popstate',()=>select(fromFragment()||stored()||'catalog',{remember:true}));
-  window.addEventListener('hashchange',()=>select(fromFragment()||stored()||'catalog',{remember:true}));
+  window.addEventListener('popstate',()=>select(fromFragment()||'catalog',{remember:true}));
+  window.addEventListener('hashchange',()=>select(fromFragment()||'catalog',{remember:true}));
   positionNav();
   select(fromFragment()||stored()||'catalog',{remember:true});
 })();
