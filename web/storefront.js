@@ -202,7 +202,17 @@ function render(){
   el('filters').innerHTML='';
   data.categories.forEach(c=>{
     let b=document.createElement('button');
-    b.textContent=c==='All'?t('all'):c;
+    const name=document.createElement('span');
+    name.textContent=c==='All'?t('all'):c;
+    const pictureUrl=data.categoryImages?.[c];
+    if(typeof pictureUrl==='string'&&/^https:\/\/[^\s]+$/i.test(pictureUrl)){
+      const picture=document.createElement('img');
+      picture.className='category-photo';picture.alt='';
+      picture.loading='lazy';picture.src=pictureUrl;
+      picture.onerror=()=>picture.remove();
+      b.append(picture);
+    }
+    b.append(name);
     b.className=c===category?'active':'';
     b.onclick=()=>{
       category=c;

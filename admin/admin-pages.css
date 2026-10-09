@@ -112,3 +112,6 @@ html[data-admin-page="operations"] #ordersPanel{margin-top:20px}
 @media(max-width:1000px){.admin-app{grid-template-columns:205px minmax(0,1fr)}.admin-rail{padding:18px 9px}.admin-page-links a{font-size:12px;padding:9px 7px}.admin-app main{padding:20px 13px 50px}}
 @media(max-width:760px){.admin-app{display:block}.admin-rail{display:none}.admin-mobile-pages{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:0 0 12px;scrollbar-width:thin;white-space:nowrap}.admin-mobile-pages a{padding:9px 11px;flex:none;text-decoration:none;color:#244c65;background:#f2f7fb;border-radius:9px;font-weight:700;font-size:12px}.admin-app main{padding:13px 12px 40px}.admin-page-title{padding:15px;margin-bottom:12px}.admin-help{padding:13px}.admin-help-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.admin-page-links a{transition:none}}
+/* Only Products Master owns the Media Library.
+   Other generated pages keep shared DOM nodes for existing JS integrations. */
+html:not([data-admin-page="products"]) #mediaPanel{display:none!important}
