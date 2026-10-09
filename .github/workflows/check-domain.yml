@@ -10,6 +10,7 @@ on:
       - 'sitemap.xml'
       - 'robots.txt'
       - 'scripts/check-domain.cjs'
+      - 'scripts/check-operations-guide.cjs'
       - '.github/workflows/check-domain.yml'
   pull_request:
   workflow_dispatch:
@@ -36,3 +37,5 @@ jobs:
           node --check admin/packing.js
           node --check admin/catalog.js
           node --check admin/records.js
+      - name: Test Operations Desk how-to and intact legacy features
+        run: node scripts/check-operations-guide.cjs
