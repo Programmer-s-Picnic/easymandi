@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-admin-page="operations">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -13,8 +13,9 @@
 <meta property="og:url" content="https://easymandi.in/admin/">
 <meta property="og:image" content="https://easymandi.in/web/og-image.svg">
 <meta name="theme-color" content="#176b46">
-<title>Easy Mandi · Admin workspace</title>
+<title>Easy Mandi · Operations Desk</title>
 <link rel="stylesheet" href="catalog.css?v=20261009-ops-help">
+<link rel="stylesheet" href="admin-pages.css?v=20261009-four-page-v1">
 <link rel="stylesheet" href="../shared/notifications.css?v=20261008-animated">
 <script src="../shared/api-client.js?v=20261001-icons" defer>
 </script>
@@ -29,7 +30,27 @@
 <h1>Easy Mandi · Operations Centre</h1>
 <p>Process orders and deliveries throughout the day · Catalog and records available below</p>
 </header>
-<main>
+<div class="admin-app">
+<aside class="admin-rail" aria-label="Easy Mandi administration">
+ <a class="admin-rail-brand" href="./"><span class="admin-rail-logo" aria-hidden="true">EM</span><span><strong>Easy Mandi</strong><small>ADMIN WORKSPACE</small></span></a>
+ <nav class="admin-page-links" aria-label="Admin pages">
+  <a data-admin-link="operations" href="./"><span aria-hidden="true">▤</span> Operations Desk</a>
+  <a data-admin-link="products" href="products.html"><span aria-hidden="true">▦</span> Products Master</a>
+  <a data-admin-link="customers" href="customers.html"><span aria-hidden="true">♙</span> Customers Master</a>
+  <a data-admin-link="partners" href="delivery-partners.html"><span aria-hidden="true">⇥</span> Delivery Partners Master</a>
+  <a data-admin-link="help" href="how-to.html"><span aria-hidden="true">?</span> How to Work</a>
+ </nav>
+ <div class="admin-rail-bottom"><a href="../">Customer website ↗</a><a href="https://programmer-s-picnic.github.io/delivery-app/web/" target="_blank" rel="noopener noreferrer">Delivery administration ↗</a><small>Authorized staff only · All order times in IST</small></div>
+</aside>
+<main id="adminMain">
+<nav class="admin-mobile-pages" aria-label="Admin pages on mobile">
+ <a href="./" data-admin-link="operations">Operations</a><a href="products.html" data-admin-link="products">Products</a><a href="customers.html" data-admin-link="customers">Customers</a><a href="delivery-partners.html" data-admin-link="partners">Delivery Partners</a><a href="how-to.html" data-admin-link="help">How to Work</a>
+</nav>
+<div class="admin-page-title" data-page-title="operations"><span class="admin-eyebrow">DAILY CONTROL</span><h2>Operations Desk</h2><p>Process customer orders, payments, packing and deliveries from your live working queue.</p></div>
+<div class="admin-page-title" data-page-title="products"><span class="admin-eyebrow">CATALOG MANAGEMENT</span><h2>Products Master</h2><p>Manage store settings, product categories, prices, photos and availability. Validate and publish to the live catalog.</p></div>
+<div class="admin-page-title" data-page-title="customers"><span class="admin-eyebrow">ACCOUNT RECORDS</span><h2>Customers Master</h2><p>Search customer profiles, addresses and order history. Private data is available only after administrator sign-in.</p></div>
+<div class="admin-page-title" data-page-title="partners"><span class="admin-eyebrow">DELIVERY TEAM</span><h2>Delivery Partners Master</h2><p>Review partner profiles, active status and delivery performance. Use Delivery administration for edits and assignments.</p><a class="btn secondary admin-title-action" href="https://programmer-s-picnic.github.io/delivery-app/web/" target="_blank" rel="noopener noreferrer">Open delivery administration ↗</a></div>
+<div class="admin-page-title" data-page-title="help"><span class="admin-eyebrow">STAFF HANDBOOK</span><h2>How to Work</h2><p>Step-by-step instructions for operating Easy Mandi safely throughout the day.</p></div>
 <section class="ops-workspace" id="opsDesk" aria-labelledby="opsTitle">
  <div class="ops-heading"><div><p class="ops-kicker">EASY MANDI · LIVE OPERATIONS</p><h2 id="opsTitle">Operations Desk</h2><p class="ops-muted">Orders, payments, packing and delivery in one workspace · Times in IST</p></div><div class="ops-top-actions"><span id="opsLastSync" class="ops-muted">Not connected</span><button class="btn secondary" id="opsRefresh" type="button">Refresh</button><button class="btn" id="opsSignIn" type="button">Unlock operations</button></div></div>
  <details class="ops-guide" id="opsHowTo">
@@ -58,12 +79,12 @@
   <div class="ops-list-column"><div class="ops-list-top"><h3>Work queue</h3><label class="ops-search-label"><span class="sr-only">Search orders</span><input type="search" id="opsSearch" placeholder="Order ID, name, mobile or locality" autocomplete="off"></label><div class="ops-filter-line"><label for="opsQueue">Show</label><select id="opsQueue"><option value="new">New orders</option><option value="payment">UPI verification</option><option value="packing">Preparing / packing</option><option value="unassigned">Awaiting assignment</option><option value="active">Active deliveries</option><option value="exceptions">Exceptions</option><option value="completed">Completed</option><option value="all">All orders</option></select></div><p id="opsCount" class="ops-muted" role="status"></p></div><div id="opsList" class="ops-queue-list" role="list" aria-label="Orders awaiting work"></div><div class="ops-paging"><button id="opsPrev" type="button" class="btn secondary" disabled>Previous</button><span id="opsPage">Page 1</span><button id="opsNext" type="button" class="btn secondary" disabled>Next</button></div></div>
   <div class="ops-detail-column"><div class="ops-detail-heading"><h3>Selected order</h3><span id="opsDetailStatus" class="ops-muted">Select an order from the queue</span></div><div id="opsDetail" class="ops-detail" role="region" aria-label="Selected order processing details"><p class="ops-muted">Sign in and select an order to review its items, payment, packing and delivery.</p></div><p id="opsMessage" role="status" aria-live="polite"></p></div>
  </div>
- <div class="ops-tools"><a href="#ordersPanel">Legacy order tools</a><a href="#productsPanel">Product catalog</a><a href="#recordsPanel">Customer records</a><a href="https://programmer-s-picnic.github.io/delivery-app/web/">Advanced delivery management</a></div>
+ <div class="ops-tools"><a href="#ordersPanel">Legacy order tools</a><a href="products.html#productsPanel">Product catalog</a><a href="customers.html#recordsPanel">Customer records</a><a href="https://programmer-s-picnic.github.io/delivery-app/web/">Advanced delivery management</a></div>
 </section>
 <nav class="workspace-nav" aria-label="Admin websites">
 <a href="https://easymandi.in/admin/" aria-current="page">Easy Mandi admin</a>
 <a href="https://programmer-s-picnic.github.io/delivery-app/web/" >Delivery admin</a>
-<a href="#usageGuide">How to use</a>
+<a href="how-to.html">How to Work</a>
 </nav>
 <details class="guide" id="usageGuide">
 <summary>How to use Easy Mandi admin</summary>
@@ -97,7 +118,7 @@
 <p>
 <strong>Notifications:</strong> While signed in, updates refresh every five minutes. New updates appear automatically without clicking Refresh or re-entering a password. Unread entries are highlighted. Use Mark as read or Mark all as read; each account sees its own updates. Android users can open My deliveries or the partner jobs screen. Handoff codes are sent separately by the admin.</p>
 </details>
-<nav class="section-nav" aria-label="Workspace sections">
+<nav class="section-nav admin-legacy-nav" aria-label="Legacy workspace sections">
 <a href="#opsDesk">Operations Desk</a>
 <a href="#opsHowTo">How to Work</a>
 <a href="#storePanel">Store settings</a>
@@ -119,6 +140,8 @@
 <strong>Publishing:</strong> Edit the catalog below and choose <strong>Save to server</strong>. Enter the separate administrator password. The website and app read the saved catalog from cserver. Download a backup whenever you need a copy.</p>
 <div id="message" role="status" aria-live="polite">
 </div>
+<section class="admin-master-note" id="customerMasterNote"><strong>Customers Master</strong><p>Profiles and saved addresses are read-only here. Use Search and the row details to inspect full customer records and histories. To process a customer's order, open the Operations Desk. Other record types remain available in the selector for existing administrative workflows.</p></section>
+<section class="admin-master-note" id="partnerMasterNote"><strong>Delivery Partners Master</strong><p>Partner records include active status and completed jobs. Account creation, editing, photographs, passwords and assignments remain in the separate Delivery administration website; they are not editable from this read-only records view.</p></section>
 <section class="summary" id="summary">
 </section>
 <section class="panel" id="storePanel">
@@ -228,7 +251,22 @@
 <p class="hint">Changes are saved to this browser draft. Save to server publishes them.</p>
 <div class="row"><button id="productCancel" type="button" class="btn secondary">Cancel</button><button id="productSubmit" type="submit" class="btn">Update draft</button></div>
 </form></dialog>
+<section class="admin-help" id="adminHelp" aria-labelledby="adminHelpTitle">
+ <h2 id="adminHelpTitle">Easy Mandi · Staff working guide</h2>
+ <p class="hint">Each page uses the same server-side data and 30-minute administrator session. Do not use the Back button to repeat submissions. Refresh the relevant queue or records after a change.</p>
+ <div class="admin-help-grid">
+  <article><h3>1 · Operations Desk</h3><ol><li><a href="./">Open Operations Desk</a> and unlock with the administrator password.</li><li>Review the New orders queue, quantities, address, contact details and totals before confirming.</li><li>Review UPI evidence or collect cash on delivery. Mark payment paid only after actual verification or collection.</li><li>Prepare items, print a packing checklist, then import for delivery if needed.</li><li>Assign an active partner, track progress, and check exceptions before closing the day.</li></ol></article>
+  <article><h3>2 · Products Master</h3><ol><li><a href="products.html">Open Products Master</a> and review Store settings.</li><li>Add categories before products. Update product details, price, stock availability and images in the catalog grid.</li><li>Insert, Update and Delete edit a <strong>local draft</strong>, not the live catalog.</li><li>Choose Validate catalog, then Save to server to publish.</li><li>Use Download backup before important bulk changes. Reload published catalog only when it is safe to discard unsaved edits.</li></ol></article>
+  <article><h3>3 · Customers Master</h3><ol><li><a href="customers.html">Open Customers Master</a> and unlock private records.</li><li>Search by customer name or mobile number.</li><li>Open row details to inspect saved addresses and historical orders where available.</li><li>Use Operations Desk for any order processing or customer delivery follow-up.</li><li>Customer profiles are <strong>read-only</strong> in this initial release; do not expect edit or delete controls.</li></ol></article>
+  <article><h3>4 · Delivery Partners Master</h3><ol><li><a href="delivery-partners.html">Open Delivery Partners Master</a> and check registered partners, active status and jobs.</li><li>Search or view details here; private records are read-only.</li><li>For creating/editing partners, photographs, credentials or changing assignments, open <a href="https://programmer-s-picnic.github.io/delivery-app/web/" target="_blank" rel="noopener noreferrer">Delivery administration ↗</a>.</li><li>Use the Operations Desk to track current customer-order dispatches and resend handoff details through existing delivery tools.</li></ol></article>
+ </div>
+ <div class="admin-help-grid">
+  <article><h3>Session and privacy</h3><p>An administrator session expires after 30 minutes. Sign in again when prompted. Avoid sharing screenshots of customer mobile numbers, addresses or handoff codes. Lock order records after working on a shared computer.</p></article>
+  <article><h3>Useful troubleshooting</h3><p>If an order appears missing, clear search or filters and use All orders or the paginated record explorer. If a catalog change does not appear for customers, ensure Save to server succeeded. If partner actions are unavailable here, use Delivery administration.</p></article>
+ </div>
+</section>
 </main>
+</div>
 <footer>Developed and maintained by <a href="https://learnwithchampak.live">Champak Roy</a>
 </footer>
 <script src="auth-dialog.js?v=20261001-icons" defer></script>
@@ -240,6 +278,7 @@
 <script src="records.js?v=20261008-admin-records" defer></script>
 <script src="operations-desk.js?v=20261009-ops-help" defer></script>
 <script src="../shared/password-ui.js?v=20261001-access" defer></script>
+<script src="admin-pages.js?v=20261009-four-page-v1" defer></script>
 </body>
 </html>
 
