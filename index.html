@@ -6,7 +6,7 @@
 <!-- Render the customer homepage at the domain root while loading its assets from /web/. -->
 <base href="/web/">
 <meta name="theme-color" content="#176b46">
-<meta name="easy-mandi-web-release" content="20261009-diagnostic-tabs-v9">
+<meta name="easy-mandi-web-release" content="20261009-stable-recovery-v11">
 <meta name="referrer" content="no-referrer">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta name="description" content="Shop fresh vegetables in Varanasi with Easy Mandi. Browse daily essentials, choose delivery and pay by cash or UPI. Available in English and Hindi.">
@@ -21,9 +21,8 @@
 <meta name="twitter:description" content="Fresh vegetables for Varanasi. Order in English or Hindi.">
 <meta name="twitter:image" content="https://easymandi.in/web/og-image.svg">
 <title>Easy Mandi | Fresh vegetables</title>
-<link rel="stylesheet" href="storefront.css?v=20261009-diagnostic-tabs-v9">
-<script src="i18n.js?v=20261009-apk-parity-v4" defer></script>
-<script src="test-alerts.js?v=20261009-diagnostic-tabs-v9" defer></script>
+<link rel="stylesheet" href="storefront.css?v=20261009-stable-recovery-v11">
+<script src="i18n.js?v=20261009-stable-recovery-v11" defer></script>
 <link rel="stylesheet" href="../shared/notifications.css?v=20261008-animate">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
 </script>
@@ -46,42 +45,25 @@
 </div>
 </header>
 <main class="wrap">
-<div class="app-store-toolbar">
- <h1 data-i18n="apkShopTitle">Fruits &amp; Vegetables</h1>
- <div class="app-menu-holder">
-   <button class="btn ghost" id="appMore" type="button" aria-haspopup="true" aria-expanded="false" data-i18n="moreOptions">More options</button>
-   <div class="app-menu" id="appMoreMenu" hidden>
-     <button type="button" data-app-view="catalog" data-i18n="navCatalog">Today's Catalogue</button>
-     <button type="button" data-app-view="orders" data-i18n="navOrders">My Orders</button>
-     <button type="button" data-app-view="deliveries" data-i18n="navDeliveries">My Deliveries</button>
-     <button type="button" id="appReload" data-i18n="refreshCatalog">Refresh catalog</button>
-     <button type="button" id="appAbout" data-i18n="aboutEasyMandi">About Easy Mandi</button>
-     <button type="button" id="testAlertsToggle" aria-pressed="false">Testing alerts: OFF</button>
-   </div>
- </div>
-</div>
-<section class="customer-screen" id="catalogSection" data-customer-section="catalog">
+<section class="hero" aria-label="Easy Mandi welcome">
+  <div class="hero-main">
+    <div class="hero-copy">
+      <small class="hero-eyebrow" data-i18n="eyebrow">FRESH FROM THE MANDI</small>
+      <h1 data-i18n="heroTitle">Good food starts fresh.</h1>
+      <p data-i18n="heroText">Onions, potatoes and vegetables for your everyday kitchen · Varanasi</p>
+      <a class="hero-shop-link" href="#shopCatalog"><span data-i18n="browseCatalog">Browse today's catalog</span><span aria-hidden="true">→</span></a>
+    </div>
+    <div class="hero-graphic" aria-hidden="true"><img src="brand-mark.svg" alt=""><span>Fresh picks<br>for every kitchen</span></div>
+  </div>
+  <div class="hero-promises">
+    <span><span aria-hidden="true">🥬</span> <span data-i18n="freshEssentials">Fresh essentials</span></span>
+    <span><span aria-hidden="true">🌐</span> हिन्दी / English</span>
+    <span><span aria-hidden="true">💳</span> <span data-i18n="paymentChoices">UPI &amp; Cash on Delivery</span></span>
+  </div>
+</section>
 <p id="status" class="status" role="status">
 </p>
-<div class="catalog-search-tools"><input class="search" id="search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products" data-i18n-aria-label="searchAria"><button type="button" id="clearSearch" class="btn ghost" data-i18n="clearSearch">Clear search</button><button type="button" id="favoritesFilter" class="btn ghost" aria-pressed="false" data-i18n="showFavorites">♡ Favorites</button></div>
-<div class="filters" id="filters">
-</div>
-<div class="head" id="shopCatalog">
-<div>
-<h2 data-i18n="shopFresh">Shop fresh</h2>
-<p id="count" role="status">Current catalog prices</p>
-</div>
-<button class="btn ghost" id="refresh" data-i18n="refreshCatalog">Refresh catalog</button>
-</div>
-<div class="delivery-progress-banner" id="deliveryProgressBanner" role="status" aria-live="polite"><span aria-hidden="true">🚚</span> <span id="deliveryProgress"></span><div class="delivery-progress-track" aria-hidden="true"><span id="deliveryProgressFill"></span></div></div>
-<section class="app-recent-section" id="recentSection"><div class="recent-section-heading"><h2 data-i18n="previouslyOrdered">Previously ordered items</h2><button type="button" id="refreshRecent" class="btn ghost" data-i18n="refreshPrevious">Refresh previous orders</button></div><div id="previousProductsMount"></div></section>
-<div class="grid" id="products">
-</div>
-
-
-</section>
-<section class="customer-screen" id="ordersSection" data-customer-section="orders" hidden>
- <section id="myOrdersPanel" class="my-orders-panel" hidden aria-labelledby="myOrdersHeading">
+<section id="myOrdersPanel" class="my-orders-panel" hidden aria-labelledby="myOrdersHeading">
   <div class="delivery-panel-top">
     <div><small class="section-kicker" data-i18n="yourAccountKicker">YOUR EASY MANDI ACCOUNT</small>
       <h2 id="myOrdersHeading">My orders · full history</h2>
@@ -93,9 +75,7 @@
   <div id="myOrdersList" class="my-orders-list"></div>
   <button id="moreMyOrders" class="btn ghost" type="button" hidden>Load more orders</button>
 </section>
-</section>
-<section class="customer-screen" id="deliveriesSection" data-customer-section="deliveries" hidden>
- <section id="deliveryPanel" class="delivery-panel" hidden aria-labelledby="deliveryHeading">
+<section id="deliveryPanel" class="delivery-panel" hidden aria-labelledby="deliveryHeading">
   <div class="delivery-panel-top">
     <h2 id="deliveryHeading">My deliveries · code &amp; QR</h2>
     <button id="refreshDeliveries" class="btn ghost" type="button">Refresh deliveries</button>
@@ -103,15 +83,20 @@
   <p id="deliveryStatus" class="status" role="status" aria-live="polite"></p>
   <div id="customerDeliveries" class="delivery-list"></div>
 </section>
-</section>
+<div class="catalog-search-tools"><input class="search" id="search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products" data-i18n-aria-label="searchAria"><button type="button" class="btn ghost" id="clearSearch" data-i18n="clearSearch">Clear search</button><button type="button" class="btn ghost" id="favoritesFilter" aria-pressed="false" data-i18n="showFavorites">♡ Favorites</button></div>
+<div class="filters" id="filters">
+</div>
+<div class="head" id="shopCatalog">
+<div>
+<h2 data-i18n="shopFresh">Shop fresh</h2>
+<p id="count" role="status">Current catalog prices</p>
+</div>
+<button class="btn ghost" id="refresh" data-i18n="refreshCatalog">Refresh catalog</button>
+</div>
+<div class="delivery-progress-banner" id="deliveryProgressBanner" role="status" aria-live="polite"><span aria-hidden="true">🚚</span> <span id="deliveryProgress"></span><div class="delivery-progress-track" aria-hidden="true"><span id="deliveryProgressFill"></span></div></div>
+<div class="grid" id="products">
+</div>
 </main>
-<dialog id="aboutDialog" class="app-about-dialog" aria-labelledby="aboutTitle">
- <h2 id="aboutTitle">Easy Mandi</h2>
- <p data-i18n="developedBy">Developed and maintained by Champak Roy</p>
- <p><a href="https://easymandi.in/" rel="noopener noreferrer">easymandi.in</a></p>
- <p><a href="https://learnwithchampak.live" target="_blank" rel="noopener noreferrer">learnwithchampak.live</a></p>
- <div class="actions"><button class="btn" type="button" id="closeAbout" data-i18n="close">Close</button></div>
-</dialog>
 <dialog id="basket">
 <h2 data-i18n="yourBasket">Your basket</h2>
 <div id="items">
@@ -125,7 +110,6 @@
 <p class="note" id="deliveryNote">
 </p>
 <form class="form" id="orderForm">
-<label class="save-checkout-address"><input id="saveCheckoutAddress" type="checkbox" checked> <span data-i18n="saveDeviceAddress">Save this address</span></label>
 <input name="name" data-i18n-placeholder="yourName" placeholder="Your name" minlength="2" maxlength="100" required>
 <label for="mobile"><span data-i18n="mobileNumber">Mobile number</span> (<span id="countryCode">+91</span>)</label>
 <input id="mobile" name="phone" type="tel" placeholder="9876543210" pattern="[6-9][0-9]{9}" maxlength="10" inputmode="numeric" autocomplete="tel-national" title="10 digits starting with 6, 7, 8 or 9" required>
@@ -230,15 +214,14 @@
  <p>Fresh essentials, straightforward ordering. <a href="https://learnwithchampak.live" rel="noopener noreferrer">Developed &amp; maintained by Champak Roy</a></p>
  <small>easymandi.in · Customer assistance is available through the order confirmation details.</small>
 </footer>
-<script src="storefront.js?v=20261009-diagnostic-tabs-v9" defer>
+<script src="storefront.js?v=20261009-stable-recovery-v11" defer>
 </script>
-<script src="auth.js?v=20261009-section-refresh-v5" defer>
+<script src="auth.js?v=20261009-stable-recovery-v11" defer>
 </script>
-<script src="customer-data.js?v=20261009-test-alerts-v7" defer></script>
+<script src="customer-data.js?v=20261009-stable-recovery-v11" defer></script>
 <script src="vendor/qrcode.min.js?v=20261008" defer></script>
-<script src="deliveries.js?v=20261009-diagnostic-tabs-v9" defer></script>
-<script src="order-history.js?v=20261009-diagnostic-tabs-v9" defer></script>
-<script src="section-navigation.js?v=20261009-diagnostic-tabs-v9" defer></script>
+<script src="deliveries.js?v=20261009-stable-recovery-v11" defer></script>
+<script src="order-history.js?v=20261009-stable-recovery-v11" defer></script>
 </body>
 </html>
 
