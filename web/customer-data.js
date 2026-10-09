@@ -16,7 +16,7 @@
   const message=document.createElement('p');
   message.setAttribute('role','status');
   controls.append(title,select,save,remove,message);
-  by('orderForm').prepend(controls);
+  by('orderForm').querySelector('.service-locality-group').after(controls);
   const history=document.createElement('section');
   history.className='panel previously-purchased';
   history.setAttribute('aria-labelledby','previouslyOrderedHeading');
