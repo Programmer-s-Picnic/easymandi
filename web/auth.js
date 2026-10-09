@@ -38,7 +38,18 @@
     } catch {
       throw new Error('Unexpected server response.');
     }
-    if (!response.ok) throw new Error(result.error || 'Please try again.');
+    if (!response.ok) {
+      if (authorized && response.status === 401) {
+        token = null;
+        user = null;
+        restoringSession = false;
+        sessionStorage.removeItem(tokenKey);
+        refresh();
+      }
+      const error = new Error(result.error || 'Please try again.');
+      error.statusCode = response.status;
+      throw error;
+    }
     return result;
   }
   const notificationRoot=document.createElement('section');
@@ -190,7 +201,17 @@
       return response;
     });
   }
-  window.CustomerAccount={get user(){return user;},get restoring(){return restoringSession;},request,customerDeliveries};
+  window.CustomerAccount={
+    get user(){return user;},
+    get restoring(){return restoringSession;},
+    get authenticated(){return !!user && !!token && !restoringSession;},
+    openSignIn(){
+      if(user)return;
+      mode(false);
+      if(!byId('accountDialog').open)byId('accountDialog').showModal();
+    },
+    request,customerDeliveries
+  };
   function refresh() {
     window.dispatchEvent(new Event('customer-account-changed'));
     inbox.active=!!user;
@@ -198,6 +219,7 @@
     });
     else inbox.stop();
     byId('accountButton').textContent = user ? t('hiUser',{name:user.name}) : t('signIn');
+    byId('orderForm').elements.phone.readOnly = !!user;
     byId('accountProfile').hidden = !user;
     byId('accountForm').hidden = !!user;
     byId('accountSwitch').hidden = !!user;
