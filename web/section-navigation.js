@@ -14,6 +14,18 @@
  };
  let current='catalog',afterSignIn=null;
  const closeMenu=()=>{menu.hidden=true;menuButton.setAttribute('aria-expanded','false');};
+ // Every screen has a direct refresh entry point. This avoids lost custom events
+ // and does not require navigating away or reloading the document to update.
+ const refreshCurrent=id=>{
+   const calls=id==='catalog'
+     ?[window.EasyMandiCatalog?.refresh,window.EasyMandiCustomerData?.refresh]
+     :id==='orders'?[window.EasyMandiOrders?.refresh]
+     :[window.EasyMandiDeliveries?.refresh];
+   for(const task of calls){
+     if(typeof task!=='function')continue;
+     try{Promise.resolve(task()).catch(()=>{});}catch(_){}
+   }
+ };
  function activate(id,{push=false,scroll=true}={}){
    if(!valid.has(id))return false;
    if(id!=='catalog'&&!window.CustomerAccount?.user){
@@ -32,6 +44,7 @@
    if(push&&location.hash!=='#'+id)history.pushState(null,'',location.pathname+location.search+'#'+id);
    // Always notify data controllers, even when reselecting an already open view.
    window.dispatchEvent(new CustomEvent('customer-section-opened',{detail:{section:id,reopened}}));
+   refreshCurrent(id);
    closeMenu();
    if(scroll)window.scrollTo({top:0,behavior:'auto'});
    return true;
@@ -62,6 +75,17 @@
    // Back/forward cache restores the page without rerunning scripts.
    if(event.persisted)activate(viewFromHash(),{scroll:false});
  });
+ let lastReturnRefresh=0;
+ const onReturn=()=>{
+   if(document.hidden)return;
+   // Mobile browsers often emit focus and visibilitychange together.
+   const now=Date.now();
+   if(now-lastReturnRefresh<1000)return;
+   lastReturnRefresh=now;
+   refreshCurrent(current);
+ };
+ window.addEventListener('focus',onReturn);
+ document.addEventListener('visibilitychange',onReturn);
  window.addEventListener('popstate',()=>activate(viewFromHash(),{scroll:false}));
  window.addEventListener('hashchange',()=>activate(viewFromHash(),{scroll:false}));
  activate(viewFromHash(),{scroll:false});

@@ -143,12 +143,8 @@
     }
   }
   refreshButton.addEventListener('click',refresh);
-  window.addEventListener('customer-section-opened',event=>{
-    if(event.detail?.section==='deliveries'){
-      render(); // cached delivery cards and active codes appear immediately
-      refresh(); // update current status and codes in the background
-    }
-  });
+  window.EasyMandiDeliveries=Object.freeze({refresh:()=>{render();return refresh();}});
+  // Navigation invokes this entry point directly.
   window.addEventListener('customer-account-changed',()=>{
     requestNumber++;
     loading=false;
@@ -158,8 +154,8 @@
   });
   window.addEventListener('customer-order-placed',()=>refresh());
   window.addEventListener('languagechange',()=>{render();});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
-  window.addEventListener('focus',()=>{if(!document.hidden)refresh();});
+
+
   setInterval(()=>{if(!document.hidden&&window.CustomerAccount?.user)refresh();},60000);
   render();
   if(window.CustomerAccount?.user)refresh();

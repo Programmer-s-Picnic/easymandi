@@ -231,6 +231,8 @@
     }
   }
   window.EasyMandiCustomerData=Object.freeze({
+    // The section coordinator calls this every time the catalogue is opened.
+    refresh:()=>{renderPreviouslyOrdered();return refresh();},
     saveCheckoutAddress:async fields=>{
       const payload={operation:'save',...(selected!==null?{id:selected}:{})};
       for(const field of ['name','house','locality','landmark','pin'])payload[field]=String(fields[field]||'').trim();
@@ -254,14 +256,7 @@
   });
 
   window.addEventListener('customer-account-changed',refresh);
-  window.addEventListener('customer-section-opened',event=>{
-    // Previous purchases are now part of the catalogue (APK-style), so
-    // refresh them whenever the catalogue is revisited, not an obsolete tab.
-    if(event.detail?.section==='catalog'){
-      renderPreviouslyOrdered(); // show the last known products immediately
-      refresh();
-    }
-  });
+  // Section coordinator now calls EasyMandiCustomerData.refresh directly.
   window.addEventListener('customer-order-placed',event=>{
     if(!signedIn()&&Array.isArray(event.detail?.items)){
       guestRecordOrder(event.detail.items);
@@ -271,8 +266,8 @@
   window.addEventListener('languagechange',render);
   window.addEventListener('easy-mandi-catalog-rendered',renderPreviouslyOrdered);
   by('basketButton').addEventListener('click',refresh);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
-  window.addEventListener('focus',()=>{if(!document.hidden)refresh();});
+
+
   setInterval(()=>{if(!document.hidden&&window.CustomerAccount?.user)refresh();},120000);
   refresh();
 })();

@@ -140,14 +140,10 @@
     if(accountId!==null)fetchPage(true);
   });
   window.addEventListener('customer-order-placed',()=>fetchPage(true));
-  window.addEventListener('customer-section-opened',event=>{
-    if(event.detail?.section==='orders'){
-      render(); // last known order cards become visible immediately
-      fetchPage(true); // then refresh from the server without a page reload
-    }
-  });
+  window.EasyMandiOrders=Object.freeze({refresh:()=>{render();return fetchPage(true);}});
+  // Navigation invokes the refresh entry point instead of relying on a transient event.
   window.addEventListener('languagechange',render);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&window.CustomerAccount?.user)fetchPage(true);});
+
   render();
   if(window.CustomerAccount.user)fetchPage(true);
 })();

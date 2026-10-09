@@ -185,6 +185,8 @@ window.EasyMandiCatalog=Object.freeze({
   ready:()=>!!data,
   getProduct:id=>data?.products.find(p=>String(p.id)===String(id))||null,
   createCard:createProductCard,
+  // Direct entry point used by navigation; the current catalog is painted now.
+  refresh:()=>{if(data)render();return load(true);},
   setPreviousIds:ids=>{
     previouslyBoughtIds=new Set((Array.isArray(ids)?ids:[]).map(String));
     if(data)render();
@@ -515,20 +517,14 @@ el('orderForm').onsubmit=async e=>{
     button.textContent=t('placeOrder')
   }
 };
-window.addEventListener('customer-section-opened',event=>{
-  if(event.detail?.section==='catalog'){
-    // Paint cached products instantly, then retrieve fresh prices in the background.
-    if(data)render();
-    load(true);
-  }
-});
+// Navigation invokes EasyMandiCatalog.refresh directly; avoid duplicate network requests.
 window.addEventListener('languagechange',()=>{
   if(data){render();if(el('basket').open)renderBasket();if(el('itemDetail').open)renderItemDetail();}
   showLocationStatus(el('locationStatus').dataset.locationState||'hint');
   if(confirmationLanguageRefresh)confirmationLanguageRefresh();
 });
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(true);});
-window.addEventListener('focus',()=>{if(!document.hidden)load(true);});
+
+
 setInterval(()=>{if(!document.hidden)load(true);},120000);
 loadPopularity();
 load();
