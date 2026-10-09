@@ -4,7 +4,7 @@
   const by=id=>document.getElementById(id);
   const t=(key,vars={})=>window.EMI18n?.t(key,vars)||key;
   const labelFor=p=>window.EMI18n?.lang==='hi'?(p.hindi||p.name):p.name;
-  let addresses=[],previousItems=[],selected=null,refreshSerial=0;
+  let addresses=[],previousItems=[],selected=null,refreshSerial=0,seenAccountId=null,previousLoading=false,previousError='';
   const controls=document.createElement('section');
   controls.className='customer-address-book';
   const title=document.createElement('h3');
@@ -27,9 +27,16 @@
     history.hidden=!signedIn;
     history.replaceChildren();
     if(!signedIn)return;
+    if(previousError){
+      const error=document.createElement('p');
+      error.className='status';
+      error.setAttribute('role','alert');
+      error.textContent=previousError;
+      history.append(error);
+    }
     if(!previousItems.length){
       const empty=document.createElement('p');
-      empty.textContent=t('noPrevious');
+      empty.textContent=previousLoading?t('loading'):t('noPrevious');
       history.append(empty);
       return;
     }
@@ -106,21 +113,35 @@
   async function refresh(){
     const account=window.CustomerAccount?.user;
     const request=++refreshSerial;
-    if(!account){
-      addresses=[];previousItems=[];selected=null;message.textContent='';
+    const id=account?.id==null?null:String(account.id);
+    // Never show the previous customer's purchases while another account signs in.
+    if(id!==seenAccountId){
+      seenAccountId=id;
+      addresses=[];previousItems=[];selected=null;previousError='';
       window.EasyMandiCatalog?.setPreviousIds([]);
+    }
+    if(!account){
+      previousLoading=false;
+      message.textContent='';
       render();return;
     }
+    previousLoading=true;
+    previousError='';
+    renderPreviouslyOrdered();
     try{
       const result=await window.CustomerAccount.request('customer-data',{authorized:true});
       if(request!==refreshSerial||window.CustomerAccount?.user?.id!==account.id)return;
       addresses=Array.isArray(result.addresses)?result.addresses:[];
       previousItems=Array.isArray(result.items)?result.items:[];
+      previousLoading=false;
       window.EasyMandiCatalog?.setPreviousIds(previousItems.map(item=>item.product_id));
       render();
     }catch(error){
       if(request===refreshSerial&&window.CustomerAccount?.user?.id===account.id){
-        message.textContent=error.message||t('addressLoadError');
+        previousLoading=false;
+        previousError=error.message||t('addressLoadError');
+        message.textContent=previousError;
+        renderPreviouslyOrdered();
       }
     }
   }
@@ -165,6 +186,9 @@
   });
 
   window.addEventListener('customer-account-changed',refresh);
+  window.addEventListener('customer-section-opened',event=>{
+    if(event.detail?.section==='previous')refresh();
+  });
   window.addEventListener('customer-order-placed',refresh);
   window.addEventListener('languagechange',render);
   window.addEventListener('easy-mandi-catalog-rendered',renderPreviouslyOrdered);
