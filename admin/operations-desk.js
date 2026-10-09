@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const root=$('opsDesk');if(!root)return;
+const root=$('opsDesk');if(!root||document.documentElement.dataset.adminPage!=='operations')return;
 const api='https://cserver.learnwithchampak.live/easymandi/api/';
 const deliveryApi='https://cserver.learnwithchampak.live/delivery/api/?action=admin';
 const state={orders:[],counts:{},partners:[],page:1,total:0,hasMore:false,selected:null,busy:false,filter:'new',search:'',timer:null,seq:0,loaded:false};
