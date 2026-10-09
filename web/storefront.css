@@ -452,3 +452,27 @@ body>header{z-index:10}
 @media(max-width:700px){.customer-section-nav{gap:6px;margin:-5px 0 12px;padding:9px 2px}.customer-section-nav a{font-size:12px;padding:9px 10px;border-radius:10px}.customer-section-intro{padding:14px 15px}.customer-section-intro h2{font-size:19px}.customer-section-gate{padding:18px 14px}}
 @media(max-width:600px){.previous-purchase-badge{font-size:9px;padding:3px 5px;top:5px;left:5px}}
 @media(prefers-reduced-motion:reduce){.customer-section-nav a{transition:none}}
+
+/* Flutter customer app catalog parity: favorites, photos, offers, progress. */
+.catalog-search-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0 12px}
+.catalog-search-tools .search{flex:1 1 230px;margin:0;min-width:0}
+.catalog-search-tools .btn{font-size:12px;white-space:nowrap}
+#favoritesFilter[aria-pressed="true"]{background:#fce5ef;color:#a42058;box-shadow:inset 0 0 0 1px #efb1c8}
+.favorite-button{position:absolute;z-index:1;top:7px;right:7px;height:34px;min-width:34px;border:1px solid #e6d1df;border-radius:50%;background:#fffffff0;color:#d82971;font-size:21px;line-height:1;display:grid;place-items:center;cursor:pointer}
+.favorite-button.is-favorite{background:#fff0f6;color:#c41d59}
+.favorite-button:focus-visible,.product-name-link:focus-visible{outline:3px solid #4ca6d4;outline-offset:2px}
+.illustration{overflow:hidden}
+.product-photo{width:100%;height:100%;object-fit:cover;display:block}
+.emoji-art{display:grid;place-items:center;width:100%;height:100%;font-size:inherit}
+.product-name-link{cursor:pointer;border-radius:3px}
+.product-name-link:hover{text-decoration:underline;text-decoration-color:#7fbe9e}
+.illustration.product-unavailable{opacity:.62}
+.compare-price{display:block;color:#697d76;font-weight:400;font-size:12px;text-decoration:line-through}
+.product-savings{display:block;color:#22834e;font-weight:750;font-size:11px;white-space:normal}
+.card .price{line-height:1.28}
+.detail-art .product-photo{width:100%;height:100%;object-fit:contain}
+.delivery-progress-banner{display:flex;align-items:center;flex-wrap:wrap;gap:7px 10px;background:#e9f4f1;color:#16583b;border:1px solid #b7d9c5;border-radius:14px;padding:10px 15px;margin:12px 0 14px;font-size:13px;font-weight:750}
+.delivery-progress-track{height:7px;flex:1 1 100%;border-radius:9px;overflow:hidden;background:#c6dfd3}
+.delivery-progress-track span{display:block;height:100%;width:0;background:#176b46;transition:width .2s}
+@media(max-width:600px){.catalog-search-tools{gap:6px;margin:12px 0 9px}.catalog-search-tools .search{flex-basis:100%}.catalog-search-tools .btn{flex:1;padding:8px 6px;font-size:11px}.favorite-button{top:4px;right:4px;width:28px;min-width:28px;height:28px;font-size:17px}.previous-purchase-badge{max-width:calc(100% - 40px)}.product-savings{font-size:10px}.compare-price{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.delivery-progress-track span{transition:none}}
