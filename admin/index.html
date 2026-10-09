@@ -14,7 +14,7 @@
 <meta property="og:image" content="https://easymandi.in/web/og-image.svg">
 <meta name="theme-color" content="#176b46">
 <title>Easy Mandi · Admin workspace</title>
-<link rel="stylesheet" href="catalog.css?v=20261008-client12">
+<link rel="stylesheet" href="catalog.css?v=20261009-ops-v1">
 <link rel="stylesheet" href="../shared/notifications.css?v=20261008-animated">
 <script src="../shared/api-client.js?v=20261001-icons" defer>
 </script>
@@ -26,10 +26,19 @@
 </head>
 <body>
 <header>
-<h1>Easy Mandi · Catalog admin</h1>
-<p>Manage the product catalog for the customer website and Flutter app</p>
+<h1>Easy Mandi · Operations Centre</h1>
+<p>Process orders and deliveries throughout the day · Catalog and records available below</p>
 </header>
 <main>
+<section class="ops-workspace" id="opsDesk" aria-labelledby="opsTitle">
+ <div class="ops-heading"><div><p class="ops-kicker">EASY MANDI · LIVE OPERATIONS</p><h2 id="opsTitle">Operations Desk</h2><p class="ops-muted">Orders, payments, packing and delivery in one workspace · Times in IST</p></div><div class="ops-top-actions"><span id="opsLastSync" class="ops-muted">Not connected</span><button class="btn secondary" id="opsRefresh" type="button">Refresh</button><button class="btn" id="opsSignIn" type="button">Unlock operations</button></div></div>
+ <div class="ops-kpis" id="opsKpis" aria-label="Operation queue totals"></div>
+ <div class="ops-layout">
+  <div class="ops-list-column"><div class="ops-list-top"><h3>Work queue</h3><label class="ops-search-label"><span class="sr-only">Search orders</span><input type="search" id="opsSearch" placeholder="Order ID, name, mobile or locality" autocomplete="off"></label><div class="ops-filter-line"><label for="opsQueue">Show</label><select id="opsQueue"><option value="new">New orders</option><option value="payment">UPI verification</option><option value="packing">Preparing / packing</option><option value="unassigned">Awaiting assignment</option><option value="active">Active deliveries</option><option value="exceptions">Exceptions</option><option value="completed">Completed</option><option value="all">All orders</option></select></div><p id="opsCount" class="ops-muted" role="status"></p></div><div id="opsList" class="ops-queue-list" role="list" aria-label="Orders awaiting work"></div><div class="ops-paging"><button id="opsPrev" type="button" class="btn secondary" disabled>Previous</button><span id="opsPage">Page 1</span><button id="opsNext" type="button" class="btn secondary" disabled>Next</button></div></div>
+  <div class="ops-detail-column"><div class="ops-detail-heading"><h3>Selected order</h3><span id="opsDetailStatus" class="ops-muted">Select an order from the queue</span></div><div id="opsDetail" class="ops-detail" role="region" aria-label="Selected order processing details"><p class="ops-muted">Sign in and select an order to review its items, payment, packing and delivery.</p></div><p id="opsMessage" role="status" aria-live="polite"></p></div>
+ </div>
+ <div class="ops-tools"><a href="#ordersPanel">Legacy order tools</a><a href="#productsPanel">Product catalog</a><a href="#recordsPanel">Customer records</a><a href="https://programmer-s-picnic.github.io/delivery-app/web/">Advanced delivery management</a></div>
+</section>
 <nav class="workspace-nav" aria-label="Admin websites">
 <a href="https://easymandi.in/admin/" aria-current="page">Easy Mandi admin</a>
 <a href="https://programmer-s-picnic.github.io/delivery-app/web/" >Delivery admin</a>
@@ -68,6 +77,7 @@
 <strong>Notifications:</strong> While signed in, updates refresh every five minutes. New updates appear automatically without clicking Refresh or re-entering a password. Unread entries are highlighted. Use Mark as read or Mark all as read; each account sees its own updates. Android users can open My deliveries or the partner jobs screen. Handoff codes are sent separately by the admin.</p>
 </details>
 <nav class="section-nav" aria-label="Workspace sections">
+<a href="#opsDesk">Operations Desk</a>
 <a href="#storePanel">Store settings</a>
 <a href="#categoriesPanel">Categories</a>
 <a href="#productsPanel">Products</a>
@@ -206,6 +216,7 @@
 <script src="orders.js?v=20261008-client12" defer>
 </script>
 <script src="records.js?v=20261008-admin-records" defer></script>
+<script src="operations-desk.js?v=20261009-ops-v1" defer></script>
 <script src="../shared/password-ui.js?v=20261001-access" defer></script>
 </body>
 </html>
