@@ -383,7 +383,13 @@ el('orderForm').onsubmit=async e=>{
     }if(!response.ok){
       if(response.status===409&&result.error?.startsWith('Order request already used'))sessionStorage.removeItem('easy-mandi-pending-order');
       throw Error(result.error||t('orderFailure'));
-    }window.dispatchEvent(new Event('customer-order-placed'));
+    }window.dispatchEvent(new CustomEvent('customer-order-placed',{detail:{
+      orderId:result.orderId,
+      items:chosen.map(line=>{
+        const product=data.products.find(p=>String(p.id)===String(line.id));
+        return {product_id:String(line.id),name:product?.name||'',unit:product?.unit||'',quantity:line.quantity};
+      })
+    }}));
     const paymentMethod=String(form.get('paymentMethod')||'cod');
     deliveryLocation=null;
     showLocationStatus('hint');
