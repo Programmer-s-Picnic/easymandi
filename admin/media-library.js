@@ -98,6 +98,14 @@
  $('mediaPickerClose').addEventListener('click',()=>$('mediaPickerDialog').close());
  $('mediaPickerRefresh').addEventListener('click',()=>load().catch(error=>status(error.message,'error')));
  $('mediaPickerDialog').addEventListener('close',()=>{selection=null;});
+ // Load thumbnails after an existing or freshly unlocked admin session.
+ // Never prompt for a password merely because a page was opened.
+ const automaticLoad=()=>{
+   if(document.documentElement.dataset.adminPage==='products'&&window.AdminSession?.token)
+     load().catch(error=>status(error.message,'error'));
+ };
+ window.addEventListener('admin-session-started',automaticLoad);
+ if(document.documentElement.dataset.adminPage==='products')automaticLoad();
  window.EasyMandiMedia=Object.freeze({
    async pick(callback){
      if(typeof callback!=='function')return;
