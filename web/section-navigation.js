@@ -1,79 +1,56 @@
-/* Easy Mandi customer sections: persistent on-device view selection.
-   Never persists customer data, authentication tokens or handoff codes. */
+/* Customer navigation follows the Flutter application's catalog + More menu.
+   Basket and Account are existing dialogs. No extra website-only tab memory. */
 (()=>{
-  'use strict';
-  const key='easy-mandi-last-customer-section-v1';
-  const valid=new Set(['catalog','previous','orders','deliveries']);
-  const byId=id=>document.getElementById(id);
-  const nav=byId('customerSectionNav');
-  if(!nav)return;
-  let current='catalog';
-  const fromFragment=()=>{
-    let fragment;
-    try{fragment=decodeURIComponent(location.hash.slice(1));}catch{return null;}
-    if(valid.has(fragment))return fragment;
-    return ({shopCatalog:'catalog',myOrdersPanel:'orders',deliveryPanel:'deliveries',previousProductsMount:'previous'})[fragment]||null;
-  };
-  const stored=()=>{
-    try{const id=localStorage.getItem(key);return valid.has(id)?id:null;}catch{return null;}
-  };
-  function syncAccount(){
-    const signedIn=!!window.CustomerAccount?.user;
-    for(const section of ['previous','orders','deliveries']){
-      const gate=byId(section+'SignInGate');
-      if(gate)gate.hidden=signedIn;
-    }
-  }
-  function positionNav(){
-    const header=document.querySelector('body > header');
-    if(header)document.documentElement.style.setProperty('--customer-header-height',Math.ceil(header.getBoundingClientRect().height)+'px');
-  }
-  function select(id,{remember=true,updateUrl=false,scroll=false}={}){
-    if(!valid.has(id))return false;
-    current=id;
-    document.querySelectorAll('[data-customer-section]').forEach(section=>{
-      section.hidden=section.dataset.customerSection!==id;
-    });
-    nav.querySelectorAll('[data-customer-tab]').forEach(link=>{
-      if(link.dataset.customerTab===id)link.setAttribute('aria-current','page');
-      else link.removeAttribute('aria-current');
-    });
-    document.body.dataset.customerSection=id;
-    syncAccount();
-    if(remember){try{localStorage.setItem(key,id);}catch{}}
-    if(updateUrl){
-      const next='#'+id;
-      if(location.hash!==next)history.pushState(null,'',location.pathname+location.search+next);
-    }
-    if(scroll){
-      positionNav();
-      window.scrollTo({top:0,behavior:'auto'});
-    }
-    return true;
-  }
-  window.EasyMandiSections=Object.freeze({
-    select:id=>select(id,{remember:true,updateUrl:true,scroll:true}),
-    get current(){return current;}
-  });
-  nav.addEventListener('click',event=>{
-    const link=event.target.closest('a[data-customer-tab],a[data-customer-action]');
-    if(!link||!nav.contains(link)||event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
-    event.preventDefault();
-    if(link.dataset.customerTab){
-      select(link.dataset.customerTab,{remember:true,updateUrl:true,scroll:true});
-      return;
-    }
-    if(link.dataset.customerAction==='basket')byId('basketButton')?.click();
-    if(link.dataset.customerAction==='account')byId('accountButton')?.click();
-  });
-  for(const section of ['previous','orders','deliveries']){
-    byId(section+'SignIn')?.addEventListener('click',()=>byId('accountButton')?.click());
-  }
-  window.addEventListener('customer-account-changed',syncAccount);
-  window.addEventListener('pageshow',()=>{positionNav();syncAccount();});
-  window.addEventListener('resize',positionNav);
-  window.addEventListener('popstate',()=>select(fromFragment()||'catalog',{remember:true}));
-  window.addEventListener('hashchange',()=>select(fromFragment()||'catalog',{remember:true}));
-  positionNav();
-  select(fromFragment()||stored()||'catalog',{remember:true});
+ 'use strict';
+ const byId=id=>document.getElementById(id);
+ const menuButton=byId('appMore'),menu=byId('appMoreMenu');
+ if(!menuButton||!menu)return;
+ const valid=new Set(['catalog','orders','deliveries']);
+ const viewFromHash=()=>{
+   let hash='';
+   try{hash=decodeURIComponent(location.hash.slice(1));}catch{return 'catalog';}
+   return ({myOrdersPanel:'orders',deliveryPanel:'deliveries',shopCatalog:'catalog'})[hash]||
+       (valid.has(hash)?hash:'catalog');
+ };
+ let current='catalog',afterSignIn=null;
+ const closeMenu=()=>{menu.hidden=true;menuButton.setAttribute('aria-expanded','false');};
+ function activate(id,{push=false,scroll=true}={}){
+   if(!valid.has(id))return false;
+   if(id!=='catalog'&&!window.CustomerAccount?.user){
+     afterSignIn=id;
+     closeMenu();
+     byId('accountButton')?.click();
+     return false;
+   }
+   current=id;
+   document.querySelectorAll('[data-customer-section]').forEach(section=>{
+     section.hidden=section.dataset.customerSection!==id;
+   });
+   document.body.dataset.customerSection=id;
+   if(push&&location.hash!=='#'+id)history.pushState(null,'',location.pathname+location.search+'#'+id);
+   window.dispatchEvent(new CustomEvent('customer-section-opened',{detail:{section:id}}));
+   closeMenu();
+   if(scroll)window.scrollTo({top:0,behavior:'auto'});
+   return true;
+ }
+ window.EasyMandiSections=Object.freeze({select:id=>activate(id,{push:true}),get current(){return current;}});
+ menuButton.addEventListener('click',()=>{menu.hidden=!menu.hidden;menuButton.setAttribute('aria-expanded',String(!menu.hidden));});
+ menu.addEventListener('click',event=>{
+   const button=event.target.closest('button');
+   if(!button)return;
+   if(button.dataset.appView)activate(button.dataset.appView,{push:true});
+   else if(button.id==='appReload')byId('refresh')?.click();
+   else if(button.id==='appAbout')byId('aboutDialog')?.showModal();
+   closeMenu();
+ });
+ document.addEventListener('click',event=>{if(!menu.contains(event.target)&&event.target!==menuButton)closeMenu();});
+ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu();});
+ window.addEventListener('customer-account-changed',()=>{
+   if(!window.CustomerAccount?.user){
+     if(current!=='catalog')activate('catalog',{push:false,scroll:false});
+   }else if(afterSignIn){const target=afterSignIn;afterSignIn=null;activate(target,{push:true});}
+ });
+ window.addEventListener('popstate',()=>activate(viewFromHash(),{scroll:false}));
+ window.addEventListener('hashchange',()=>activate(viewFromHash(),{scroll:false}));
+ activate(viewFromHash(),{scroll:false});
 })();

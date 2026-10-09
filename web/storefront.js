@@ -8,6 +8,47 @@ try{
 const t=(key,vars={})=>window.EMI18n?.t(key,vars)||key;
 const productLabel=p=>window.EMI18n?.lang==='hi'?(p.hindi||p.name):p.name;
 let popularIds=[];
+const favoriteKey='easy-mandi-favorites';
+let favoriteIds=new Set();
+try{favoriteIds=new Set(JSON.parse(localStorage.getItem(favoriteKey)||'[]').map(String));}catch{}
+let favoritesOnly=false;
+function toggleFavorite(id){
+  const key=String(id);
+  if(favoriteIds.has(key))favoriteIds.delete(key);else favoriteIds.add(key);
+  try{localStorage.setItem(favoriteKey,JSON.stringify([...favoriteIds]));}catch{}
+  render();
+}
+function productPhoto(p){
+  const raw=p?.imageUrl||p?.image||'';
+  if(typeof raw!=='string')return '';
+  try{const url=new URL(raw);return url.protocol==='https:'&&url.hostname?raw:'';}catch{return '';}
+}
+function compareAt(p){
+  const amount=Number(p?.compareAtPrice),price=Number(p?.price);
+  return Number.isFinite(amount)&&amount>price&&amount<=1000000?amount:null;
+}
+function showArtwork(parent,p){
+  parent.replaceChildren();
+  const fallback=document.createElement('span');fallback.textContent=p.emoji||'🥬';fallback.className='emoji-art';
+  const src=productPhoto(p);
+  if(src){
+    const photo=document.createElement('img');
+    photo.src=src;photo.alt='';photo.loading='lazy';photo.decoding='async';photo.className='product-photo';
+    photo.onerror=()=>photo.replaceWith(fallback);
+    parent.append(photo);
+  }else parent.append(fallback);
+}
+function deliveryProgress(){
+  const target=el('deliveryProgress');
+  if(!target||!data)return;
+  const above=Number(data.store?.freeDeliveryAbove||499);
+  const subtotal=totals().subtotal;
+  const missing=Math.max(0,above-subtotal);
+  target.textContent=missing===0?t('deliveryUnlocked'):
+    subtotal===0?t('deliveryAbove',{amount:money(above)}):t('deliveryRemaining',{amount:money(missing)});
+  const track=el('deliveryProgressFill');if(track)track.style.width=(above>0?Math.min(100,subtotal/above*100):100)+'%';
+}
+
 let previouslyBoughtIds=new Set();
 async function loadPopularity(){
   try{
@@ -76,17 +117,24 @@ function createProductCard(p,{context='catalog'}={}){
   card.dataset.productId=String(p.id);
   const art=document.createElement('div');
   art.className='illustration';
-  art.textContent=p.emoji||'🛒';
+  showArtwork(art,p);
   art.setAttribute('aria-hidden','true');
-  const previouslyBought=previouslyBoughtIds.has(String(p.id));
-  if(context==='previous'||previouslyBought){
-    const badge=document.createElement('span');
-    badge.className='previous-purchase-badge'+(context==='previous'?' repeat-purchase':'');
-    badge.textContent=context==='previous'?t('buyAgainLabel'):t('purchasedBefore');
-    art.append(badge);
-  }
+  const favorite=document.createElement('button');
+  favorite.className='favorite-button'+(favoriteIds.has(String(p.id))?' is-favorite':'');
+  favorite.type='button';
+  favorite.textContent=favoriteIds.has(String(p.id))?'♥':'♡';
+  favorite.setAttribute('aria-label',t(favoriteIds.has(String(p.id))?'removeFavorite':'addFavorite')+' '+productLabel(p));
+  favorite.onclick=event=>{event.stopPropagation();toggleFavorite(p.id);};
+  art.append(favorite);
+  art.classList.toggle('product-unavailable',!p.available);
   const title=document.createElement('h3');
   title.textContent=productLabel(p);
+  title.className='product-name-link';
+  title.tabIndex=0;
+  title.setAttribute('role','button');
+  title.setAttribute('aria-label',t('viewFull',{name:productLabel(p)}));
+  title.onclick=()=>showItemDetail(p);
+  title.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showItemDetail(p);}};
   const unit=document.createElement('small');
   unit.textContent=(window.EMI18n?.lang==='hi'?p.name:(p.hindi||p.name))+' · '+p.unit;
   const row=document.createElement('div');
@@ -94,6 +142,12 @@ function createProductCard(p,{context='catalog'}={}){
   const price=document.createElement('span');
   price.className='price';
   price.textContent=money(p.price);
+  const strike=compareAt(p);
+  if(strike){
+    const compare=document.createElement('del');compare.className='compare-price';compare.textContent=money(strike);
+    const saving=document.createElement('small');saving.className='product-savings';saving.textContent=t('saveAmount',{amount:money(strike-Number(p.price))});
+    price.append(compare,saving);
+  }
   const step=document.createElement('span');
   step.className='step';
   if(!p.available){
@@ -112,12 +166,14 @@ function createProductCard(p,{context='catalog'}={}){
       button.textContent=label;
       button.setAttribute('aria-label',t(delta>0?'add':'removeOne')+' '+productLabel(p));
       button.onclick=()=>change(p.id,delta);
+      button.disabled=delta>0&&cart[p.id]>=99;
       if(delta>0)step.append(String(cart[p.id]));
       step.append(button);
     }
   }
   row.append(price,step);
   card.append(art,title,unit,row);
+  card.onclick=event=>{if(!event.target.closest('button')&&!event.target.closest('[role="button"]'))showItemDetail(p);};
   return card;
 }
 window.EasyMandiCatalog=Object.freeze({
@@ -148,16 +204,22 @@ function render(){
     el('filters').append(b)
   });
   const q=el('search').value.toLocaleLowerCase();
-  let list=data.products.filter(p=>(category==='All'||p.category===category)&&(p.name+' '+p.hindi+' '+p.category).toLocaleLowerCase().includes(q));
+  let list=data.products.filter(p=>(category==='All'||p.category===category)&&(!favoritesOnly||favoriteIds.has(String(p.id)))&&(p.name+' '+p.hindi+' '+p.category).toLocaleLowerCase().includes(q));
   if(category==='All'&&!q&&popularIds.length){
     const ranks=new Map(popularIds.map((id,index)=>[id,index]));
     list=[...list].sort((a,b)=>(ranks.get(String(a.id))??999)-(ranks.get(String(b.id))??999));
   }
   el('count').textContent=t('productsCount',{count:list.length});
+  const favoritesButton=el('favoritesFilter');
+  if(favoritesButton){
+    favoritesButton.textContent=favoritesOnly?t('showAllProducts'):t('showFavorites');
+    favoritesButton.setAttribute('aria-pressed',String(favoritesOnly));
+  }
   el('products').innerHTML='';
   for(const p of list)el('products').append(createProductCard(p));
   if(!list.length)el('products').textContent=t('noProducts');
   el('basketButton').textContent=t('basket')+' · '+Object.values(cart).reduce((a,b)=>a+b,0);
+  deliveryProgress();
   window.dispatchEvent(new Event('easy-mandi-catalog-rendered'));
 }
 function renderBasket(){
@@ -173,7 +235,18 @@ function renderBasket(){
     name.setAttribute('aria-label',t('viewFull',{name:productLabel(p)}));
     name.onclick=()=>showItemDetail(p);
     const count=document.createElement('span');
-    count.textContent='× '+cart[p.id];
+    count.className='basket-quantity';
+    const minus=document.createElement('button');
+    minus.type='button';minus.textContent='−';
+    minus.setAttribute('aria-label',t('removeOne')+' '+productLabel(p));
+    minus.onclick=()=>change(p.id,-1);
+    const number=document.createElement('strong');number.textContent=String(cart[p.id]);
+    const plus=document.createElement('button');
+    plus.type='button';plus.textContent='+';
+    plus.setAttribute('aria-label',t('add')+' '+productLabel(p));
+    plus.disabled=cart[p.id]>=99;
+    plus.onclick=()=>change(p.id,1);
+    count.append(minus,number,plus);
     const price=document.createElement('strong');
     price.textContent=money(p.price*cart[p.id]);
     const remove=document.createElement('button');
@@ -204,12 +277,12 @@ function showItemDetail(product){
 }
 function renderItemDetail(){
   const p=data?.products.find(item=>item.id===detailProductId),quantity=cart[detailProductId]||0;
-  if(!p||!quantity){
+  if(!p){
     if(el('itemDetail').open)el('itemDetail').close();
     detailProductId=null;
     return
   }el('detailTitle').textContent=productLabel(p);
-  el('detailArt').textContent=p.emoji;
+  showArtwork(el('detailArt'),p);
   el('detailHindi').textContent=window.EMI18n?.lang==='hi'?p.name:(p.hindi||'');
   el('detailPrice').textContent=money(p.price)+' / '+p.unit;
   el('detailDescription').textContent=p.description||'';
@@ -217,10 +290,11 @@ function renderItemDetail(){
   el('detailTotal').textContent=t('itemTotal',{amount:money(p.price*quantity)});
   el('detailMinus').setAttribute('aria-label',t('removeOne')+' '+productLabel(p));
   el('detailPlus').setAttribute('aria-label',t('add')+' '+productLabel(p));
-  el('detailPlus').disabled=quantity>=99
+  el('detailMinus').disabled=quantity<=0;
+  el('detailPlus').disabled=!p.available||quantity>=99
 }
 el('detailMinus').onclick=()=>{
-  if(detailProductId){
+  if(detailProductId&&cart[detailProductId]){
     change(detailProductId,-1);
     renderItemDetail()
   }
@@ -262,6 +336,9 @@ el('basketButton').onclick=()=>{
 el('close').onclick=()=>el('basket').close();
 el('refresh').onclick=()=>load(false);
 el('search').oninput=render;
+el('favoritesFilter')?.addEventListener('click',()=>{favoritesOnly=!favoritesOnly;render();});
+el('closeAbout')?.addEventListener('click',()=>el('aboutDialog')?.close());
+el('clearSearch')?.addEventListener('click',()=>{el('search').value='';render();el('search').focus();});
 el('mobile').oninput=()=>el('mobile').setCustomValidity('');
 el('pin').oninput=()=>el('pin').setCustomValidity('');
 el('orderForm').onsubmit=async e=>{
@@ -293,6 +370,13 @@ el('orderForm').onsubmit=async e=>{
   button.textContent=t('placingOrder');
   el('orderError').textContent='';
   try{
+    if(el('saveCheckoutAddress')?.checked&&window.EasyMandiCustomerData?.saveCheckoutAddress){
+      try{
+        await window.EasyMandiCustomerData.saveCheckoutAddress({
+          name:String(form.get('name')||''),phone,house,locality,landmark,pin
+        });
+      }catch(_){ /* Saving an address never blocks a successfully validated order. */ }
+    }
     let key=sessionStorage.getItem('easy-mandi-pending-order');
     if(!key){
       key=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
@@ -312,7 +396,13 @@ el('orderForm').onsubmit=async e=>{
     }if(!response.ok){
       if(response.status===409&&result.error?.startsWith('Order request already used'))sessionStorage.removeItem('easy-mandi-pending-order');
       throw Error(result.error||t('orderFailure'));
-    }window.dispatchEvent(new Event('customer-order-placed'));
+    }window.dispatchEvent(new CustomEvent('customer-order-placed',{detail:{
+      orderId:result.orderId,
+      items:chosen.map(line=>{
+        const product=data.products.find(p=>String(p.id)===String(line.id));
+        return {product_id:String(line.id),name:product?.name||'',unit:product?.unit||'',quantity:line.quantity};
+      })
+    }}));
     const paymentMethod=String(form.get('paymentMethod')||'cod');
     deliveryLocation=null;
     showLocationStatus('hint');
@@ -336,10 +426,30 @@ el('orderForm').onsubmit=async e=>{
       const payWrap=document.createElement('section');
       payWrap.className='payment-panel';
       const payTitle=document.createElement('h4');payTitle.textContent=t('upiPayment');
-      const payInfo=document.createElement('p');payInfo.textContent=t('payInfo',{total:money(result.total),name:'ABHISHEK KUMAR SINGH',upi:'7398564033@kotakbank'});
-      const payLink=document.createElement('a');payLink.className='btn';payLink.textContent=t('openUpi');
-      const upi='upi://pay?pa='+encodeURIComponent('7398564033@kotakbank')+'&pn='+encodeURIComponent('ABHISHEK KUMAR SINGH')+'&am='+encodeURIComponent(Number(result.total).toFixed(2))+'&cu=INR&tn='+encodeURIComponent('Easy Mandi '+result.orderId);
-      payLink.href=upi;
+      const payInfo=document.createElement('p');
+      payInfo.textContent=t('paymentLoading');
+      const payLink=document.createElement('a');
+      payLink.className='btn';payLink.textContent=t('openUpi');payLink.hidden=true;
+      const qrHolder=document.createElement('div');qrHolder.className='payment-qr';
+      payWrap.append(payTitle,payInfo,qrHolder,payLink);
+      // Match the Flutter app: obtain the UPI payee and QR from the payment API.
+      (async()=>{
+        try{
+          const response=await AppHttp.fetch('https://cserver.learnwithchampak.live/easymandi/api/payment.php',{
+            method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({operation:'status',orderId:result.orderId,requestKey:key})
+          });
+          const payment=await response.json();
+          if(!response.ok)throw Error(payment.error||t('paymentLoadError'));
+          const uri=String(payment.upiUri||'');
+          if(!uri.startsWith('upi://pay?'))throw Error(t('paymentLoadError'));
+          payInfo.textContent=t('payInfo',{total:money(result.total),name:String(payment.payeeName||''),upi:String(payment.upiId||'')});
+          payLink.href=uri;payLink.hidden=false;
+          if(typeof window.QRCode==='function')new window.QRCode(qrHolder,{text:uri,width:208,height:208,
+            colorDark:'#123c30',colorLight:'#ffffff',correctLevel:window.QRCode.CorrectLevel.M});
+          else qrHolder.textContent=String(payment.upiId||'');
+        }catch(error){payInfo.textContent=error.message||t('paymentLoadError');}
+      })();
       const ref=document.createElement('input');ref.placeholder=t('upiReference');ref.maxLength=80;
       const receipt=document.createElement('input');receipt.type='file';receipt.accept='image/jpeg,image/png,image/webp';
       const receiptStatus=document.createElement('p');receiptStatus.className='note';receiptStatus.textContent=t('receiptHint');
@@ -360,7 +470,7 @@ el('orderForm').onsubmit=async e=>{
           sessionStorage.removeItem('easy-mandi-pending-order');
         }catch(error){receiptStatus.textContent=error.message||'Could not submit receipt.';submitReceipt.disabled=false;}
       };
-      payWrap.append(payTitle,payInfo,payLink,ref,receipt,submitReceipt,receiptStatus);
+      payWrap.append(ref,receipt,submitReceipt,receiptStatus);
       box.append(payWrap);
     }else{
       sessionStorage.removeItem('easy-mandi-pending-order');
@@ -384,7 +494,7 @@ el('orderForm').onsubmit=async e=>{
       const panel=box.querySelector('.payment-panel');
       if(panel){
         panel.querySelector('h4').textContent=t('upiPayment');
-        panel.querySelector('p').textContent=t('payInfo',{total:money(result.total),name:'ABHISHEK KUMAR SINGH',upi:'7398564033@kotakbank'});
+        // Dynamic UPI payee information comes from the authenticated payment status API.
         panel.querySelector('a').textContent=t('openUpi');
         panel.querySelector('input').placeholder=t('upiReference');
       }
@@ -400,6 +510,9 @@ el('orderForm').onsubmit=async e=>{
     button.textContent=t('placeOrder')
   }
 };
+window.addEventListener('customer-section-opened',event=>{
+  if(event.detail?.section==='catalog')load(true);
+});
 window.addEventListener('languagechange',()=>{
   if(data){render();if(el('basket').open)renderBasket();if(el('itemDetail').open)renderItemDetail();}
   showLocationStatus(el('locationStatus').dataset.locationState||'hint');
