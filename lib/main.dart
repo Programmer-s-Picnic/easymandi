@@ -249,7 +249,14 @@ class _StorePageState extends State<StorePage> {
   Future<void> restoreAccount() async {
     try {
       final account = await AuthService.instance.restore();
-      if (mounted) {setState(() => signedInUser = account);checkNotifications();syncCustomerData();}
+      if (mounted) {
+        setState(() {
+          signedInUser=account;
+          if(account!=null)recentItems=[];
+        });
+        checkNotifications();
+        syncCustomerData();
+      }
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(tr('Could not restore your account. Sign in again.','आपका खाता पुनः लोड नहीं हो सका। फिर से साइन इन करें।'))));
@@ -299,7 +306,11 @@ class _StorePageState extends State<StorePage> {
     if (signedInUser == null) {
       final account = await Navigator.push<AuthUser>(context,
         MaterialPageRoute(builder: (_) => const AccountPage()));
-      if (mounted && account != null) {setState(() => signedInUser = account);checkNotifications();syncCustomerData();}
+      if (mounted && account != null) {
+        setState(() {signedInUser=account;recentItems=[];});
+        checkNotifications();
+        syncCustomerData();
+      }
       return;
     }
     final account = signedInUser!;
