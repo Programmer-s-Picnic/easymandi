@@ -5,7 +5,7 @@ on:
     paths:
       - 'index.html'
       - 'web/**'
-      - 'admin/index.html'
+      - 'admin/**'
       - 'CNAME'
       - 'sitemap.xml'
       - 'robots.txt'
@@ -29,3 +29,10 @@ jobs:
           node --check web/i18n.js
           node --check web/storefront.js
           node --check web/deliveries.js
+      - name: Validate admin operations scripts
+        run: |
+          node --check admin/operations-desk.js
+          node --check admin/orders.js
+          node --check admin/packing.js
+          node --check admin/catalog.js
+          node --check admin/records.js
