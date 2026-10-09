@@ -15,8 +15,8 @@
 <meta property="og:image" content="https://easymandi.in/web/og-image.svg">
 <meta name="theme-color" content="#176b46">
 <title>Easy Mandi · Delivery Partners Master</title>
-<link rel="stylesheet" href="catalog.css?v=20261009-ops-help">
-<link rel="stylesheet" href="admin-pages.css?v=20261009-four-page-v1">
+<link rel="stylesheet" href="catalog.css?v=20261009-media-v1">
+<link rel="stylesheet" href="admin-pages.css?v=20261009-media-v1">
 <link rel="stylesheet" href="../shared/notifications.css?v=20261008-animated">
 <script src="../shared/api-client.js?v=20261001-icons" defer>
 </script>
@@ -150,6 +150,18 @@
 <div class="grid" id="store">
 </div>
 </section>
+<section class="panel media-panel" id="mediaPanel" aria-labelledby="mediaTitle">
+ <h2 id="mediaTitle">Media Library · Product &amp; Category Pictures</h2>
+ <p class="hint">Upload a JPEG, PNG or WebP picture (up to 4 MB). It is stored on the Easy Mandi server and assigned a permanent HTTPS URL. Choose that URL for a product or category, then Save to server to publish the catalogue change.</p>
+ <div class="media-upload-row">
+  <label class="field"><span>Picture to upload</span><input id="mediaUploadFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
+  <img id="mediaUploadPreview" class="media-upload-preview" alt="Selected image preview" hidden>
+  <button id="mediaUpload" class="btn" type="button">Upload picture</button>
+  <button id="mediaRefresh" class="btn secondary" type="button">Refresh library</button>
+ </div>
+ <p id="mediaStatus" class="hint" role="status" aria-live="polite">Unlock administration to upload or browse server images.</p>
+ <div id="mediaGrid" class="media-grid" aria-label="Previously uploaded pictures"></div>
+</section>
 <section class="panel" id="categoriesPanel">
 <h2>Product categories</h2>
 <p class="hint">Add or rename categories. Rename moves existing products with the category. To delete a category, move its products first. The All filter is reserved.</p>
@@ -244,6 +256,12 @@
 </div>
 </form>
 </dialog>
+<dialog id="mediaPickerDialog" class="record-dialog media-picker-dialog" aria-labelledby="mediaPickerTitle">
+ <h2 id="mediaPickerTitle">Choose uploaded picture</h2>
+ <p class="hint">Use a previously uploaded server picture. To add a new one, upload it in the Media Library above.</p>
+ <div class="row"><button type="button" id="mediaPickerRefresh" class="btn secondary">Refresh pictures</button><button type="button" id="mediaPickerClose" class="btn secondary">Close</button></div>
+ <div id="mediaPickerGrid" class="media-grid"></div>
+</dialog>
 <dialog id="productDialog" class="record-dialog" aria-labelledby="productTitle">
 <form id="productForm" novalidate>
 <h2 id="productTitle">Product record</h2>
@@ -271,7 +289,8 @@
 <footer>Developed and maintained by <a href="https://learnwithchampak.live">Champak Roy</a>
 </footer>
 <script src="auth-dialog.js?v=20261001-icons" defer></script>
-<script src="catalog.js?v=20261008-gallery-fields" defer>
+<script src="media-library.js?v=20261009-media-v1" defer></script>
+<script src="catalog.js?v=20261009-media-v1" defer>
 </script>
 <script src="packing.js?v=20261008-checklist" defer></script>
 <script src="orders.js?v=20261008-client12" defer>
