@@ -13,7 +13,8 @@
     method = 'GET', payload = null, authorized = false
   } = {
   }) {
-    const response = await AppHttp.fetch(`${api}/${path}.php`, {
+    const url = path.includes('?') ? `${api}/${path.replace('?', '.php?')}` : `${api}/${path}.php`;
+    const response = await AppHttp.fetch(url, {
       method, cache: 'no-store',
       headers: {
         Accept: 'application/json', ...(payload ? {
