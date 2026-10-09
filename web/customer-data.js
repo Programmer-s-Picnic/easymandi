@@ -19,18 +19,14 @@
   by('orderForm').prepend(controls);
   const history=document.createElement('section');
   history.className='panel previously-purchased';
-  history.setAttribute('aria-labelledby','previouslyOrderedHeading');
-  by('products').before(history);
+  history.setAttribute('aria-label','Previously purchased product cards');
+  by('previousProductsMount').append(history);
 
   function renderPreviouslyOrdered(){
     const signedIn=!!window.CustomerAccount?.user;
     history.hidden=!signedIn;
     history.replaceChildren();
     if(!signedIn)return;
-    const heading=document.createElement('h2');
-    heading.id='previouslyOrderedHeading';
-    heading.textContent=t('previouslyOrdered');
-    history.append(heading);
     if(!previousItems.length){
       const empty=document.createElement('p');
       empty.textContent=t('noPrevious');
@@ -55,7 +51,7 @@
       if(current){
         // Identical live catalog card: image, both names, unit, current price
         // and +/- controls connected to the same basket as the shop grid.
-        grid.append(catalog.createCard(current));
+        grid.append(catalog.createCard(current,{context:'previous'}));
       }else{
         // Keep historical purchases visible even when a product is deleted
         // from the current catalog. Never allow adding an unavailable item.
@@ -111,13 +107,16 @@
     const account=window.CustomerAccount?.user;
     const request=++refreshSerial;
     if(!account){
-      addresses=[];previousItems=[];selected=null;message.textContent='';render();return;
+      addresses=[];previousItems=[];selected=null;message.textContent='';
+      window.EasyMandiCatalog?.setPreviousIds([]);
+      render();return;
     }
     try{
       const result=await window.CustomerAccount.request('customer-data',{authorized:true});
       if(request!==refreshSerial||window.CustomerAccount?.user?.id!==account.id)return;
       addresses=Array.isArray(result.addresses)?result.addresses:[];
       previousItems=Array.isArray(result.items)?result.items:[];
+      window.EasyMandiCatalog?.setPreviousIds(previousItems.map(item=>item.product_id));
       render();
     }catch(error){
       if(request===refreshSerial&&window.CustomerAccount?.user?.id===account.id){

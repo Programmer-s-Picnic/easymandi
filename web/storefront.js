@@ -8,6 +8,7 @@ try{
 const t=(key,vars={})=>window.EMI18n?.t(key,vars)||key;
 const productLabel=p=>window.EMI18n?.lang==='hi'?(p.hindi||p.name):p.name;
 let popularIds=[];
+let previouslyBoughtIds=new Set();
 async function loadPopularity(){
   try{
     const response=await AppHttp.fetch('https://cserver.learnwithchampak.live/easymandi/api/popular-products.php',{cache:'no-store'});
@@ -69,14 +70,21 @@ function totals(){
 
 /* One product-card renderer for the live catalog and previously ordered items.
    Reusing the same component keeps prices, language and cart controls in sync. */
-function createProductCard(p){
+function createProductCard(p,{context='catalog'}={}){
   const card=document.createElement('article');
-  card.className='card';
+  card.className='card'+(context==='previous'?' previously-ordered-card':'');
   card.dataset.productId=String(p.id);
   const art=document.createElement('div');
   art.className='illustration';
   art.textContent=p.emoji||'🛒';
   art.setAttribute('aria-hidden','true');
+  const previouslyBought=previouslyBoughtIds.has(String(p.id));
+  if(context==='previous'||previouslyBought){
+    const badge=document.createElement('span');
+    badge.className='previous-purchase-badge'+(context==='previous'?' repeat-purchase':'');
+    badge.textContent=context==='previous'?t('buyAgainLabel'):t('purchasedBefore');
+    art.append(badge);
+  }
   const title=document.createElement('h3');
   title.textContent=productLabel(p);
   const unit=document.createElement('small');
@@ -115,7 +123,11 @@ function createProductCard(p){
 window.EasyMandiCatalog=Object.freeze({
   ready:()=>!!data,
   getProduct:id=>data?.products.find(p=>String(p.id)===String(id))||null,
-  createCard:createProductCard
+  createCard:createProductCard,
+  setPreviousIds:ids=>{
+    previouslyBoughtIds=new Set((Array.isArray(ids)?ids:[]).map(String));
+    if(data)render();
+  }
 });
 function render(){
   if(!data)return;
