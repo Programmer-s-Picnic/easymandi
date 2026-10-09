@@ -8,6 +8,47 @@ try{
 const t=(key,vars={})=>window.EMI18n?.t(key,vars)||key;
 const productLabel=p=>window.EMI18n?.lang==='hi'?(p.hindi||p.name):p.name;
 let popularIds=[];
+const favoriteKey='easy-mandi-favorites';
+let favoriteIds=new Set();
+try{favoriteIds=new Set(JSON.parse(localStorage.getItem(favoriteKey)||'[]').map(String));}catch{}
+let favoritesOnly=false;
+function toggleFavorite(id){
+  const key=String(id);
+  if(favoriteIds.has(key))favoriteIds.delete(key);else favoriteIds.add(key);
+  try{localStorage.setItem(favoriteKey,JSON.stringify([...favoriteIds]));}catch{}
+  render();
+}
+function productPhoto(p){
+  const raw=p?.imageUrl||p?.image||'';
+  if(typeof raw!=='string')return '';
+  try{const url=new URL(raw);return url.protocol==='https:'&&url.hostname?raw:'';}catch{return '';}
+}
+function compareAt(p){
+  const amount=Number(p?.compareAtPrice),price=Number(p?.price);
+  return Number.isFinite(amount)&&amount>price&&amount<=1000000?amount:null;
+}
+function showArtwork(parent,p){
+  parent.replaceChildren();
+  const fallback=document.createElement('span');fallback.textContent=p.emoji||'🥬';fallback.className='emoji-art';
+  const src=productPhoto(p);
+  if(src){
+    const photo=document.createElement('img');
+    photo.src=src;photo.alt='';photo.loading='lazy';photo.decoding='async';photo.className='product-photo';
+    photo.onerror=()=>photo.replaceWith(fallback);
+    parent.append(photo);
+  }else parent.append(fallback);
+}
+function deliveryProgress(){
+  const target=el('deliveryProgress');
+  if(!target||!data)return;
+  const above=Number(data.store?.freeDeliveryAbove||499);
+  const subtotal=totals().subtotal;
+  const missing=Math.max(0,above-subtotal);
+  target.textContent=missing===0?t('deliveryUnlocked'):
+    subtotal===0?t('deliveryAbove',{amount:money(above)}):t('deliveryRemaining',{amount:money(missing)});
+  const track=el('deliveryProgressFill');if(track)track.style.width=(above>0?Math.min(100,subtotal/above*100):100)+'%';
+}
+
 let previouslyBoughtIds=new Set();
 async function loadPopularity(){
   try{
@@ -76,7 +117,7 @@ function createProductCard(p,{context='catalog'}={}){
   card.dataset.productId=String(p.id);
   const art=document.createElement('div');
   art.className='illustration';
-  art.textContent=p.emoji||'🛒';
+  showArtwork(art,p);
   art.setAttribute('aria-hidden','true');
   const previouslyBought=previouslyBoughtIds.has(String(p.id));
   if(context==='previous'||previouslyBought){
@@ -85,8 +126,22 @@ function createProductCard(p,{context='catalog'}={}){
     badge.textContent=context==='previous'?t('buyAgainLabel'):t('purchasedBefore');
     art.append(badge);
   }
+  const favorite=document.createElement('button');
+  favorite.className='favorite-button'+(favoriteIds.has(String(p.id))?' is-favorite':'');
+  favorite.type='button';
+  favorite.textContent=favoriteIds.has(String(p.id))?'♥':'♡';
+  favorite.setAttribute('aria-label',t(favoriteIds.has(String(p.id))?'removeFavorite':'addFavorite')+' '+productLabel(p));
+  favorite.onclick=()=>toggleFavorite(p.id);
+  art.append(favorite);
+  art.classList.toggle('product-unavailable',!p.available);
   const title=document.createElement('h3');
   title.textContent=productLabel(p);
+  title.className='product-name-link';
+  title.tabIndex=0;
+  title.setAttribute('role','button');
+  title.setAttribute('aria-label',t('viewFull',{name:productLabel(p)}));
+  title.onclick=()=>showItemDetail(p);
+  title.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showItemDetail(p);}};
   const unit=document.createElement('small');
   unit.textContent=(window.EMI18n?.lang==='hi'?p.name:(p.hindi||p.name))+' · '+p.unit;
   const row=document.createElement('div');
@@ -94,6 +149,12 @@ function createProductCard(p,{context='catalog'}={}){
   const price=document.createElement('span');
   price.className='price';
   price.textContent=money(p.price);
+  const strike=compareAt(p);
+  if(strike){
+    const compare=document.createElement('del');compare.className='compare-price';compare.textContent=money(strike);
+    const saving=document.createElement('small');saving.className='product-savings';saving.textContent=t('saveAmount',{amount:money(strike-Number(p.price))});
+    price.append(compare,saving);
+  }
   const step=document.createElement('span');
   step.className='step';
   if(!p.available){
@@ -112,6 +173,7 @@ function createProductCard(p,{context='catalog'}={}){
       button.textContent=label;
       button.setAttribute('aria-label',t(delta>0?'add':'removeOne')+' '+productLabel(p));
       button.onclick=()=>change(p.id,delta);
+      button.disabled=delta>0&&cart[p.id]>=99;
       if(delta>0)step.append(String(cart[p.id]));
       step.append(button);
     }
@@ -148,16 +210,22 @@ function render(){
     el('filters').append(b)
   });
   const q=el('search').value.toLocaleLowerCase();
-  let list=data.products.filter(p=>(category==='All'||p.category===category)&&(p.name+' '+p.hindi+' '+p.category).toLocaleLowerCase().includes(q));
+  let list=data.products.filter(p=>(category==='All'||p.category===category)&&(!favoritesOnly||favoriteIds.has(String(p.id)))&&(p.name+' '+p.hindi+' '+p.category).toLocaleLowerCase().includes(q));
   if(category==='All'&&!q&&popularIds.length){
     const ranks=new Map(popularIds.map((id,index)=>[id,index]));
     list=[...list].sort((a,b)=>(ranks.get(String(a.id))??999)-(ranks.get(String(b.id))??999));
   }
   el('count').textContent=t('productsCount',{count:list.length});
+  const favoritesButton=el('favoritesFilter');
+  if(favoritesButton){
+    favoritesButton.textContent=favoritesOnly?t('showAllProducts'):t('showFavorites');
+    favoritesButton.setAttribute('aria-pressed',String(favoritesOnly));
+  }
   el('products').innerHTML='';
   for(const p of list)el('products').append(createProductCard(p));
   if(!list.length)el('products').textContent=t('noProducts');
   el('basketButton').textContent=t('basket')+' · '+Object.values(cart).reduce((a,b)=>a+b,0);
+  deliveryProgress();
   window.dispatchEvent(new Event('easy-mandi-catalog-rendered'));
 }
 function renderBasket(){
@@ -204,12 +272,12 @@ function showItemDetail(product){
 }
 function renderItemDetail(){
   const p=data?.products.find(item=>item.id===detailProductId),quantity=cart[detailProductId]||0;
-  if(!p||!quantity){
+  if(!p){
     if(el('itemDetail').open)el('itemDetail').close();
     detailProductId=null;
     return
   }el('detailTitle').textContent=productLabel(p);
-  el('detailArt').textContent=p.emoji;
+  showArtwork(el('detailArt'),p);
   el('detailHindi').textContent=window.EMI18n?.lang==='hi'?p.name:(p.hindi||'');
   el('detailPrice').textContent=money(p.price)+' / '+p.unit;
   el('detailDescription').textContent=p.description||'';
@@ -217,10 +285,11 @@ function renderItemDetail(){
   el('detailTotal').textContent=t('itemTotal',{amount:money(p.price*quantity)});
   el('detailMinus').setAttribute('aria-label',t('removeOne')+' '+productLabel(p));
   el('detailPlus').setAttribute('aria-label',t('add')+' '+productLabel(p));
-  el('detailPlus').disabled=quantity>=99
+  el('detailMinus').disabled=quantity<=0;
+  el('detailPlus').disabled=!p.available||quantity>=99
 }
 el('detailMinus').onclick=()=>{
-  if(detailProductId){
+  if(detailProductId&&cart[detailProductId]){
     change(detailProductId,-1);
     renderItemDetail()
   }
@@ -262,6 +331,8 @@ el('basketButton').onclick=()=>{
 el('close').onclick=()=>el('basket').close();
 el('refresh').onclick=()=>load(false);
 el('search').oninput=render;
+el('favoritesFilter')?.addEventListener('click',()=>{favoritesOnly=!favoritesOnly;render();});
+el('clearSearch')?.addEventListener('click',()=>{el('search').value='';render();el('search').focus();});
 el('mobile').oninput=()=>el('mobile').setCustomValidity('');
 el('pin').oninput=()=>el('pin').setCustomValidity('');
 el('orderForm').onsubmit=async e=>{
