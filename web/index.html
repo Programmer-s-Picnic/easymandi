@@ -18,8 +18,8 @@
 <meta name="twitter:description" content="Fresh vegetables for Varanasi. Order in English or Hindi.">
 <meta name="twitter:image" content="https://easymandi.in/web/og-image.svg">
 <title>Easy Mandi | Fresh vegetables</title>
-<link rel="stylesheet" href="storefront.css?v=20261009-apk-parity-v3">
-<script src="i18n.js?v=20261009-apk-parity-v3" defer></script>
+<link rel="stylesheet" href="storefront.css?v=20261009-apk-parity-v4">
+<script src="i18n.js?v=20261009-apk-parity-v4" defer></script>
 <link rel="stylesheet" href="../shared/notifications.css?v=20261008-animate">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
 </script>
@@ -42,33 +42,20 @@
 </div>
 </header>
 <main class="wrap">
-
-<nav class="customer-section-nav" id="customerSectionNav" aria-label="Easy Mandi shopping sections">
- <a href="#catalog" data-customer-tab="catalog" aria-current="page"><span aria-hidden="true">🥬</span> <span data-i18n="navCatalog">Today's Catalogue</span></a>
- <a href="#previous" data-customer-tab="previous"><span aria-hidden="true">↻</span> <span data-i18n="navPrevious">Previously Ordered</span></a>
- <a href="#orders" data-customer-tab="orders"><span aria-hidden="true">🧾</span> <span data-i18n="navOrders">My Orders</span></a>
- <a href="#deliveries" data-customer-tab="deliveries"><span aria-hidden="true">🚚</span> <span data-i18n="navDeliveries">My Deliveries</span></a>
- <a href="#basket" data-customer-action="basket"><span aria-hidden="true">🛒</span> <span data-i18n="navBasket">Basket &amp; Address</span></a>
- <a href="#account" data-customer-action="account"><span aria-hidden="true">👤</span> <span data-i18n="navAccount">My Account</span></a>
-</nav>
-
-<section class="customer-screen" id="catalogSection" data-customer-section="catalog" aria-label="Today's Catalogue">
-<section class="hero" aria-label="Easy Mandi welcome">
-  <div class="hero-main">
-    <div class="hero-copy">
-      <small class="hero-eyebrow" data-i18n="eyebrow">FRESH FROM THE MANDI</small>
-      <h1 data-i18n="heroTitle">Good food starts fresh.</h1>
-      <p data-i18n="heroText">Onions, potatoes and vegetables for your everyday kitchen · Varanasi</p>
-      <a class="hero-shop-link" href="#shopCatalog"><span data-i18n="browseCatalog">Browse today's catalog</span><span aria-hidden="true">→</span></a>
-    </div>
-    <div class="hero-graphic" aria-hidden="true"><img src="brand-mark.svg" alt=""><span>Fresh picks<br>for every kitchen</span></div>
-  </div>
-  <div class="hero-promises">
-    <span><span aria-hidden="true">🥬</span> <span data-i18n="freshEssentials">Fresh essentials</span></span>
-    <span><span aria-hidden="true">🌐</span> हिन्दी / English</span>
-    <span><span aria-hidden="true">💳</span> <span data-i18n="paymentChoices">UPI &amp; Cash on Delivery</span></span>
-  </div>
-</section>
+<div class="app-store-toolbar">
+ <h1 data-i18n="apkShopTitle">Fruits &amp; Vegetables</h1>
+ <div class="app-menu-holder">
+   <button class="btn ghost" id="appMore" type="button" aria-haspopup="true" aria-expanded="false" data-i18n="moreOptions">More options</button>
+   <div class="app-menu" id="appMoreMenu" hidden>
+     <button type="button" data-app-view="catalog" data-i18n="navCatalog">Today's Catalogue</button>
+     <button type="button" data-app-view="orders" data-i18n="navOrders">My Orders</button>
+     <button type="button" data-app-view="deliveries" data-i18n="navDeliveries">My Deliveries</button>
+     <button type="button" id="appReload" data-i18n="refreshCatalog">Refresh catalog</button>
+     <button type="button" id="appAbout" data-i18n="aboutEasyMandi">About Easy Mandi</button>
+   </div>
+ </div>
+</div>
+<section class="customer-screen" id="catalogSection" data-customer-section="catalog">
 <p id="status" class="status" role="status">
 </p>
 <div class="catalog-search-tools"><input class="search" id="search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products" data-i18n-aria-label="searchAria"><button type="button" id="clearSearch" class="btn ghost" data-i18n="clearSearch">Clear search</button><button type="button" id="favoritesFilter" class="btn ghost" aria-pressed="false" data-i18n="showFavorites">♡ Favorites</button></div>
@@ -82,20 +69,13 @@
 <button class="btn ghost" id="refresh" data-i18n="refreshCatalog">Refresh catalog</button>
 </div>
 <div class="delivery-progress-banner" id="deliveryProgressBanner" role="status" aria-live="polite"><span aria-hidden="true">🚚</span> <span id="deliveryProgress"></span><div class="delivery-progress-track" aria-hidden="true"><span id="deliveryProgressFill"></span></div></div>
+<section class="app-recent-section" id="recentSection"><div class="recent-section-heading"><h2 data-i18n="previouslyOrdered">Previously ordered items</h2><button type="button" id="refreshRecent" class="btn ghost" data-i18n="refreshPrevious">Refresh previous orders</button></div><div id="previousProductsMount"></div></section>
 <div class="grid" id="products">
 </div>
 
+
 </section>
-<section class="customer-screen" id="previousSection" data-customer-section="previous" aria-label="Previously ordered items" hidden>
- <div class="customer-section-intro" id="previousIntro"><h2 data-i18n="previouslyOrdered">Previously ordered items</h2><p data-i18n="previousSectionLead">Products you have bought before · Reorder at today's prices</p></div>
- <div id="previousProductsMount"></div>
- <div class="customer-section-gate" id="previousSignInGate" hidden>
- <h2 data-i18n="previouslyOrdered">Previously ordered items</h2>
- <p data-i18n="signInSectionHint">Please sign in to view your personal information.</p>
- <button class="btn" type="button" id="previousSignIn" data-i18n="signIn">Sign in</button>
-</div>
-</section>
-<section class="customer-screen" id="ordersSection" data-customer-section="orders" aria-label="My Orders" hidden>
+<section class="customer-screen" id="ordersSection" data-customer-section="orders" hidden>
  <section id="myOrdersPanel" class="my-orders-panel" hidden aria-labelledby="myOrdersHeading">
   <div class="delivery-panel-top">
     <div><small class="section-kicker" data-i18n="yourAccountKicker">YOUR EASY MANDI ACCOUNT</small>
@@ -108,14 +88,8 @@
   <div id="myOrdersList" class="my-orders-list"></div>
   <button id="moreMyOrders" class="btn ghost" type="button" hidden>Load more orders</button>
 </section>
-
- <div class="customer-section-gate" id="ordersSignInGate" hidden>
- <h2 data-i18n="navOrders">My Orders</h2>
- <p data-i18n="signInSectionHint">Please sign in to view your personal information.</p>
- <button class="btn" type="button" id="ordersSignIn" data-i18n="signIn">Sign in</button>
-</div>
 </section>
-<section class="customer-screen" id="deliveriesSection" data-customer-section="deliveries" aria-label="My Deliveries" hidden>
+<section class="customer-screen" id="deliveriesSection" data-customer-section="deliveries" hidden>
  <section id="deliveryPanel" class="delivery-panel" hidden aria-labelledby="deliveryHeading">
   <div class="delivery-panel-top">
     <h2 id="deliveryHeading">My deliveries · code &amp; QR</h2>
@@ -124,12 +98,6 @@
   <p id="deliveryStatus" class="status" role="status" aria-live="polite"></p>
   <div id="customerDeliveries" class="delivery-list"></div>
 </section>
-
- <div class="customer-section-gate" id="deliveriesSignInGate" hidden>
- <h2 data-i18n="navDeliveries">My Deliveries</h2>
- <p data-i18n="signInSectionHint">Please sign in to view your personal information.</p>
- <button class="btn" type="button" id="deliveriesSignIn" data-i18n="signIn">Sign in</button>
-</div>
 </section>
 </main>
 <dialog id="basket">
@@ -249,15 +217,15 @@
  <p>Fresh essentials, straightforward ordering. <a href="https://learnwithchampak.live" rel="noopener noreferrer">Developed &amp; maintained by Champak Roy</a></p>
  <small>easymandi.in · Customer assistance is available through the order confirmation details.</small>
 </footer>
-<script src="storefront.js?v=20261009-apk-parity-v3" defer>
+<script src="storefront.js?v=20261009-apk-parity-v4" defer>
 </script>
 <script src="auth.js?v=20261009-orders" defer>
 </script>
-<script src="customer-data.js?v=20261009-tab-refresh-v2" defer></script>
+<script src="customer-data.js?v=20261009-apk-parity-v4" defer></script>
 <script src="vendor/qrcode.min.js?v=20261008" defer></script>
 <script src="deliveries.js?v=20261009-tab-refresh-v2" defer></script>
 <script src="order-history.js?v=20261009-tab-refresh-v2" defer></script>
-<script src="section-navigation.js?v=20261009-tab-refresh-v2" defer></script>
+<script src="section-navigation.js?v=20261009-apk-parity-v4" defer></script>
 </body>
 </html>
 
