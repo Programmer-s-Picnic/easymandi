@@ -1,7 +1,7 @@
 name: easy_mandi
 description: Easy Mandi client demonstration storefront.
 publish_to: none
-version: 1.3.8+17
+version: 1.3.9+18
 environment:
   sdk: '>=3.4.0 <4.0.0'
 dependencies:
