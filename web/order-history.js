@@ -114,6 +114,7 @@
       hasMore=!!result.hasMore;
       notice.textContent=t('Showing orders for your signed-in account · Times in IST','आपके खाते के ऑर्डर · समय भारतीय मानक समय (IST) में');
       render();
+      window.dispatchEvent(new CustomEvent('customer-view-rendered',{detail:{section:'orders',count:rows.length}}));
       window.EasyMandiTestAlerts?.report('orders','RENDERED',
         rows.length+' orders · Visible: '+(!panel.hidden&&!byId('ordersSection')?.hidden),
         {popup:window.EasyMandiTestAlerts?.recent('orders')});
