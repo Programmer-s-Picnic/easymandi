@@ -115,3 +115,29 @@ html[data-admin-page="operations"] #ordersPanel{margin-top:20px}
 /* Only Products Master owns the Media Library.
    Other generated pages keep shared DOM nodes for existing JS integrations. */
 html:not([data-admin-page="products"]) #mediaPanel{display:none!important}
+
+/* Localities Master is its own administration workspace. */
+html[data-admin-page="localities"] [data-page-title="localities"]{display:block}
+html[data-admin-page="localities"] [data-admin-link="localities"]{background:#dceffb;color:#104366;font-weight:800}
+html:not([data-admin-page="localities"]) #localitiesMaster{display:none!important}
+html[data-admin-page="localities"] #opsDesk,
+html[data-admin-page="localities"] .toolbar,
+html[data-admin-page="localities"] .alert,
+html[data-admin-page="localities"] #message,
+html[data-admin-page="localities"] #summary,
+html[data-admin-page="localities"] #storePanel,
+html[data-admin-page="localities"] #categoriesPanel,
+html[data-admin-page="localities"] #productsPanel,
+html[data-admin-page="localities"] #mediaPanel,
+html[data-admin-page="localities"] #publishPanel,
+html[data-admin-page="localities"] #ordersPanel,
+html[data-admin-page="localities"] #recordsPanel,
+html[data-admin-page="localities"] #usageGuide,
+html[data-admin-page="localities"] #adminHelp{display:none!important}
+.localities-master{background:linear-gradient(125deg,#eff8fd,#fff);border:1px solid #b9d8ea}
+.localities-master .row{flex-wrap:wrap;gap:9px}
+.locality-master-row{display:grid;grid-template-columns:minmax(135px,1fr) minmax(180px,2fr) auto auto auto;gap:9px;align-items:center;padding:12px;border:1px solid #d6e8f1;background:#fff;border-radius:11px;margin:10px 0}
+.locality-master-row input:not([type=checkbox]){min-width:0;width:100%;padding:9px}
+.locality-active{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:13px}
+#localityStatus[data-error="yes"]{color:#a42e22}
+@media(max-width:780px){.locality-master-row{grid-template-columns:1fr 1fr}.locality-master-row input:nth-child(1),.locality-master-row input:nth-child(2){grid-column:1/-1}}
