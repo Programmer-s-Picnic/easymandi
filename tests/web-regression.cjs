@@ -25,10 +25,11 @@ class Element {
 }
 function harness(html){
  const nodes={};for(const [,id]of html.matchAll(/\bid="([^"]+)"/g))nodes[id]=new Element();
- const all=[];const document={hidden:false,head:new Element(),body:new Element(),getElementById:id=>nodes[id]||all.find(n=>n.id===id),createElement:tag=>{const n=new Element(tag);all.push(n);return n},createTextNode:text=>text,querySelectorAll:()=>[],addEventListener(){}};
+ const all=[];const document={hidden:false,documentElement:new Element('html'),head:new Element(),body:new Element(),getElementById:id=>nodes[id]||all.find(n=>n.id===id),createElement:tag=>{const n=new Element(tag);all.push(n);return n},createTextNode:text=>text,querySelectorAll:()=>[],addEventListener(){}};
+ document.documentElement.dataset.adminPage=/data-admin-page="([^"]+)"/.exec(html)?.[1]||'';
  const memory=new Map(),storage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,String(v)),removeItem:k=>memory.delete(k)};
  const events={},timers=[];const window={innerWidth:1024,innerHeight:768,removeEventListener:(n,f)=>{events[n]=(events[n]||[]).filter(fn=>fn!==f)},addEventListener:(n,f)=>(events[n]??=[]).push(f),dispatchEvent:e=>(events[e.type]||[]).forEach(f=>f())};
- const ctx={window,document,sessionStorage:storage,localStorage:storage,AbortController,URL,URLSearchParams,crypto:require('node:crypto').webcrypto,Date,Event,console,confirm:()=>true,alert(){},navigator:{},location:{search:''},setInterval:f=>{timers.push(f);return timers.length},clearInterval(){},setTimeout:f=>{timers.push(f);return timers.length},clearTimeout(){},MutationObserver:class{observe(){}disconnect(){}},FormData:class{constructor(form){this.values=form.values||{}}get(k){return this.values[k]}}};
+ const ctx={window,document,sessionStorage:storage,localStorage:storage,AbortController,URL,URLSearchParams,crypto:require('node:crypto').webcrypto,Date,Event,CustomEvent:class {constructor(type,init){this.type=type;this.detail=init?.detail;}},console,confirm:()=>true,alert(){},navigator:{},location:{search:''},setInterval:f=>{timers.push(f);return timers.length},clearInterval(){},setTimeout:f=>{timers.push(f);return timers.length},clearTimeout(){},MutationObserver:class{observe(){}disconnect(){}},FormData:class{constructor(form){this.values=form.values||{}}get(k){return this.values[k]}}};
  vm.createContext(ctx);return {ctx,nodes,storage,timers,run:p=>{vm.runInContext(fs.readFileSync(path.join(base,p),'utf8'),ctx,{filename:p});if(ctx.window.AppHttp)ctx.AppHttp=ctx.window.AppHttp;if(ctx.window.AdminSession)ctx.AdminSession=ctx.window.AdminSession;if(ctx.window.NotificationInbox)ctx.NotificationInbox=ctx.window.NotificationInbox;}};
 }
 const tick=()=>new Promise(r=>setImmediate(r));
@@ -85,12 +86,32 @@ const tick=()=>new Promise(r=>setImmediate(r));
   assert.equal(a.nodes.adminDialog.open,false);await a.ctx.window.AdminAccess.ensure();assert.equal(attempts,2);
   // Execute customer checkout including WhatsApp confirmation with real production script.
   const c=harness(fs.readFileSync(path.join(base,'web/index.html'),'utf8'));const catalog=JSON.parse(fs.readFileSync(path.join(base,'assets/products.json')));catalog.store.minimumOrder=0;catalog.products[0].price=10.75;const id=catalog.products[0].id;
-  c.ctx.fetch=async(url,options)=>({ok:true,status:200,json:async()=>({orderId:'ABC123',total:10.75}),text:async()=>JSON.stringify(catalog)});
-  // Catalog calls expect JSON; order calls use the same response shape.
-  c.ctx.fetch=async(url,options)=>({ok:true,status:200,json:async()=>url.includes('order-create')?{orderId:'ABC123',total:10.75}:catalog});
+  c.ctx.fetch=async()=>({ok:true,status:200,json:async()=>catalog});
+  c.ctx.window.EasyMandiLocalities={valid:locality=>locality==='Lanka'};
+  let savedOrders=0,loggedIn=false;
+  c.ctx.window.CustomerAccount={
+    get authenticated(){return loggedIn;},
+    openSignIn(){},
+    request:async(endpoint,options)=>{
+      assert.equal(endpoint,'order-create');
+      assert.equal(options.authorized,true);
+      assert.equal(options.method,'POST');
+      assert.equal(options.payload.mobile,'9876543210');
+      savedOrders++;
+      return {orderId:'ABC123',total:10.75};
+    }
+  };
   c.run('shared/api-client.js');c.run('web/storefront.js');await tick();await tick();vm.runInContext(`change(${JSON.stringify(id)},1)`,c.ctx);
-  c.nodes.orderForm.values={name:'Test User',phone:'9876543210',house:'House 12',locality:'Lanka',landmark:'',pin:'221005'};await c.nodes.orderForm.fire('submit');
-  const link=c.nodes.orderConfirmation.children.find(n=>n.tagName==='a');assert.ok(link.href.startsWith('https://wa.me/917398564033?'));assert.ok(new URL(link.href).searchParams.get('text').includes('\n'));assert.equal(c.nodes.orderForm.hidden,true);
+  c.nodes.orderForm.values={name:'Test User',phone:'9876543210',house:'House 12',locality:'Lanka',landmark:'',pin:'221005'};
+  await c.nodes.orderForm.fire('submit');
+  assert.equal(savedOrders,0,'guest checkout must not save orders');
+  assert.equal(c.nodes.checkoutLoginGate.hidden,false,'guests see sign-in gate');
+  loggedIn=true;
+  c.ctx.window.dispatchEvent(new Event('customer-account-changed'));
+  assert.equal(c.nodes.orderForm.hidden,false,'signed in customers may check out');
+  await c.nodes.orderForm.fire('submit');
+  assert.equal(savedOrders,1,'authenticated order submitted');
+  const link=c.nodes.orderConfirmation.children.find(n=>n.tagName==='a');assert.ok(link.href.startsWith('https://wa.me/917398564033?'));assert.ok(new URL(link.href).searchParams.get('text').includes('\\n'));assert.equal(c.nodes.orderForm.hidden,true);
   const cloud=harness(fs.readFileSync(path.join(base,'web/index.html'),'utf8'));let addressPayload;
   cloud.nodes.orderForm.elements=Object.fromEntries(['name','phone','house','locality','landmark','pin'].map(key=>[key,new Element('input')]));
   cloud.ctx.data={products:[{id:'potato',price:20,available:true}]};cloud.ctx.change=()=>{};cloud.ctx.deliveryLocation={locationLat:1,locationLng:2};
