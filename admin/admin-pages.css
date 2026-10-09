@@ -1,0 +1,114 @@
+/* Easy Mandi admin page layout. All legacy component IDs stay in the DOM so the
+   catalog, order, payment and delivery integrations continue to work. */
+:root{--admin-navy:#14344b;--admin-blue:#eaf5ff;--admin-border:#d8e7f0}
+.admin-app{display:grid;grid-template-columns:245px minmax(0,1fr);max-width:1570px;margin:0 auto;min-height:calc(100vh - 134px);gap:0}
+.admin-rail{background:linear-gradient(180deg,#f4f9fd 0%,#fff 70%);padding:25px 14px 24px;border-right:1px solid var(--admin-border);display:flex;flex-direction:column;gap:18px;align-self:stretch}
+.admin-rail-brand{display:flex;align-items:center;gap:10px;padding:2px 9px 18px;border-bottom:1px solid var(--admin-border);color:var(--admin-navy);text-decoration:none}
+.admin-rail-brand strong,.admin-rail-brand small{display:block}
+.admin-rail-brand strong{font-size:20px}
+.admin-rail-brand small{font-size:9px;font-weight:800;letter-spacing:.16em;color:#6b8393}
+.admin-rail-logo{display:grid;place-items:center;border-radius:12px;background:#176b46;color:#fff;font-weight:900;width:42px;height:42px;flex-shrink:0}
+.admin-page-links{display:grid;gap:6px}
+.admin-page-links a{display:flex;align-items:center;gap:12px;padding:12px 10px;border-radius:10px;text-decoration:none;color:#35566b;font-weight:650;font-size:14px;transition:background .15s ease}
+.admin-page-links a span{display:grid;place-items:center;width:25px;height:25px;border:1px solid #d3e3ee;border-radius:7px;background:white;color:#176b46;font-weight:900}
+.admin-page-links a:hover{background:#e5f1f8}
+.admin-page-links a[aria-current="page"]{background:#dceffb;color:#104366;box-shadow:inset 3px 0 #176b46}
+.admin-rail-bottom{margin-top:auto;padding:18px 10px 0;border-top:1px solid var(--admin-border);display:grid;gap:10px}
+.admin-rail-bottom a{font-size:12px;color:#24627b}
+.admin-rail-bottom small{color:#70889a;font-size:11px;line-height:1.5}
+.admin-app main{min-width:0;width:100%;max-width:1180px;margin:0 auto;padding:24px 22px 70px}
+.admin-mobile-pages{display:none}
+.admin-page-title{display:none;padding:20px 23px;margin-bottom:18px;border:1px solid var(--admin-border);border-radius:17px;background:linear-gradient(110deg,#ecf7ff,#fff);color:var(--admin-navy)}
+.admin-page-title h2{font-size:clamp(22px,2vw,29px);margin:3px 0 6px}
+.admin-page-title p{font-size:14px;margin:0;line-height:1.6;color:#4e6a7a}
+.admin-eyebrow{color:#2a788e;letter-spacing:.13em;font-size:10px;font-weight:900}
+.admin-title-action{display:inline-block;margin-top:12px;text-decoration:none}
+html[data-admin-page="operations"] [data-page-title="operations"],
+html[data-admin-page="products"] [data-page-title="products"],
+html[data-admin-page="customers"] [data-page-title="customers"],
+html[data-admin-page="partners"] [data-page-title="partners"],
+html[data-admin-page="help"] [data-page-title="help"]{display:block}
+html[data-admin-page="operations"] [data-admin-link="operations"],
+html[data-admin-page="products"] [data-admin-link="products"],
+html[data-admin-page="customers"] [data-admin-link="customers"],
+html[data-admin-page="partners"] [data-admin-link="partners"],
+html[data-admin-page="help"] [data-admin-link="help"]{background:#dceffb;color:#104366;font-weight:800}
+.workspace-nav,.section-nav{display:none!important}
+/* Retain all original nodes for existing JavaScript, but keep one working
+   surface visible per URL. Order history remains available via customer record
+   explorer, and delivery account editing stays in the existing delivery admin. */
+html[data-admin-page="operations"] .toolbar,
+html[data-admin-page="operations"] .alert,
+html[data-admin-page="operations"] #message,
+html[data-admin-page="operations"] #summary,
+html[data-admin-page="operations"] #storePanel,
+html[data-admin-page="operations"] #categoriesPanel,
+html[data-admin-page="operations"] #productsPanel,
+html[data-admin-page="operations"] #publishPanel,
+html[data-admin-page="operations"] #recordsPanel,
+html[data-admin-page="operations"] #usageGuide,
+html[data-admin-page="operations"] #customerMasterNote,
+html[data-admin-page="operations"] #partnerMasterNote,
+html[data-admin-page="operations"] #adminHelp{display:none!important}
+html[data-admin-page="products"] #opsDesk,
+html[data-admin-page="products"] #ordersPanel,
+html[data-admin-page="products"] #recordsPanel,
+html[data-admin-page="products"] #usageGuide,
+html[data-admin-page="products"] #customerMasterNote,
+html[data-admin-page="products"] #partnerMasterNote,
+html[data-admin-page="products"] #adminHelp{display:none!important}
+html[data-admin-page="customers"] #opsDesk,
+html[data-admin-page="customers"] .toolbar,
+html[data-admin-page="customers"] .alert,
+html[data-admin-page="customers"] #message,
+html[data-admin-page="customers"] #summary,
+html[data-admin-page="customers"] #storePanel,
+html[data-admin-page="customers"] #categoriesPanel,
+html[data-admin-page="customers"] #productsPanel,
+html[data-admin-page="customers"] #publishPanel,
+html[data-admin-page="customers"] #ordersPanel,
+html[data-admin-page="customers"] #usageGuide,
+html[data-admin-page="customers"] #partnerMasterNote,
+html[data-admin-page="customers"] #adminHelp{display:none!important}
+html[data-admin-page="partners"] #opsDesk,
+html[data-admin-page="partners"] .toolbar,
+html[data-admin-page="partners"] .alert,
+html[data-admin-page="partners"] #message,
+html[data-admin-page="partners"] #summary,
+html[data-admin-page="partners"] #storePanel,
+html[data-admin-page="partners"] #categoriesPanel,
+html[data-admin-page="partners"] #productsPanel,
+html[data-admin-page="partners"] #publishPanel,
+html[data-admin-page="partners"] #ordersPanel,
+html[data-admin-page="partners"] #usageGuide,
+html[data-admin-page="partners"] #customerMasterNote,
+html[data-admin-page="partners"] #adminHelp{display:none!important}
+html[data-admin-page="help"] #opsDesk,
+html[data-admin-page="help"] .toolbar,
+html[data-admin-page="help"] .alert,
+html[data-admin-page="help"] #message,
+html[data-admin-page="help"] #summary,
+html[data-admin-page="help"] #storePanel,
+html[data-admin-page="help"] #categoriesPanel,
+html[data-admin-page="help"] #productsPanel,
+html[data-admin-page="help"] #publishPanel,
+html[data-admin-page="help"] #ordersPanel,
+html[data-admin-page="help"] #recordsPanel,
+html[data-admin-page="help"] #customerMasterNote,
+html[data-admin-page="help"] #partnerMasterNote{display:none!important}
+.admin-master-note{margin:0 0 16px;padding:16px 20px;background:#eef7fc;border:1px solid #d1e6f3;border-radius:12px;color:#173f54}
+.admin-master-note p{margin:7px 0 0;line-height:1.55;font-size:13px}
+.admin-help{border:1px solid var(--admin-border);border-radius:17px;background:white;padding:23px;margin:16px 0}
+.admin-help h2{margin-top:0;color:#143f55}
+.admin-help-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.admin-help-grid article{background:#f1f8fd;border:1px solid #dbeaf4;border-radius:13px;padding:17px;min-width:0}
+.admin-help-grid h3{margin:0 0 9px;color:#154f63;font-size:17px}
+.admin-help-grid ol{padding-left:19px;margin:0}
+.admin-help-grid li{line-height:1.65;font-size:13px;margin:5px 0;color:#34576a}
+.admin-help-grid p{color:#34576a;font-size:13px;line-height:1.65;margin:0}
+.admin-help a{color:#136e88}
+#usageGuide{margin-bottom:16px}
+html[data-admin-page="operations"] #ordersPanel{margin-top:20px}
+@media(max-width:1000px){.admin-app{grid-template-columns:205px minmax(0,1fr)}.admin-rail{padding:18px 9px}.admin-page-links a{font-size:12px;padding:9px 7px}.admin-app main{padding:20px 13px 50px}}
+@media(max-width:760px){.admin-app{display:block}.admin-rail{display:none}.admin-mobile-pages{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:0 0 12px;scrollbar-width:thin;white-space:nowrap}.admin-mobile-pages a{padding:9px 11px;flex:none;text-decoration:none;color:#244c65;background:#f2f7fb;border-radius:9px;font-weight:700;font-size:12px}.admin-app main{padding:13px 12px 40px}.admin-page-title{padding:15px;margin-bottom:12px}.admin-help{padding:13px}.admin-help-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.admin-page-links a{transition:none}}
