@@ -523,8 +523,8 @@ window.addEventListener('languagechange',()=>{
   showLocationStatus(el('locationStatus').dataset.locationState||'hint');
   if(confirmationLanguageRefresh)confirmationLanguageRefresh();
 });
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(true);});
-window.addEventListener('focus',()=>{if(!document.hidden)load(true);});
+
+
 setInterval(()=>{if(!document.hidden)load(true);},120000);
 loadPopularity();
 load();
