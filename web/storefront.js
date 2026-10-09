@@ -238,6 +238,7 @@ function render(){
   el('basketButton').textContent=t('basket')+' · '+Object.values(cart).reduce((a,b)=>a+b,0);
   deliveryProgress();
   window.dispatchEvent(new Event('easy-mandi-catalog-rendered'));
+  window.dispatchEvent(new CustomEvent('customer-view-rendered',{detail:{section:'catalog',count:list.length}}));
 }
 function renderBasket(){
   const chosen=data.products.filter(p=>p.available&&cart[p.id]);
