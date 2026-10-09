@@ -58,7 +58,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
       .where((v)=>v!=null&&'$v'.trim().isNotEmpty).join(', ');
     return Card(margin:const EdgeInsets.symmetric(horizontal:12,vertical:6),
       child:ExpansionTile(
-        title:Text('@{o['public_id']}',style:const TextStyle(fontWeight:FontWeight.w800)),
+        title:Text('\${o['public_id']}',style:const TextStyle(fontWeight:FontWeight.w800)),
         subtitle:Text('${ist(o['created_at'])}\n${o['status']} · ${assigned?o['delivery_status']:tr('Awaiting assignment','साथी नियुक्त नहीं')}',
           style:const TextStyle(fontSize:12)),
         trailing:Text(money(o['total']),style:const TextStyle(color:Color(0xFF176B46),fontWeight:FontWeight.w900)),
