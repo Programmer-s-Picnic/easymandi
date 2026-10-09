@@ -476,3 +476,37 @@ body>header{z-index:10}
 .delivery-progress-track span{display:block;height:100%;width:0;background:#176b46;transition:width .2s}
 @media(max-width:600px){.catalog-search-tools{gap:6px;margin:12px 0 9px}.catalog-search-tools .search{flex-basis:100%}.catalog-search-tools .btn{flex:1;padding:8px 6px;font-size:11px}.favorite-button{top:4px;right:4px;width:28px;min-width:28px;height:28px;font-size:17px}.previous-purchase-badge{max-width:calc(100% - 40px)}.product-savings{font-size:10px}.compare-price{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.delivery-progress-track span{transition:none}}
+
+/* Android-customer feature parity: home and More menu, rather than bespoke
+   website-only hero navigation and a separate purchase-history tab. */
+.customer-screen[hidden],.app-menu[hidden],.app-recent-section[hidden]{display:none!important}
+.my-orders-nav{display:none!important}
+.app-store-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 14px;padding:10px 3px}
+.app-store-toolbar h1{font-size:clamp(19px,2.2vw,24px);color:#273648;margin:0}
+.app-menu-holder{position:relative}
+#appMore{white-space:nowrap}
+.app-menu{position:absolute;right:0;top:calc(100% + 5px);z-index:8;min-width:230px;padding:7px;background:#fff;border:1px solid #d4e1ec;border-radius:13px;box-shadow:0 14px 42px #234b5c2b;display:grid;gap:3px}
+.app-menu button{background:transparent;color:#264256;border:0;border-radius:8px;text-align:left;padding:11px 13px;font:inherit;font-size:13px;cursor:pointer}
+.app-menu button:hover,.app-menu button:focus-visible{background:#eaf5fc;outline:0}
+.app-recent-section{padding:15px;margin:14px 0;border:1px solid #dce9e1;background:#fff;border-radius:18px}
+.recent-section-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px}
+.recent-section-heading h2{margin:0;color:#273648;font-size:16px}
+.recent-section-heading .btn{font-size:11px;padding:7px 9px;flex-shrink:0}
+#recentSection .previously-purchased{border:0;border-radius:0;padding:0;margin:0}
+#recentSection .previously-purchased-grid{display:flex;overflow-x:auto;gap:8px;padding:2px 2px 8px;scrollbar-width:thin;align-items:stretch}
+#recentSection .previously-purchased-grid .card{flex:0 0 175px;min-width:0;padding:9px;border:1px solid #dce9e2;box-shadow:none}
+#recentSection .previously-purchased-grid .illustration{height:100px;font-size:40px}
+#recentSection .previously-purchased-grid .favorite-button{width:25px;height:25px;min-width:25px;font-size:16px}
+#recentSection .previously-purchased-grid .card h3{font-size:13px;margin-top:7px}
+#recentSection .previously-purchased-grid .price{font-size:15px}
+#recentSection .previously-purchased-grid .card .row{margin-top:8px}
+.app-about-dialog{max-width:400px;padding:22px}
+.app-about-dialog p{line-height:1.6}
+.app-about-dialog a{color:#176b46}
+.save-checkout-address{display:flex;gap:9px;align-items:center;margin:8px 0;padding:8px;border:1px solid #dce9e1;border-radius:10px;background:#f8fcf8}
+.save-checkout-address input{width:auto!important;margin:0!important}
+.payment-qr{display:flex;justify-content:center;align-items:center;padding:8px}
+.payment-qr canvas,.payment-qr img{max-width:100%;height:auto}
+.product-name-link{cursor:pointer}
+.card{cursor:pointer}
+@media(max-width:600px){.app-store-toolbar{padding:8px 0}.app-menu{min-width:min(245px,82vw)}.app-recent-section{padding:11px;margin:10px 0}.recent-section-heading h2{font-size:14px}#recentSection .previously-purchased-grid .card{flex-basis:156px}}
