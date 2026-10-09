@@ -112,7 +112,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
   assert.equal(c.nodes.orderForm.hidden,false,'signed in customers may check out');
   await c.nodes.orderForm.fire('submit');
   assert.equal(savedOrders,1,'authenticated order submitted');
-  const link=c.nodes.orderConfirmation.children.find(n=>n.tagName==='a');assert.ok(link.href.startsWith('https://wa.me/917398564033?'));assert.ok(new URL(link.href).searchParams.get('text').includes('\\n'));assert.equal(c.nodes.orderForm.hidden,true);
+  const link=c.nodes.orderConfirmation.children.find(n=>n.tagName==='a');assert.ok(link.href.startsWith('https://wa.me/917398564033?'));assert.ok(new URL(link.href).searchParams.get('text').includes('\n'));assert.equal(c.nodes.orderForm.hidden,true);
   const cloud=harness(fs.readFileSync(path.join(base,'web/index.html'),'utf8'));let addressPayload;
   cloud.nodes.orderForm.elements=Object.fromEntries(['name','phone','house','locality','landmark','pin'].map(key=>[key,new Element('input')]));
   cloud.ctx.data={products:[{id:'potato',price:20,available:true}]};cloud.ctx.change=()=>{};cloud.ctx.deliveryLocation={locationLat:1,locationLng:2};
