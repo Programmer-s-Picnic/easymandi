@@ -143,12 +143,8 @@
     }
   }
   refreshButton.addEventListener('click',refresh);
-  window.addEventListener('customer-section-opened',event=>{
-    if(event.detail?.section==='deliveries'){
-      render(); // cached delivery cards and active codes appear immediately
-      refresh(); // update current status and codes in the background
-    }
-  });
+  window.EasyMandiDeliveries=Object.freeze({refresh:()=>{render();return refresh();}});
+  // Navigation invokes this entry point directly.
   window.addEventListener('customer-account-changed',()=>{
     requestNumber++;
     loading=false;
