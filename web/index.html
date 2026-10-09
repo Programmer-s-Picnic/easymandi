@@ -19,7 +19,7 @@
 <meta name="twitter:description" content="Fresh vegetables for Varanasi. Order in English or Hindi.">
 <meta name="twitter:image" content="https://easymandi.in/web/og-image.svg">
 <title>Easy Mandi | Fresh vegetables</title>
-<link rel="stylesheet" href="storefront.css?v=20261009-media-v1">
+<link rel="stylesheet" href="storefront.css?v=20261009-localities-v1">
 <script src="i18n.js?v=20261009-market-nav-v12" defer></script>
 <link rel="stylesheet" href="../shared/notifications.css?v=20261008-animate">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
@@ -115,8 +115,9 @@
 <p class="note" data-i18n="mobileHint">Format: +91 9876543210. Enter only the 10 digits.</p>
 <label for="house" data-i18n="house">House / flat / building</label>
 <input id="house" name="house" data-i18n-placeholder="housePlaceholder" placeholder="House 12" minlength="2" required>
-<label for="locality" data-i18n="locality">Street / locality</label>
-<input id="locality" name="locality" data-i18n-placeholder="localityPlaceholder" placeholder="Lanka" minlength="5" required>
+<label for="locality" data-i18n="locality">Select delivery locality · डिलीवरी क्षेत्र चुनें</label>
+<select id="locality" name="locality" required aria-describedby="serviceLocalityStatus"><option value="">Loading service localities…</option></select>
+<div class="service-locality-actions"><a class="btn ghost" id="localityMap" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true" data-i18n="viewLocalityMap">Display locality on map</a><span class="note" id="serviceLocalityStatus" role="status">Checking available areas…</span></div>
 <label for="landmark" data-i18n="landmark">Landmark (optional)</label>
 <input id="landmark" name="landmark" data-i18n-placeholder="landmarkPlaceholder" placeholder="Near the main gate">
 <label for="pin" data-i18n="pin">PIN code</label>
@@ -213,7 +214,8 @@
  <p>Fresh essentials, straightforward ordering. <a href="https://learnwithchampak.live" rel="noopener noreferrer">Developed &amp; maintained by Champak Roy</a></p>
  <small>easymandi.in · Customer assistance is available through the order confirmation details.</small>
 </footer>
-<script src="storefront.js?v=20261009-qr-only-v13" defer>
+<script src="localities.js?v=20261009-localities-v1" defer></script>
+<script src="storefront.js?v=20261009-localities-v1" defer>
 </script>
 <script src="auth.js?v=20261009-market-nav-v12" defer>
 </script>
