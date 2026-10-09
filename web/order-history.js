@@ -97,8 +97,10 @@
   async function fetchPage(reset=false){
     const current=window.CustomerAccount?.user;
     if(!current){nonce++;rows=[];page=0;hasMore=false;render();return;}
-    if(loading&&!reset)return;
-    if(reset){nonce++;page=0;rows=[];hasMore=false;}
+    // An existing request for this account will update the opened section.
+    // Restarting overlapping fetches repeatedly used to discard the response.
+    if(loading)return;
+    if(reset){nonce++;page=0;}
     const serial=nonce,owner=current.id;
     loading=true;
     refreshButton.disabled=moreButton.disabled=true;
@@ -134,12 +136,15 @@
   topButton.onclick=()=>window.EasyMandiSections?.select('orders')||panel.scrollIntoView({behavior:'smooth',block:'start'});
   window.addEventListener('customer-account-changed',()=>{
     accountId=window.CustomerAccount?.user?.id??null;
-    rows=[];page=0;hasMore=false;nonce++;render();
+    rows=[];page=0;hasMore=false;nonce++;loading=false;render();
     if(accountId!==null)fetchPage(true);
   });
   window.addEventListener('customer-order-placed',()=>fetchPage(true));
   window.addEventListener('customer-section-opened',event=>{
-    if(event.detail?.section==='orders')fetchPage(true);
+    if(event.detail?.section==='orders'){
+      render(); // last known order cards become visible immediately
+      fetchPage(true); // then refresh from the server without a page reload
+    }
   });
   window.addEventListener('languagechange',render);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&window.CustomerAccount?.user)fetchPage(true);});
