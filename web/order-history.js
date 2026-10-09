@@ -33,7 +33,7 @@
     delivered:['Delivered','पहुंचाया गया'],cancelled:['Cancelled','रद्द']
   };
   const statusName=s=>labels[s]?t(...labels[s]):String(s||'—');
-  let rows=[],page=0,hasMore=false,loading=false,nonce=0,accountId=null,displayOnly=false;
+  let rows=[],page=0,hasMore=false,loading=false,nonce=0,accountId=null;
   function render(){
     const logged=!!window.CustomerAccount?.user;
     panel.hidden=!logged;
@@ -104,10 +104,7 @@
     refreshButton.disabled=moreButton.disabled=true;
     notice.textContent=t('Loading your saved orders…','आपके ऑर्डर लोड हो रहे हैं…');
     try{
-      const result=await window.CustomerAccount.request('my-orders',{
-        authorized:true
-      /* Query string page is added to request path, before .php, so use explicit
-         same-origin API URL below for pagination beyond the first page. */});
+      const result=await window.CustomerAccount.request('my-orders',{authorized:true});
       if(serial!==nonce||window.CustomerAccount?.user?.id!==owner)return;
       rows=Array.isArray(result.orders)?result.orders:[];
       page=1;
@@ -124,12 +121,7 @@
     moreButton.disabled=true;
     const serial=nonce,owner=window.CustomerAccount.user.id,next=page+1;
     try{
-      const response=await AppHttp.fetch('https://cserver.learnwithchampak.live/easymandi/api/my-orders.php?page='+next,{
-        headers:{Accept:'application/json',Authorization:'Bearer '+sessionStorage.getItem('easy-mandi-auth-token')},
-        cache:'no-store'
-      });
-      const data=await response.json();
-      if(!response.ok)throw Error(data.error||'Could not load more orders.');
+      const data=await window.CustomerAccount.request('my-orders?page='+next,{authorized:true});
       if(serial!==nonce||window.CustomerAccount?.user?.id!==owner)return;
       rows.push(...(data.orders||[]));page=next;hasMore=!!data.hasMore;render();
     }catch(error){notice.textContent=error.message||t('Could not load more.','और ऑर्डर लोड नहीं हुए।');}
