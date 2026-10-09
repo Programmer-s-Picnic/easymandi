@@ -18,8 +18,8 @@
 <meta name="twitter:description" content="Fresh vegetables for Varanasi. Order in English or Hindi.">
 <meta name="twitter:image" content="https://easymandi.in/web/og-image.svg">
 <title>Easy Mandi | Fresh vegetables</title>
-<link rel="stylesheet" href="storefront.css?v=20261009-full-previous-products">
-<script src="i18n.js?v=20261009-orders-brand" defer></script>
+<link rel="stylesheet" href="storefront.css?v=20261009-sections-v1">
+<script src="i18n.js?v=20261009-sections-v1" defer></script>
 <link rel="stylesheet" href="../shared/notifications.css?v=20261008-animate">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
 </script>
@@ -42,6 +42,17 @@
 </div>
 </header>
 <main class="wrap">
+
+<nav class="customer-section-nav" id="customerSectionNav" aria-label="Easy Mandi shopping sections">
+ <a href="#catalog" data-customer-tab="catalog" aria-current="page"><span aria-hidden="true">🥬</span> <span data-i18n="navCatalog">Today's Catalogue</span></a>
+ <a href="#previous" data-customer-tab="previous"><span aria-hidden="true">↻</span> <span data-i18n="navPrevious">Previously Ordered</span></a>
+ <a href="#orders" data-customer-tab="orders"><span aria-hidden="true">🧾</span> <span data-i18n="navOrders">My Orders</span></a>
+ <a href="#deliveries" data-customer-tab="deliveries"><span aria-hidden="true">🚚</span> <span data-i18n="navDeliveries">My Deliveries</span></a>
+ <a href="#basket" data-customer-action="basket"><span aria-hidden="true">🛒</span> <span data-i18n="navBasket">Basket &amp; Address</span></a>
+ <a href="#account" data-customer-action="account"><span aria-hidden="true">👤</span> <span data-i18n="navAccount">My Account</span></a>
+</nav>
+
+<section class="customer-screen" id="catalogSection" data-customer-section="catalog" aria-label="Today's Catalogue">
 <section class="hero" aria-label="Easy Mandi welcome">
   <div class="hero-main">
     <div class="hero-copy">
@@ -60,26 +71,6 @@
 </section>
 <p id="status" class="status" role="status">
 </p>
-<section id="myOrdersPanel" class="my-orders-panel" hidden aria-labelledby="myOrdersHeading">
-  <div class="delivery-panel-top">
-    <div><small class="section-kicker" data-i18n="yourAccountKicker">YOUR EASY MANDI ACCOUNT</small>
-      <h2 id="myOrdersHeading">My orders · full history</h2>
-      <p class="note" data-i18n="ordersDescription">Every saved order, including those awaiting delivery assignment.</p>
-    </div>
-    <button id="refreshMyOrders" class="btn ghost" type="button">Refresh orders</button>
-  </div>
-  <p id="myOrdersStatus" class="note" role="status" aria-live="polite"></p>
-  <div id="myOrdersList" class="my-orders-list"></div>
-  <button id="moreMyOrders" class="btn ghost" type="button" hidden>Load more orders</button>
-</section>
-<section id="deliveryPanel" class="delivery-panel" hidden aria-labelledby="deliveryHeading">
-  <div class="delivery-panel-top">
-    <h2 id="deliveryHeading">My deliveries · code &amp; QR</h2>
-    <button id="refreshDeliveries" class="btn ghost" type="button">Refresh deliveries</button>
-  </div>
-  <p id="deliveryStatus" class="status" role="status" aria-live="polite"></p>
-  <div id="customerDeliveries" class="delivery-list"></div>
-</section>
 <input class="search" id="search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products" data-i18n-aria-label="searchAria">
 <div class="filters" id="filters">
 </div>
@@ -92,6 +83,53 @@
 </div>
 <div class="grid" id="products">
 </div>
+
+</section>
+<section class="customer-screen" id="previousSection" data-customer-section="previous" aria-label="Previously ordered items" hidden>
+ <div class="customer-section-intro" id="previousIntro"><h2 data-i18n="previouslyOrdered">Previously ordered items</h2><p data-i18n="previousSectionLead">Products you have bought before · Reorder at today's prices</p></div>
+ <div id="previousProductsMount"></div>
+ <div class="customer-section-gate" id="previousSignInGate" hidden>
+ <h2 data-i18n="previouslyOrdered">Previously ordered items</h2>
+ <p data-i18n="signInSectionHint">Please sign in to view your personal information.</p>
+ <button class="btn" type="button" id="previousSignIn" data-i18n="signIn">Sign in</button>
+</div>
+</section>
+<section class="customer-screen" id="ordersSection" data-customer-section="orders" aria-label="My Orders" hidden>
+ <section id="myOrdersPanel" class="my-orders-panel" hidden aria-labelledby="myOrdersHeading">
+  <div class="delivery-panel-top">
+    <div><small class="section-kicker" data-i18n="yourAccountKicker">YOUR EASY MANDI ACCOUNT</small>
+      <h2 id="myOrdersHeading">My orders · full history</h2>
+      <p class="note" data-i18n="ordersDescription">Every saved order, including those awaiting delivery assignment.</p>
+    </div>
+    <button id="refreshMyOrders" class="btn ghost" type="button">Refresh orders</button>
+  </div>
+  <p id="myOrdersStatus" class="note" role="status" aria-live="polite"></p>
+  <div id="myOrdersList" class="my-orders-list"></div>
+  <button id="moreMyOrders" class="btn ghost" type="button" hidden>Load more orders</button>
+</section>
+
+ <div class="customer-section-gate" id="ordersSignInGate" hidden>
+ <h2 data-i18n="navOrders">My Orders</h2>
+ <p data-i18n="signInSectionHint">Please sign in to view your personal information.</p>
+ <button class="btn" type="button" id="ordersSignIn" data-i18n="signIn">Sign in</button>
+</div>
+</section>
+<section class="customer-screen" id="deliveriesSection" data-customer-section="deliveries" aria-label="My Deliveries" hidden>
+ <section id="deliveryPanel" class="delivery-panel" hidden aria-labelledby="deliveryHeading">
+  <div class="delivery-panel-top">
+    <h2 id="deliveryHeading">My deliveries · code &amp; QR</h2>
+    <button id="refreshDeliveries" class="btn ghost" type="button">Refresh deliveries</button>
+  </div>
+  <p id="deliveryStatus" class="status" role="status" aria-live="polite"></p>
+  <div id="customerDeliveries" class="delivery-list"></div>
+</section>
+
+ <div class="customer-section-gate" id="deliveriesSignInGate" hidden>
+ <h2 data-i18n="navDeliveries">My Deliveries</h2>
+ <p data-i18n="signInSectionHint">Please sign in to view your personal information.</p>
+ <button class="btn" type="button" id="deliveriesSignIn" data-i18n="signIn">Sign in</button>
+</div>
+</section>
 </main>
 <dialog id="basket">
 <h2 data-i18n="yourBasket">Your basket</h2>
@@ -210,14 +248,15 @@
  <p>Fresh essentials, straightforward ordering. <a href="https://learnwithchampak.live" rel="noopener noreferrer">Developed &amp; maintained by Champak Roy</a></p>
  <small>easymandi.in · Customer assistance is available through the order confirmation details.</small>
 </footer>
-<script src="storefront.js?v=20261009-full-previous-products" defer>
+<script src="storefront.js?v=20261009-sections-v1" defer>
 </script>
 <script src="auth.js?v=20261009-orders" defer>
 </script>
-<script src="customer-data.js?v=20261009-full-previous-products" defer></script>
+<script src="customer-data.js?v=20261009-sections-v1" defer></script>
 <script src="vendor/qrcode.min.js?v=20261008" defer></script>
 <script src="deliveries.js?v=20261008-handoff-qr" defer></script>
-<script src="order-history.js?v=20261009-order-ledger" defer></script>
+<script src="order-history.js?v=20261009-sections-v1" defer></script>
+<script src="section-navigation.js?v=20261009-sections-v1" defer></script>
 </body>
 </html>
 
