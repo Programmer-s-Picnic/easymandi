@@ -132,6 +132,7 @@
       lastOrders=Array.isArray(response.orders)?response.orders:[];
       notice.textContent='';
       render();
+      window.dispatchEvent(new CustomEvent('customer-view-rendered',{detail:{section:'deliveries',count:lastOrders.length}}));
       window.EasyMandiTestAlerts?.report('deliveries','RENDERED',
         lastOrders.length+' deliveries · Visible: '+(!panel.hidden&&!byId('deliveriesSection')?.hidden),
         {popup:window.EasyMandiTestAlerts?.recent('deliveries')});

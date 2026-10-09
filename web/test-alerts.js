@@ -11,7 +11,28 @@
   let enabled=false;
   try{enabled=sessionStorage.getItem(key)==='1';}catch(_){enabled=params.get('testAlerts')==='1';}
   const entries=[];
-  let panel=null,feed=null,button=null;
+  let panel=null,feed=null,button=null,toastStack=null;
+  function showToast(label,phase,info){
+    if(!toastStack)return;
+    const notice=document.createElement('div');
+    notice.className='customer-test-toast';
+    notice.setAttribute('role','alert');
+    const labelNode=document.createElement('strong');
+    labelNode.textContent=label+' — '+phase;
+    const description=document.createElement('span');
+    description.textContent=info;
+    const dismiss=document.createElement('button');
+    dismiss.type='button';
+    dismiss.textContent='×';
+    dismiss.setAttribute('aria-label','Dismiss testing notice');
+    dismiss.onclick=()=>notice.remove();
+    notice.append(labelNode,description,dismiss);
+    toastStack.append(notice);
+    while(toastStack.children.length>3)toastStack.firstElementChild.remove();
+    // Browser alert() pauses JavaScript and may prevent the page from painting.
+    // These notices are non-blocking and disappear after a few seconds.
+    setTimeout(()=>notice.remove(),6500);
+  }
   let activeSection='',activeAt=0;
   const stamp=()=>new Date().toLocaleTimeString('en-IN',{hour12:false});
   function renderPanel(){
@@ -47,7 +68,7 @@
     entries.push(line);
     if(entries.length>100)entries.shift();
     renderPanel();
-    if(opts.popup)window.alert('Easy Mandi testing\n\n'+label+' — '+phase+'\n'+info);
+    if(opts.popup)showToast(label,phase,info);
   }
   function begin(section,detail=''){
     activeSection=String(section);
@@ -81,6 +102,10 @@
   feed=document.createElement('pre');feed.className='customer-test-alerts-log';
   panel.append(header,feed);
   document.body.append(panel);
+  toastStack=document.createElement('div');
+  toastStack.className='customer-test-toast-stack';
+  toastStack.setAttribute('aria-live','polite');
+  document.body.append(toastStack);
   renderPanel();
   if(enabled)report('TEST','READY','v7 diagnostic alerts loaded');
 })();
