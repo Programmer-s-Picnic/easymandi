@@ -119,19 +119,12 @@ function createProductCard(p,{context='catalog'}={}){
   art.className='illustration';
   showArtwork(art,p);
   art.setAttribute('aria-hidden','true');
-  const previouslyBought=previouslyBoughtIds.has(String(p.id));
-  if(context==='previous'||previouslyBought){
-    const badge=document.createElement('span');
-    badge.className='previous-purchase-badge'+(context==='previous'?' repeat-purchase':'');
-    badge.textContent=context==='previous'?t('buyAgainLabel'):t('purchasedBefore');
-    art.append(badge);
-  }
   const favorite=document.createElement('button');
   favorite.className='favorite-button'+(favoriteIds.has(String(p.id))?' is-favorite':'');
   favorite.type='button';
   favorite.textContent=favoriteIds.has(String(p.id))?'♥':'♡';
   favorite.setAttribute('aria-label',t(favoriteIds.has(String(p.id))?'removeFavorite':'addFavorite')+' '+productLabel(p));
-  favorite.onclick=()=>toggleFavorite(p.id);
+  favorite.onclick=event=>{event.stopPropagation();toggleFavorite(p.id);};
   art.append(favorite);
   art.classList.toggle('product-unavailable',!p.available);
   const title=document.createElement('h3');
@@ -180,6 +173,7 @@ function createProductCard(p,{context='catalog'}={}){
   }
   row.append(price,step);
   card.append(art,title,unit,row);
+  card.onclick=event=>{if(!event.target.closest('button')&&!event.target.closest('[role="button"]'))showItemDetail(p);};
   return card;
 }
 window.EasyMandiCatalog=Object.freeze({
@@ -332,6 +326,7 @@ el('close').onclick=()=>el('basket').close();
 el('refresh').onclick=()=>load(false);
 el('search').oninput=render;
 el('favoritesFilter')?.addEventListener('click',()=>{favoritesOnly=!favoritesOnly;render();});
+el('closeAbout')?.addEventListener('click',()=>el('aboutDialog')?.close());
 el('clearSearch')?.addEventListener('click',()=>{el('search').value='';render();el('search').focus();});
 el('mobile').oninput=()=>el('mobile').setCustomValidity('');
 el('pin').oninput=()=>el('pin').setCustomValidity('');
@@ -364,6 +359,13 @@ el('orderForm').onsubmit=async e=>{
   button.textContent=t('placingOrder');
   el('orderError').textContent='';
   try{
+    if(el('saveCheckoutAddress')?.checked&&window.EasyMandiCustomerData?.saveCheckoutAddress){
+      try{
+        await window.EasyMandiCustomerData.saveCheckoutAddress({
+          name:String(form.get('name')||''),phone,house,locality,landmark,pin
+        });
+      }catch(_){ /* Saving an address never blocks a successfully validated order. */ }
+    }
     let key=sessionStorage.getItem('easy-mandi-pending-order');
     if(!key){
       key=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
@@ -413,10 +415,30 @@ el('orderForm').onsubmit=async e=>{
       const payWrap=document.createElement('section');
       payWrap.className='payment-panel';
       const payTitle=document.createElement('h4');payTitle.textContent=t('upiPayment');
-      const payInfo=document.createElement('p');payInfo.textContent=t('payInfo',{total:money(result.total),name:'ABHISHEK KUMAR SINGH',upi:'7398564033@kotakbank'});
-      const payLink=document.createElement('a');payLink.className='btn';payLink.textContent=t('openUpi');
-      const upi='upi://pay?pa='+encodeURIComponent('7398564033@kotakbank')+'&pn='+encodeURIComponent('ABHISHEK KUMAR SINGH')+'&am='+encodeURIComponent(Number(result.total).toFixed(2))+'&cu=INR&tn='+encodeURIComponent('Easy Mandi '+result.orderId);
-      payLink.href=upi;
+      const payInfo=document.createElement('p');
+      payInfo.textContent=t('paymentLoading');
+      const payLink=document.createElement('a');
+      payLink.className='btn';payLink.textContent=t('openUpi');payLink.hidden=true;
+      const qrHolder=document.createElement('div');qrHolder.className='payment-qr';
+      payWrap.append(payTitle,payInfo,qrHolder,payLink);
+      // Match the Flutter app: obtain the UPI payee and QR from the payment API.
+      (async()=>{
+        try{
+          const response=await AppHttp.fetch('https://cserver.learnwithchampak.live/easymandi/api/payment.php',{
+            method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({operation:'status',orderId:result.orderId,requestKey:key})
+          });
+          const payment=await response.json();
+          if(!response.ok)throw Error(payment.error||t('paymentLoadError'));
+          const uri=String(payment.upiUri||'');
+          if(!uri.startsWith('upi://pay?'))throw Error(t('paymentLoadError'));
+          payInfo.textContent=t('payInfo',{total:money(result.total),name:String(payment.payeeName||''),upi:String(payment.upiId||'')});
+          payLink.href=uri;payLink.hidden=false;
+          if(typeof window.QRCode==='function')new window.QRCode(qrHolder,{text:uri,width:208,height:208,
+            colorDark:'#123c30',colorLight:'#ffffff',correctLevel:window.QRCode.CorrectLevel.M});
+          else qrHolder.textContent=String(payment.upiId||'');
+        }catch(error){payInfo.textContent=error.message||t('paymentLoadError');}
+      })();
       const ref=document.createElement('input');ref.placeholder=t('upiReference');ref.maxLength=80;
       const receipt=document.createElement('input');receipt.type='file';receipt.accept='image/jpeg,image/png,image/webp';
       const receiptStatus=document.createElement('p');receiptStatus.className='note';receiptStatus.textContent=t('receiptHint');
@@ -437,7 +459,7 @@ el('orderForm').onsubmit=async e=>{
           sessionStorage.removeItem('easy-mandi-pending-order');
         }catch(error){receiptStatus.textContent=error.message||'Could not submit receipt.';submitReceipt.disabled=false;}
       };
-      payWrap.append(payTitle,payInfo,payLink,ref,receipt,submitReceipt,receiptStatus);
+      payWrap.append(ref,receipt,submitReceipt,receiptStatus);
       box.append(payWrap);
     }else{
       sessionStorage.removeItem('easy-mandi-pending-order');
@@ -461,7 +483,7 @@ el('orderForm').onsubmit=async e=>{
       const panel=box.querySelector('.payment-panel');
       if(panel){
         panel.querySelector('h4').textContent=t('upiPayment');
-        panel.querySelector('p').textContent=t('payInfo',{total:money(result.total),name:'ABHISHEK KUMAR SINGH',upi:'7398564033@kotakbank'});
+        // Dynamic UPI payee information comes from the authenticated payment status API.
         panel.querySelector('a').textContent=t('openUpi');
         panel.querySelector('input').placeholder=t('upiReference');
       }
