@@ -510,3 +510,11 @@ body>header{z-index:10}
 .product-name-link{cursor:pointer}
 .card{cursor:pointer}
 @media(max-width:600px){.app-store-toolbar{padding:8px 0}.app-menu{min-width:min(245px,82vw)}.app-recent-section{padding:11px;margin:10px 0}.recent-section-heading h2{font-size:14px}#recentSection .previously-purchased-grid .card{flex-basis:156px}}
+
+/* Flutter basket parity: quantity adjustment and removal in the basket itself. */
+.basket-line{flex-wrap:wrap}
+.basket-quantity{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.basket-quantity button{border:1px solid #afd1be;border-radius:50%;min-width:29px;height:29px;background:#e9f4ee;color:#176b46;font-weight:900;cursor:pointer}
+.basket-quantity button:disabled{opacity:.4;cursor:not-allowed}
+.basket-quantity strong{min-width:15px;text-align:center}
+@media(max-width:520px){.basket-line{gap:7px}.basket-name{min-width:100%}.basket-line>.btn{padding:7px 9px;font-size:12px}}
