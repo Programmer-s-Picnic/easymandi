@@ -6,6 +6,7 @@
   const t=(key,vars={})=>window.EMI18n?.t(key,vars)||key;
   let token = sessionStorage.getItem(tokenKey);
   let user = null;
+  let restoringSession=!!token;
   let registering = false;
   let googleCredential = null;
   let googleReady=false;
@@ -187,7 +188,7 @@
       return response;
     });
   }
-  window.CustomerAccount={get user(){return user;},request,customerDeliveries};
+  window.CustomerAccount={get user(){return user;},get restoring(){return restoringSession;},request,customerDeliveries};
   function refresh() {
     window.dispatchEvent(new Event('customer-account-changed'));
     inbox.active=!!user;
@@ -394,6 +395,7 @@
     }
     token = null;
     user = null;
+    restoringSession=false;
     sessionStorage.removeItem(tokenKey);
     localStorage.removeItem('easy-mandi-cart');
     // Match Flutter sign-out: clear personal browser data but keep favorites/language.
@@ -422,8 +424,11 @@
     authorized: true
   }).then(result => {
     user = result.user;
+    restoringSession=false;
     refresh();
   }).catch(error => {
+    restoringSession=false;
+    window.dispatchEvent(new Event('customer-account-ready'));
     if (/sign in|expired/i.test(error.message)) {
       token = null;
       sessionStorage.removeItem(tokenKey);
