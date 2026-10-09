@@ -108,11 +108,13 @@
   notificationsHeading.textContent='Notifications / सूचनाएँ';
   byId('accountProfile').insertBefore(notificationsHeading,inbox.dock);
   const forgot=document.createElement('button');
-  forgot.type='button';forgot.className='btn ghost';forgot.textContent='Forgot password? / पासवर्ड भूल गए?';
+  forgot.type='button';forgot.id='forgotPasswordButton';forgot.className='btn ghost';
+  forgot.textContent='Forgot password? / पासवर्ड भूल गए?';forgot.hidden=true;
   byId('accountSwitch').before(forgot);
   const googleLink=document.createElement('div');googleLink.id='googleLink';byId('accountProfile').append(googleLink);
   const changeButton=document.createElement('button');
-  changeButton.type='button';changeButton.className='btn ghost';changeButton.textContent='Change password / पासवर्ड बदलें';
+  changeButton.type='button';changeButton.id='changePasswordButton';changeButton.className='btn ghost';
+  changeButton.textContent='Change password / पासवर्ड बदलें';changeButton.hidden=true;
   byId('accountProfile').append(changeButton);
 
   function accountNotice(text,failed=false){
