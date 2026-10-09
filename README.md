@@ -21,7 +21,7 @@ Customer checkout validates the mobile and address, then sends a basket of produ
 
 The admin website shows the latest 100 saved orders after the separate admin password is entered. It displays the item and address snapshots and allows status changes: New, Confirmed, Preparing, Delivered, Cancelled. Status changes are recorded in `easymandi_order_events`. Customer data stays in MySQL on cserver, not in public JSON or the GitHub repository.
 
-A generated request key keeps retries from creating a second order. The customer website holds it in session storage until a save succeeds; Flutter retains it during the current checkout session. When a save fails, the customer can retry with the basket intact. Orders may be placed by guests; customer account registration and sign-in are optional.
+A generated request key keeps retries from creating a second order. The customer website holds it in session storage until a save succeeds; Flutter retains it during the current checkout session. When a save fails, the customer can retry with the basket intact. Orders require a valid customer login on the website and Android app. Guests may browse and build baskets, but checkout is blocked. The PHP `order-create.php` endpoint independently enforces a non-expired Bearer session and only accepts the authenticated account's registered mobile; direct unauthenticated requests return HTTP 401. Existing order retries retain their request keys.
 
 ## Android
 
