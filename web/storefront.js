@@ -69,12 +69,14 @@ function showLocationStatus(state){
 }
 async function load(silent=false){
   if(catalogLoading){
+    window.EasyMandiTestAlerts?.report('catalog','REQUEST IN FLIGHT','Waiting for current catalogue request');
     // Keep the already loaded catalogue visible when a user returns while
     // another network refresh is still in flight.
     if(data)render();
     return;
   }
   catalogLoading=true;
+  window.EasyMandiTestAlerts?.report('catalog','LOADING','Requesting product catalogue from server');
   if(!silent)el('status').textContent=t('loading');
   try{
     let response=await AppHttp.fetch(source+'?t='+Date.now(),{cache:'no-store'});
@@ -86,6 +88,8 @@ async function load(silent=false){
     localStorage.setItem('easy-mandi-catalog',JSON.stringify(data));
     el('status').textContent='';
   }catch(error){
+    window.EasyMandiTestAlerts?.report('catalog','ERROR',error.message||'Catalog API error',
+      {popup:window.EasyMandiTestAlerts?.recent('catalog')});
     if(!data){
       try{data=JSON.parse(localStorage.getItem('easy-mandi-catalog'))}catch{}
     }
@@ -97,6 +101,12 @@ async function load(silent=false){
     render();
     if(el('basket').open)renderBasket();
     if(el('itemDetail').open)renderItemDetail();
+    window.EasyMandiTestAlerts?.report('catalog','RENDERED',
+      data.products.length+' catalogue products · Visible: '+(!el('catalogSection')?.hidden),
+      {popup:window.EasyMandiTestAlerts?.recent('catalog')});
+  }else{
+    window.EasyMandiTestAlerts?.report('catalog','NO DATA','Catalogue unavailable',
+      {popup:window.EasyMandiTestAlerts?.recent('catalog')});
   }
 }
 function change(id,delta){
