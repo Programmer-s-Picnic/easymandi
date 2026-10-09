@@ -4,48 +4,7 @@
   const by=id=>document.getElementById(id);
   const t=(key,vars={})=>window.EMI18n?.t(key,vars)||key;
   const labelFor=p=>window.EMI18n?.lang==='hi'?(p.hindi||p.name):p.name;
-  let addresses=[],previousItems=[],selected=null,refreshSerial=0,seenAccountId=null,previousLoading=false,previousError='';
-  const guestAddressesKey='easy-mandi-guest-addresses-v1',guestRecentKey='easy-mandi-guest-recent-v1';
-  const guestRead=(key)=>{try{const rows=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(rows)?rows:[];}catch{return [];}};
-  const guestWrite=(key,rows)=>{try{localStorage.setItem(key,JSON.stringify(rows));}catch{}};
-  const guestRecent=()=>guestRead(guestRecentKey).slice(0,20);
-  const signedIn=()=>!!window.CustomerAccount?.user;
-  let lastUserId=null;
-  function guestAddressSave(payload){
-    const rows=guestRead(guestAddressesKey);
-    const record={...payload,id:payload.id??Date.now()};
-    const existing=rows.findIndex(row=>String(row.id)===String(record.id));
-    if(existing>=0)rows[existing]=record;else rows.unshift(record);
-    guestWrite(guestAddressesKey,rows.slice(0,30));selected=Number(record.id);
-  }
-  function guestRecordOrder(items){
-    const rows=guestRecent();
-    const ordered=[...items].reverse().map(item=>({
-      product_id:String(item.product_id),name:item.name||'',unit:item.unit||'',last_ordered:new Date().toISOString()
-    }));
-    const dedup=new Map();
-    for(const item of [...ordered,...rows]){
-      if(item.product_id&&!dedup.has(item.product_id))dedup.set(item.product_id,item);
-    }
-    guestWrite(guestRecentKey,[...dedup.values()].slice(0,20));
-  }
-  async function fallbackPreviousItems(){
-    const found=new Map();
-    for(let page=1;page<=5;page++){
-      const result=await window.CustomerAccount.request('my-orders?page='+page,{authorized:true});
-      for(const order of result.orders||[]){
-        if(String(order.status||'').toLowerCase()==='cancelled')continue;
-        for(const line of order.items||[]){
-          const id=String(line.product_id||''),name=String(line.product_name||'');
-          if(id&&name&&!found.has(id))found.set(id,{product_id:id,name,unit:line.unit||''});
-          if(found.size>=20)break;
-        }
-      }
-      if(found.size>=20||!result.hasMore)break;
-    }
-    return [...found.values()];
-  }
-
+  let addresses=[],previousItems=[],selected=null,refreshSerial=0;
   const controls=document.createElement('section');
   controls.className='customer-address-book';
   const title=document.createElement('h3');
@@ -60,25 +19,21 @@
   by('orderForm').prepend(controls);
   const history=document.createElement('section');
   history.className='panel previously-purchased';
-  history.setAttribute('aria-label','Previously purchased product cards');
-  by('previousProductsMount').append(history);
+  history.setAttribute('aria-labelledby','previouslyOrderedHeading');
+  by('products').before(history);
 
   function renderPreviouslyOrdered(){
-    const personal=!!window.CustomerAccount?.user;
-    history.hidden=!personal&&!previousItems.length;
-    by('recentSection').hidden=history.hidden;
+    const signedIn=!!window.CustomerAccount?.user;
+    history.hidden=!signedIn;
     history.replaceChildren();
-    if(!personal&&!previousItems.length)return;
-    if(previousError){
-      const error=document.createElement('p');
-      error.className='status';
-      error.setAttribute('role','alert');
-      error.textContent=previousError;
-      history.append(error);
-    }
+    if(!signedIn)return;
+    const heading=document.createElement('h2');
+    heading.id='previouslyOrderedHeading';
+    heading.textContent=t('previouslyOrdered');
+    history.append(heading);
     if(!previousItems.length){
       const empty=document.createElement('p');
-      empty.textContent=previousLoading?t('loading'):t('noPrevious');
+      empty.textContent=t('noPrevious');
       history.append(empty);
       return;
     }
@@ -100,7 +55,7 @@
       if(current){
         // Identical live catalog card: image, both names, unit, current price
         // and +/- controls connected to the same basket as the shop grid.
-        grid.append(catalog.createCard(current,{context:'previous'}));
+        grid.append(catalog.createCard(current));
       }else{
         // Keep historical purchases visible even when a product is deleted
         // from the current catalog. Never allow adding an unavailable item.
@@ -128,9 +83,9 @@
   }
 
   function render(){
-    const personal=!!window.CustomerAccount?.user;
-    controls.hidden=false;
-    history.hidden=!personal&&!previousItems.length;
+    const signedIn=!!window.CustomerAccount?.user;
+    controls.hidden=!signedIn;
+    history.hidden=!signedIn;
     title.textContent=t('savedAddresses');
     select.setAttribute('aria-label',t('chooseAddress'));
     save.textContent=t('saveAddress');
@@ -155,56 +110,18 @@
   async function refresh(){
     const account=window.CustomerAccount?.user;
     const request=++refreshSerial;
-    const id=account?.id==null?null:String(account.id);
-    if(id!==seenAccountId){
-      seenAccountId=id;
-      addresses=[];previousItems=[];selected=null;previousError='';
-      window.EasyMandiCatalog?.setPreviousIds([]);
-    }
     if(!account){
-      addresses=guestRead(guestAddressesKey);
-      previousItems=guestRecent();
-      previousLoading=false;
-      message.textContent='';
-      window.EasyMandiCatalog?.setPreviousIds(previousItems.map(item=>item.product_id));
-      render();
-      window.EasyMandiTestAlerts?.report('previous','RENDERED',
-        previousItems.length+' guest recent items · Visible: '+(!by('recentSection').hidden),
-        {popup:window.EasyMandiTestAlerts?.recent('catalog')});
-      window.dispatchEvent(new Event('customer-recent-items-updated'));
-      return;
+      addresses=[];previousItems=[];selected=null;message.textContent='';render();return;
     }
-    previousLoading=true;
-    previousError='';
-    renderPreviouslyOrdered();
-    window.EasyMandiTestAlerts?.report('previous','LOADING','Fetching previous purchases');
     try{
       const result=await window.CustomerAccount.request('customer-data',{authorized:true});
       if(request!==refreshSerial||window.CustomerAccount?.user?.id!==account.id)return;
       addresses=Array.isArray(result.addresses)?result.addresses:[];
       previousItems=Array.isArray(result.items)?result.items:[];
-      if(!previousItems.length)previousItems=await fallbackPreviousItems();
-      if(request!==refreshSerial||window.CustomerAccount?.user?.id!==account.id)return;
-      previousLoading=false;
-      window.EasyMandiCatalog?.setPreviousIds(previousItems.map(item=>item.product_id));
       render();
-      window.EasyMandiTestAlerts?.report('previous','RENDERED',
-        previousItems.length+' previous products · Visible: '+(!by('recentSection').hidden),
-        {popup:window.EasyMandiTestAlerts?.recent('catalog')});
     }catch(error){
       if(request===refreshSerial&&window.CustomerAccount?.user?.id===account.id){
-        try{
-          previousItems=await fallbackPreviousItems();
-          if(request!==refreshSerial||window.CustomerAccount?.user?.id!==account.id)return;
-          window.EasyMandiCatalog?.setPreviousIds(previousItems.map(item=>item.product_id));
-          previousError='';
-        }catch(other){previousError=other.message||error.message||t('addressLoadError');}
-        previousLoading=false;
-        message.textContent=previousError||t('addressLoadError');
-        renderPreviouslyOrdered();
-        window.EasyMandiTestAlerts?.report('previous',previousError?'ERROR':'FALLBACK LOADED',
-          (previousError||previousItems.length+' products from order history'),
-          {popup:window.EasyMandiTestAlerts?.recent('catalog')});
+        message.textContent=error.message||t('addressLoadError');
       }
     }
   }
@@ -226,11 +143,7 @@
     save.disabled=remove.disabled=true;
     message.textContent='';
     try{
-      if(signedIn()){
-        await window.CustomerAccount.request('customer-data',{method:'POST',authorized:true,payload});
-      }else if(payload.operation==='delete'){
-        guestWrite(guestAddressesKey,guestRead(guestAddressesKey).filter(row=>String(row.id)!==String(payload.id)));
-      }else guestAddressSave(payload);
+      await window.CustomerAccount.request('customer-data',{method:'POST',authorized:true,payload});
       message.textContent=t(successKey);
       if(payload.operation==='delete')selected=null;
       await refresh();
@@ -240,19 +153,6 @@
       save.disabled=remove.disabled=false;
     }
   }
-  window.EasyMandiCustomerData=Object.freeze({
-    // The section coordinator calls this every time the catalogue is opened.
-    refresh:()=>{renderPreviouslyOrdered();return refresh();},
-    saveCheckoutAddress:async fields=>{
-      const payload={operation:'save',...(selected!==null?{id:selected}:{})};
-      for(const field of ['name','house','locality','landmark','pin'])payload[field]=String(fields[field]||'').trim();
-      payload.phone=String(fields.phone||'').trim();
-      if(signedIn())await window.CustomerAccount.request('customer-data',{method:'POST',authorized:true,payload});
-      else guestAddressSave(payload);
-      await refresh();
-    }
-  });
-  by('refreshRecent')?.addEventListener('click',refresh);
   save.addEventListener('click',()=>{
     const form=by('orderForm');
     const payload={operation:'save',...(selected!==null?{id:selected}:{})};
@@ -266,18 +166,12 @@
   });
 
   window.addEventListener('customer-account-changed',refresh);
-  // Section coordinator now calls EasyMandiCustomerData.refresh directly.
-  window.addEventListener('customer-order-placed',event=>{
-    if(!signedIn()&&Array.isArray(event.detail?.items)){
-      guestRecordOrder(event.detail.items);
-    }
-    refresh();
-  });
+  window.addEventListener('customer-order-placed',refresh);
   window.addEventListener('languagechange',render);
   window.addEventListener('easy-mandi-catalog-rendered',renderPreviouslyOrdered);
   by('basketButton').addEventListener('click',refresh);
-
-
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
+  window.addEventListener('focus',()=>{if(!document.hidden)refresh();});
   setInterval(()=>{if(!document.hidden&&window.CustomerAccount?.user)refresh();},120000);
   refresh();
 })();

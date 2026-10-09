@@ -419,6 +419,11 @@
     }
     if(googleReady)renderGoogleButtons();
   });
+  // NotificationInbox polls every 300000 ms (five minutes) while signed in.
+  // Refresh immediately when the customer returns to a suspended browser.
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden&&user)inbox.refresh().catch(()=>{});
+  });
   mode(false);
   if (token) request('me', {
     authorized: true

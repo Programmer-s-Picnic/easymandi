@@ -117,31 +117,23 @@
   }
   async function refresh(){
     const account=window.CustomerAccount?.user;
-    if(!account){requestNumber++;lastOrders=[];loading=false;render();window.EasyMandiTestAlerts?.report('deliveries','NOT SIGNED IN');return;}
+    if(!account){requestNumber++;lastOrders=[];loading=false;render();return;}
     // Do not invalidate a running response merely because the user reopened
     // this tab. The in-flight request is already going to populate the view.
-    if(loading){window.EasyMandiTestAlerts?.report('deliveries','REQUEST IN FLIGHT','Waiting for the current request');return;}
+    if(loading)return;
     const serial=++requestNumber;
     loading=true;
     refreshButton.disabled=true;
     notice.textContent=t('Updating delivery status…','डिलीवरी स्थिति अपडेट हो रही है…');
-    window.EasyMandiTestAlerts?.report('deliveries','LOADING','Fetching deliveries from server');
     try{
       const response=await window.CustomerAccount.customerDeliveries();
       if(serial!==requestNumber||window.CustomerAccount?.user?.id!==account.id)return;
       lastOrders=Array.isArray(response.orders)?response.orders:[];
       notice.textContent='';
       render();
-      window.dispatchEvent(new CustomEvent('customer-view-rendered',{detail:{section:'deliveries',count:lastOrders.length}}));
-      const active=window.EasyMandiSections?.current==='deliveries';
-      window.EasyMandiTestAlerts?.report('deliveries',active?'RENDERED IN OPEN SECTION':'PRELOADED IN BACKGROUND',
-        lastOrders.length+' deliveries · '+(active?'Selected panel is open':'Hidden because another section is selected'),
-        {popup:active&&window.EasyMandiTestAlerts?.recent('deliveries')});
     }catch(error){
       if(serial===requestNumber&&window.CustomerAccount?.user?.id===account.id){
         notice.textContent=error.message||t('Could not load deliveries. Try again.','डिलीवरी नहीं खुली। दोबारा प्रयास करें।');
-        window.EasyMandiTestAlerts?.report('deliveries','ERROR',error.message||'Request failed',
-          {popup:window.EasyMandiTestAlerts?.recent('deliveries')});
       }
     }finally{
       if(serial===requestNumber){
@@ -151,8 +143,6 @@
     }
   }
   refreshButton.addEventListener('click',refresh);
-  window.EasyMandiDeliveries=Object.freeze({refresh:()=>{render();return refresh();}});
-  // Navigation invokes this entry point directly.
   window.addEventListener('customer-account-changed',()=>{
     requestNumber++;
     loading=false;
