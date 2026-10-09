@@ -1,6 +1,8 @@
 /* Authenticated Easy Mandi records explorer: paginated; no password/token data. */
 (()=>{
  'use strict';
+ const adminPage=document.documentElement.dataset.adminPage||'operations';
+ if(adminPage!=='customers'&&adminPage!=='partners')return;
  const id=name=>document.getElementById(name);
  const base='https://cserver.learnwithchampak.live/easymandi/api/admin-records.php';
  const session=window.AdminSession;
@@ -10,7 +12,8 @@
    payments:{title:'Payments',fields:[['Order ID','public_id'],['Customer','customer_name'],['Mobile','mobile'],['Total','total'],['Method','method'],['Status','status'],['UPI ref','upi_reference'],['Receipt','has_receipt'],['Submitted','submitted_at'],['Verified','verified_at']]},
    partners:{title:'Delivery partners',fields:[['ID','id'],['Name','name'],['Mobile','mobile'],['Active','active'],['Assigned jobs','job_count'],['Delivered','delivered_count'],['Photo','has_photo'],['Registered','created_at']]}
  };
- let mode='customers',page=1,search='',pending=0,timeout;
+ let mode=adminPage==='partners'?'partners':'customers',page=1,search='',pending=0,timeout;
+ id('recordsView').value=mode;
  const message=(text,error=false)=>{id('recordsMessage').textContent=text;id('recordsMessage').className=error?'error':'hint';};
  const cell=(tr,value)=>{
    const td=document.createElement('td');
