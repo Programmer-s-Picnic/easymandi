@@ -134,7 +134,8 @@
     const form=by('orderForm');
     for(const key of ['name','house','landmark','pin'])form.elements[key].value=address[key]||'';
     window.EasyMandiLocalities?.choose(address.locality||'');
-    form.elements.phone.value=address.phone||'';
+    // Order ownership must follow the signed-in account, not a saved address's phone.
+    form.elements.phone.value=window.CustomerAccount?.user?.mobile||'';
     deliveryLocation=null;
     by('locationStatus').dataset.locationState='hint';
     by('locationStatus').textContent=t('locationHint');
@@ -158,7 +159,7 @@
     const form=by('orderForm');
     const payload={operation:'save',...(selected!==null?{id:selected}:{})};
     for(const key of ['name','house','locality','landmark','pin'])payload[key]=form.elements[key].value.trim();
-    payload.phone=form.elements.phone.value.trim();
+    payload.phone=window.CustomerAccount?.user?.mobile||form.elements.phone.value.trim();
     if(!window.EasyMandiLocalities?.valid(payload.locality)){
       message.textContent='Choose a currently served Varanasi locality before saving this address.';
       return;
