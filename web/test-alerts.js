@@ -99,8 +99,26 @@
     catch(_){report('TEST','COPY FAILED');}
   };
   header.append(heading,copy);
+  const shortcuts=document.createElement('nav');
+  shortcuts.className='customer-test-alerts-shortcuts';
+  shortcuts.setAttribute('aria-label','Test each customer section');
+  for(const [id,label] of [['catalog','Catalogue'],['orders','Orders'],['deliveries','Deliveries']]){
+    const jump=document.createElement('button');
+    jump.type='button';
+    jump.textContent=label;
+    jump.onclick=()=>{
+      report('TEST','SELECT REQUESTED',label);
+      const navigation=window.EasyMandiSections;
+      if(typeof navigation?.select!=='function'){
+        report('TEST','NAVIGATION MISSING','Could not find section navigation',{popup:true});
+        return;
+      }
+      navigation.select(id);
+    };
+    shortcuts.append(jump);
+  }
   feed=document.createElement('pre');feed.className='customer-test-alerts-log';
-  panel.append(header,feed);
+  panel.append(header,shortcuts,feed);
   document.body.append(panel);
   toastStack=document.createElement('div');
   toastStack.className='customer-test-toast-stack';

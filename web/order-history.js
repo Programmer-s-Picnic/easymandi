@@ -115,9 +115,10 @@
       notice.textContent=t('Showing orders for your signed-in account · Times in IST','आपके खाते के ऑर्डर · समय भारतीय मानक समय (IST) में');
       render();
       window.dispatchEvent(new CustomEvent('customer-view-rendered',{detail:{section:'orders',count:rows.length}}));
-      window.EasyMandiTestAlerts?.report('orders','RENDERED',
-        rows.length+' orders · Visible: '+(!panel.hidden&&!byId('ordersSection')?.hidden),
-        {popup:window.EasyMandiTestAlerts?.recent('orders')});
+      const active=window.EasyMandiSections?.current==='orders';
+      window.EasyMandiTestAlerts?.report('orders',active?'RENDERED IN OPEN SECTION':'PRELOADED IN BACKGROUND',
+        rows.length+' orders · '+(active?'Selected panel is open':'Hidden because another section is selected'),
+        {popup:active&&window.EasyMandiTestAlerts?.recent('orders')});
     }catch(error){
       if(serial===nonce){
         notice.textContent=error.message||t('Could not load orders.','ऑर्डर लोड नहीं हो सके।');
