@@ -283,8 +283,10 @@ function renderBasket(){
   el('deliveryCity').textContent=(data.store.city||'Varanasi')+', '+(data.checkout?.state||'Uttar Pradesh');
   el('mobile').placeholder=data.checkout?.mobileExample||'9876543210';
   el('pin').placeholder=data.checkout?.pinExample||'221005';
-  el('orderForm').hidden=!chosen.length;
-  el('send').disabled=!chosen.length
+  const signedIn=!!window.CustomerAccount?.authenticated;
+  el('checkoutLoginGate').hidden=!chosen.length||signedIn;
+  el('orderForm').hidden=!chosen.length||!signedIn;
+  el('send').disabled=!chosen.length||!signedIn
 }
 let deliveryLocation=null, detailProductId=null;
 function showItemDetail(product){
@@ -351,6 +353,13 @@ el('basketButton').onclick=()=>{
   el('basket').showModal()
 };
 el('close').onclick=()=>el('basket').close();
+el('checkoutSignIn').onclick=()=>window.CustomerAccount?.openSignIn();
+window.addEventListener('customer-account-changed',()=>{
+  if(data&&el('basket').open)renderBasket();
+});
+window.addEventListener('customer-account-ready',()=>{
+  if(data&&el('basket').open)renderBasket();
+});
 el('refresh').onclick=()=>load(false);
 // Market is an in-page shortcut. Intercept its fallback URL so the root
 // storefront's <base href="/web/"> never triggers an unwanted reload.
@@ -373,6 +382,12 @@ el('mobile').oninput=()=>el('mobile').setCustomValidity('');
 el('pin').oninput=()=>el('pin').setCustomValidity('');
 el('orderForm').onsubmit=async e=>{
   e.preventDefault();
+  if(!window.CustomerAccount?.authenticated){
+    el('orderError').textContent=t('checkoutLoginRequired');
+    renderBasket();
+    window.CustomerAccount?.openSignIn();
+    return;
+  }
   const orderTotals=totals();
   if(orderTotals.subtotal<data.store.minimumOrder){
     alert(t('minimumError',{minimum:money(data.store.minimumOrder),difference:money(data.store.minimumOrder-orderTotals.subtotal)}));
@@ -415,22 +430,12 @@ el('orderForm').onsubmit=async e=>{
     if(!key){
       key=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
       sessionStorage.setItem('easy-mandi-pending-order',key)
-    }const response=await AppHttp.fetch('https://cserver.learnwithchampak.live/easymandi/api/order-create.php',{
-      method:'POST',headers:{
-        'Content-Type':'application/json'
-      },body:JSON.stringify({
+    }const result=await window.CustomerAccount.request('order-create',{
+      method:'POST',authorized:true,payload:{
         requestKey:key,source:'web',customerNote:String(form.get('customerNote')||'').trim(),paymentMethod:String(form.get('paymentMethod')||'cod'),name:String(form.get('name')||'').trim(),mobile:phone,house,locality,landmark,pin,...deliveryLocation,items:chosen
-      })
+      }
     });
-    let result;
-    try{
-      result=await response.json()
-    }catch{
-      throw Error(t('serverUnexpected'))
-    }if(!response.ok){
-      if(response.status===409&&result.error?.startsWith('Order request already used'))sessionStorage.removeItem('easy-mandi-pending-order');
-      throw Error(result.error||t('orderFailure'));
-    }window.dispatchEvent(new CustomEvent('customer-order-placed',{detail:{
+    window.dispatchEvent(new CustomEvent('customer-order-placed',{detail:{
       orderId:result.orderId,
       items:chosen.map(line=>{
         const product=data.products.find(p=>String(p.id)===String(line.id));
@@ -534,7 +539,11 @@ el('orderForm').onsubmit=async e=>{
     save();
     render()
   }catch(error){
-    el('orderError').textContent=error.message||t('orderFailure')
+    if(error.statusCode===409&&error.message?.startsWith('Order request already used')){
+      sessionStorage.removeItem('easy-mandi-pending-order');
+    }
+    el('orderError').textContent=error.message||t('orderFailure');
+    if(error.statusCode===401)renderBasket();
   }finally{
     button.disabled=false;
     button.textContent=t('placeOrder')
