@@ -9,7 +9,8 @@
   if(!nav)return;
   let current='catalog';
   const fromFragment=()=>{
-    const fragment=decodeURIComponent(location.hash.slice(1));
+    let fragment;
+    try{fragment=decodeURIComponent(location.hash.slice(1));}catch{return null;}
     if(valid.has(fragment))return fragment;
     return ({shopCatalog:'catalog',myOrdersPanel:'orders',deliveryPanel:'deliveries',previousProductsMount:'previous'})[fragment]||null;
   };
@@ -46,7 +47,7 @@
     }
     if(scroll){
       positionNav();
-      window.scrollTo({top:0,behavior:'instant'});
+      window.scrollTo({top:0,behavior:'auto'});
     }
     return true;
   }
