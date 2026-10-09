@@ -16,7 +16,7 @@
 <meta name="theme-color" content="#176b46">
 <title>Easy Mandi · Delivery Partners Master</title>
 <link rel="stylesheet" href="catalog.css?v=20261009-media-v1">
-<link rel="stylesheet" href="admin-pages.css?v=20261009-media-v1">
+<link rel="stylesheet" href="admin-pages.css?v=20261009-localities-v1">
 <link rel="stylesheet" href="../shared/notifications.css?v=20261008-animated">
 <script src="../shared/api-client.js?v=20261001-icons" defer>
 </script>
@@ -37,6 +37,7 @@
  <nav class="admin-page-links" aria-label="Admin pages">
   <a data-admin-link="operations" href="./"><span aria-hidden="true">▤</span> Operations Desk</a>
   <a data-admin-link="products" href="products.html"><span aria-hidden="true">▦</span> Products Master</a>
+  <a data-admin-link="localities" href="localities.html"><span aria-hidden="true">⌖</span> Localities Master</a>
   <a data-admin-link="customers" href="customers.html"><span aria-hidden="true">♙</span> Customers Master</a>
   <a data-admin-link="partners" href="delivery-partners.html"><span aria-hidden="true">⇥</span> Delivery Partners Master</a>
   <a data-admin-link="help" href="how-to.html"><span aria-hidden="true">?</span> How to Work</a>
@@ -49,6 +50,7 @@
 </nav>
 <div class="admin-page-title" data-page-title="operations"><span class="admin-eyebrow">DAILY CONTROL</span><h2>Operations Desk</h2><p>Process customer orders, payments, packing and deliveries from your live working queue.</p></div>
 <div class="admin-page-title" data-page-title="products"><span class="admin-eyebrow">CATALOG MANAGEMENT</span><h2>Products Master</h2><p>Manage store settings, product categories, prices, photos and availability. Validate and publish to the live catalog.</p></div>
+<div class="admin-page-title" data-page-title="localities"><span class="admin-eyebrow">SERVICE AREAS</span><h2>Varanasi Localities Master</h2><p>Serve only admin-approved localities; customers must select one before entering their address.</p></div>
 <div class="admin-page-title" data-page-title="customers"><span class="admin-eyebrow">ACCOUNT RECORDS</span><h2>Customers Master</h2><p>Search customer profiles, addresses and order history. Private data is available only after administrator sign-in.</p></div>
 <div class="admin-page-title" data-page-title="partners"><span class="admin-eyebrow">DELIVERY TEAM</span><h2>Delivery Partners Master</h2><p>Review partner profiles, active status and delivery performance. Use Delivery administration for edits and assignments.</p><a class="btn secondary admin-title-action" href="https://programmer-s-picnic.github.io/delivery-app/web/" target="_blank" rel="noopener noreferrer">Open delivery administration ↗</a></div>
 <div class="admin-page-title" data-page-title="help"><span class="admin-eyebrow">STAFF HANDBOOK</span><h2>How to Work</h2><p>Step-by-step instructions for operating Easy Mandi safely throughout the day.</p></div>
@@ -161,6 +163,14 @@
  </div>
  <p id="mediaStatus" class="hint" role="status" aria-live="polite">Unlock administration to upload or browse server images.</p>
  <div id="mediaGrid" class="media-grid" aria-label="Previously uploaded pictures"></div>
+</section>
+<section class="panel localities-master" id="localitiesMaster" aria-labelledby="localitiesMasterTitle">
+  <h2 id="localitiesMasterTitle">Localities Master · Varanasi</h2>
+  <p class="hint">Only enabled localities are serviceable. Add or edit area names, enter the Google Maps search text and verify its map. Save changes to apply to the website, Android app and server validation.</p>
+  <div class="row"><button type="button" class="btn" id="localityAdd">Add locality</button><button type="button" class="btn secondary" id="localityReload">Reload</button><button type="button" class="btn" id="localitySave">Save localities to server</button><strong id="localityCount"></strong></div>
+  <p id="localityStatus" role="status" aria-live="polite">Loading localities…</p>
+  <div id="localityRows"></div>
+  <p class="hint">Default areas: Pandeypur, Aktha and Taktakpur. Map buttons show Google Maps searches; a locality name alone does not verify a precise delivery pin.</p>
 </section>
 <section class="panel" id="categoriesPanel">
 <h2>Product categories</h2>
@@ -298,7 +308,8 @@
 <script src="records.js?v=20261008-admin-records" defer></script>
 <script src="operations-desk.js?v=20261009-ops-help" defer></script>
 <script src="../shared/password-ui.js?v=20261001-access" defer></script>
-<script src="admin-pages.js?v=20261009-four-page-v1" defer></script>
+<script src="admin-pages.js?v=20261009-localities-v1" defer></script>
+<script src="localities.js?v=20261009-localities-v1" defer></script>
 </body>
 </html>
 
