@@ -1,0 +1,285 @@
+<!doctype html>
+<!-- Generated from admin/index.html by admin/build-pages.mjs. Edit index.html instead. -->
+<html lang="en" data-admin-page="customers">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="Easy Mandi customer records and order history for authorized administrators.">
+<link rel="canonical" href="https://easymandi.in/admin/customers.html">
+<link rel="icon" href="../web/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Easy Mandi | Customers Master">
+<meta property="og:description" content="Easy Mandi customer records and order history for authorized administrators.">
+<meta property="og:url" content="https://easymandi.in/admin/customers.html">
+<meta property="og:image" content="https://easymandi.in/web/og-image.svg">
+<meta name="theme-color" content="#176b46">
+<title>Easy Mandi · Customers Master</title>
+<link rel="stylesheet" href="catalog.css?v=20261009-ops-help">
+<link rel="stylesheet" href="admin-pages.css?v=20261009-four-page-v1">
+<link rel="stylesheet" href="../shared/notifications.css?v=20261008-animated">
+<script src="../shared/api-client.js?v=20261001-icons" defer>
+</script>
+<script src="../shared/admin-session.js?v=20261001-icons" defer>
+</script>
+<script src="../shared/notifications.js?v=20261008-animated" defer>
+</script>
+<link rel="stylesheet" href="../shared/password.css?v=20261001-access">
+</head>
+<body>
+<header>
+<h1>Easy Mandi · Operations Centre</h1>
+<p>Process orders and deliveries throughout the day · Catalog and records available below</p>
+</header>
+<div class="admin-app">
+<aside class="admin-rail" aria-label="Easy Mandi administration">
+ <a class="admin-rail-brand" href="./"><span class="admin-rail-logo" aria-hidden="true">EM</span><span><strong>Easy Mandi</strong><small>ADMIN WORKSPACE</small></span></a>
+ <nav class="admin-page-links" aria-label="Admin pages">
+  <a data-admin-link="operations" href="./"><span aria-hidden="true">▤</span> Operations Desk</a>
+  <a data-admin-link="products" href="products.html"><span aria-hidden="true">▦</span> Products Master</a>
+  <a data-admin-link="customers" href="customers.html"><span aria-hidden="true">♙</span> Customers Master</a>
+  <a data-admin-link="partners" href="delivery-partners.html"><span aria-hidden="true">⇥</span> Delivery Partners Master</a>
+  <a data-admin-link="help" href="how-to.html"><span aria-hidden="true">?</span> How to Work</a>
+ </nav>
+ <div class="admin-rail-bottom"><a href="../">Customer website ↗</a><a href="https://programmer-s-picnic.github.io/delivery-app/web/" target="_blank" rel="noopener noreferrer">Delivery administration ↗</a><small>Authorized staff only · All order times in IST</small></div>
+</aside>
+<main id="adminMain">
+<nav class="admin-mobile-pages" aria-label="Admin pages on mobile">
+ <a href="./" data-admin-link="operations">Operations</a><a href="products.html" data-admin-link="products">Products</a><a href="customers.html" data-admin-link="customers">Customers</a><a href="delivery-partners.html" data-admin-link="partners">Delivery Partners</a><a href="how-to.html" data-admin-link="help">How to Work</a>
+</nav>
+<div class="admin-page-title" data-page-title="operations"><span class="admin-eyebrow">DAILY CONTROL</span><h2>Operations Desk</h2><p>Process customer orders, payments, packing and deliveries from your live working queue.</p></div>
+<div class="admin-page-title" data-page-title="products"><span class="admin-eyebrow">CATALOG MANAGEMENT</span><h2>Products Master</h2><p>Manage store settings, product categories, prices, photos and availability. Validate and publish to the live catalog.</p></div>
+<div class="admin-page-title" data-page-title="customers"><span class="admin-eyebrow">ACCOUNT RECORDS</span><h2>Customers Master</h2><p>Search customer profiles, addresses and order history. Private data is available only after administrator sign-in.</p></div>
+<div class="admin-page-title" data-page-title="partners"><span class="admin-eyebrow">DELIVERY TEAM</span><h2>Delivery Partners Master</h2><p>Review partner profiles, active status and delivery performance. Use Delivery administration for edits and assignments.</p><a class="btn secondary admin-title-action" href="https://programmer-s-picnic.github.io/delivery-app/web/" target="_blank" rel="noopener noreferrer">Open delivery administration ↗</a></div>
+<div class="admin-page-title" data-page-title="help"><span class="admin-eyebrow">STAFF HANDBOOK</span><h2>How to Work</h2><p>Step-by-step instructions for operating Easy Mandi safely throughout the day.</p></div>
+<section class="ops-workspace" id="opsDesk" aria-labelledby="opsTitle">
+ <div class="ops-heading"><div><p class="ops-kicker">EASY MANDI · LIVE OPERATIONS</p><h2 id="opsTitle">Operations Desk</h2><p class="ops-muted">Orders, payments, packing and delivery in one workspace · Times in IST</p></div><div class="ops-top-actions"><span id="opsLastSync" class="ops-muted">Not connected</span><button class="btn secondary" id="opsRefresh" type="button">Refresh</button><button class="btn" id="opsSignIn" type="button">Unlock operations</button></div></div>
+ <details class="ops-guide" id="opsHowTo">
+  <summary><span class="ops-guide-icon" aria-hidden="true">?</span><span><strong>How to Work · काम कैसे करें</strong><small>Step-by-step daily guide for processing orders and deliveries</small></span><span class="ops-guide-chevron" aria-hidden="true">▾</span></summary>
+  <div class="ops-guide-content">
+   <p class="ops-guide-intro">Start at <strong>New orders</strong>, work through payments and packing, then assign and track deliveries. The work queues show different views of the same saved orders: moving between queues does not create, duplicate, or delete an order.</p>
+   <h3>Process a customer order</h3>
+   <ol class="ops-guide-steps">
+    <li><strong>Unlock the desk</strong><span>Choose <em>Unlock operations</em> and enter the admin password. Your secure session lasts 30 minutes; you can unlock again when it expires.</span><span class="ops-guide-hi" lang="hi">पहले एडमिन लॉगिन करें।</span></li>
+    <li><strong>Receive and review</strong><span>Open <em>New orders</em>. Select an order and check the customer's items, quantities, address, mobile, notes and total. Change the order status to <em>Confirmed</em> after reviewing it.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="new">Open New orders →</button></li>
+    <li><strong>Handle payment</strong><span>For UPI, open the submitted receipt, inspect its details and verify or reject it. For COD, mark payment paid <strong>only after money has actually been collected</strong>. Never mark an unpaid order as paid.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="payment">Open UPI verification →</button></li>
+    <li><strong>Prepare and pack</strong><span>Use <em>Preparing / packing</em>, check every item, and choose <em>Print packing checklist</em>. Print or save the checklist as a PDF. Add packing/delivery notes with the existing order tools if needed.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="packing">Open Packing →</button></li>
+    <li><strong>Import and assign delivery</strong><span>In <em>Awaiting assignment</em>, choose <em>Import for delivery</em> if the order has no delivery record. Select an active delivery partner and choose <em>Assign delivery partner</em>. Assignment sends a handoff code to the customer through the established notification flow.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="unassigned">Open Unassigned →</button></li>
+    <li><strong>Track the delivery</strong><span>Use <em>Active deliveries</em> to see partner assignment, pickup and out-for-delivery states. The delivery partner completes the handoff with the customer's code/QR through the partner app. Use Advanced delivery management for resend-code and other specialist actions.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="active">Open Active deliveries →</button></li>
+    <li><strong>Resolve and close</strong><span>Review <em>Exceptions</em> for rejected receipts and long-unassigned orders. Use <em>Completed</em> to check finished or cancelled orders. Delivery completion should normally follow the partner's verified handoff, not a premature manual status change.</span><div class="ops-guide-action-row"><button type="button" class="ops-guide-action" data-ops-guide-queue="exceptions">Open Exceptions →</button><button type="button" class="ops-guide-action" data-ops-guide-queue="completed">View Completed →</button></div></li>
+   </ol>
+   <div class="ops-guide-bottom">
+    <section aria-labelledby="opsShiftHeading"><h3 id="opsShiftHeading">Daily routine</h3><p><strong>Morning:</strong> review pending UPI, new orders and old unassigned deliveries.<br><strong>During the day:</strong> keep the queue open, confirm orders, pack, assign partners and follow exceptions.<br><strong>Before closing:</strong> check incomplete deliveries, COD collections, receipts and finished orders.</p></section>
+    <section aria-labelledby="opsTipsHeading"><h3 id="opsTipsHeading">Useful controls and safety</h3><p><strong>Search:</strong> enter order ID, name, mobile or locality (Ctrl+K focuses search). <strong>Refresh:</strong> the desk checks updates about every 30 seconds while visible; use Refresh anytime. <strong>Dates:</strong> shown in IST. <strong>Privacy:</strong> lock the admin on a shared computer. <strong>Fallback:</strong> legacy order and delivery administration remain available below.</p></section>
+   </div>
+   <p class="ops-guide-note">Queue counts cover the stored records; each queue displays paginated results. Actions require an authenticated administrator and can be subject to server-side payment and delivery rules. No report here authorizes giving the delivery code before handing over the goods.</p>
+  </div>
+ </details>
+ <div class="ops-kpis" id="opsKpis" aria-label="Operation queue totals"></div>
+ <div class="ops-layout">
+  <div class="ops-list-column"><div class="ops-list-top"><h3>Work queue</h3><label class="ops-search-label"><span class="sr-only">Search orders</span><input type="search" id="opsSearch" placeholder="Order ID, name, mobile or locality" autocomplete="off"></label><div class="ops-filter-line"><label for="opsQueue">Show</label><select id="opsQueue"><option value="new">New orders</option><option value="payment">UPI verification</option><option value="packing">Preparing / packing</option><option value="unassigned">Awaiting assignment</option><option value="active">Active deliveries</option><option value="exceptions">Exceptions</option><option value="completed">Completed</option><option value="all">All orders</option></select></div><p id="opsCount" class="ops-muted" role="status"></p></div><div id="opsList" class="ops-queue-list" role="list" aria-label="Orders awaiting work"></div><div class="ops-paging"><button id="opsPrev" type="button" class="btn secondary" disabled>Previous</button><span id="opsPage">Page 1</span><button id="opsNext" type="button" class="btn secondary" disabled>Next</button></div></div>
+  <div class="ops-detail-column"><div class="ops-detail-heading"><h3>Selected order</h3><span id="opsDetailStatus" class="ops-muted">Select an order from the queue</span></div><div id="opsDetail" class="ops-detail" role="region" aria-label="Selected order processing details"><p class="ops-muted">Sign in and select an order to review its items, payment, packing and delivery.</p></div><p id="opsMessage" role="status" aria-live="polite"></p></div>
+ </div>
+ <div class="ops-tools"><a href="#ordersPanel">Legacy order tools</a><a href="products.html#productsPanel">Product catalog</a><a href="customers.html#recordsPanel">Customer records</a><a href="https://programmer-s-picnic.github.io/delivery-app/web/">Advanced delivery management</a></div>
+</section>
+<nav class="workspace-nav" aria-label="Admin websites">
+<a href="https://easymandi.in/admin/" aria-current="page">Easy Mandi admin</a>
+<a href="https://programmer-s-picnic.github.io/delivery-app/web/" >Delivery admin</a>
+<a href="how-to.html">How to Work</a>
+</nav>
+<details class="guide" id="usageGuide">
+<summary>How to use Easy Mandi admin</summary>
+<div class="guide-grid">
+<article>
+<h3>1. Update your catalog</h3>
+<ol>
+<li>Review store settings, delivery fees and minimum order.</li>
+<li>Add a category before assigning products to it. Rename updates the products in that category. Move its products before deleting a category.</li>
+<li>Search, filter or sort the product grid. Choose Add product, Update or Delete to open the record form. Insert and Update validate the fields before changing your draft.</li>
+<li>Choose Validate catalog, then Save to server. Sign in through the password pop-up if your 30-minute session has ended. Changes become available when customers reload the catalog.</li>
+</ol>
+</article>
+<article>
+<h3>2. Manage customer orders</h3>
+<ol>
+<li>Sign in using the password pop-up, then go to Customer orders.</li>
+<li>Filter by status, review items, totals, address and map pin.</li>
+<li>Choose a status and Update status. Refresh orders to see recent changes.</li>
+<li>Choose Open in delivery admin on an order to carry its ID into the import form. Sign in there and choose Import order.</li>
+</ol>
+</article>
+<article>
+<h3>3. Drafts and backups</h3>
+<p>Edits are saved as a draft in this browser. Save to server publishes them. Download backup saves a JSON copy without publishing.</p>
+<p>Reload published catalog discards your draft after confirmation. If saving reports a changed server version, review the latest catalog before retrying.</p>
+<p>Choose Lock after reviewing orders on a shared device.</p>
+<p>Use <strong>All records</strong> to inspect customer profiles, saved addresses, complete paginated order/payment history and delivery-partner records. Administrators only.</p>
+</article>
+</div>
+<p>
+<strong>Notifications:</strong> While signed in, updates refresh every five minutes. New updates appear automatically without clicking Refresh or re-entering a password. Unread entries are highlighted. Use Mark as read or Mark all as read; each account sees its own updates. Android users can open My deliveries or the partner jobs screen. Handoff codes are sent separately by the admin.</p>
+</details>
+<nav class="section-nav admin-legacy-nav" aria-label="Legacy workspace sections">
+<a href="#opsDesk">Operations Desk</a>
+<a href="#opsHowTo">How to Work</a>
+<a href="#storePanel">Store settings</a>
+<a href="#categoriesPanel">Categories</a>
+<a href="#productsPanel">Products</a>
+<a href="#ordersPanel">Customer orders</a>
+<a href="#recordsPanel">All records</a>
+<a href="#publishPanel">Publish</a>
+</nav>
+<div class="toolbar">
+<a href="../">← Customer site</a>
+<div class="row">
+<button class="btn secondary" id="reload">Reload published catalog</button>
+<button class="btn" id="saveTop">Save to server</button>
+<button class="btn secondary" id="export">Download backup</button>
+</div>
+</div>
+<p class="alert">
+<strong>Publishing:</strong> Edit the catalog below and choose <strong>Save to server</strong>. Enter the separate administrator password. The website and app read the saved catalog from cserver. Download a backup whenever you need a copy.</p>
+<div id="message" role="status" aria-live="polite">
+</div>
+<section class="admin-master-note" id="customerMasterNote"><strong>Customers Master</strong><p>Profiles and saved addresses are read-only here. Use Search and the row details to inspect full customer records and histories. To process a customer's order, open the Operations Desk. Other record types remain available in the selector for existing administrative workflows.</p></section>
+<section class="admin-master-note" id="partnerMasterNote"><strong>Delivery Partners Master</strong><p>Partner records include active status and completed jobs. Account creation, editing, photographs, passwords and assignments remain in the separate Delivery administration website; they are not editable from this read-only records view.</p></section>
+<section class="summary" id="summary">
+</section>
+<section class="panel" id="storePanel">
+<h2>Store settings</h2>
+<div class="grid" id="store">
+</div>
+</section>
+<section class="panel" id="categoriesPanel">
+<h2>Product categories</h2>
+<p class="hint">Add or rename categories. Rename moves existing products with the category. To delete a category, move its products first. The All filter is reserved.</p>
+<div id="categories">
+</div>
+<div class="row">
+<input id="newCategory" maxlength="80" placeholder="New category name" aria-label="New category name" style="max-width:340px">
+<button class="btn secondary" id="addCategory" type="button">Add category</button>
+</div>
+</section>
+<section class="panel" id="productsPanel">
+<h2>Products</h2>
+<div class="row">
+<input id="filter" type="search" placeholder="Find a product" aria-label="Find a product" style="max-width:340px">
+<button class="btn secondary" id="add">Add product</button>
+</div>
+<p class="hint">Insert, update and delete change your draft. Choose Save to server to publish.</p>
+<div class="row"><label class="field"><span>Category</span><select id="productCategoryFilter"></select></label><label class="field"><span>Availability</span><select id="productAvailabilityFilter"><option value="all">All products</option><option value="yes">Available</option><option value="no">Unavailable</option></select></label></div>
+<div id="products" tabindex="0" role="region" aria-label="Scrollable product records">
+</div>
+</section>
+<section class="panel" id="ordersPanel">
+<h2>Customer orders</h2>
+<p class="hint">Enter the admin password once. Both admin websites reuse your session for 30 minutes; notifications update automatically every five minutes.</p>
+<div class="row">
+
+<button class="btn" id="ordersUnlock" type="button">Show orders</button>
+<button class="btn secondary" id="ordersRefresh" type="button" hidden>Refresh orders</button>
+<button class="btn secondary" id="ordersLock" type="button" hidden>Lock</button>
+</div>
+<p id="ordersMessage" role="status" aria-live="polite">
+</p>
+<div class="row" id="ordersControls" hidden>
+<label class="field">
+<span>Filter by status</span>
+<select id="ordersFilter">
+<option>All</option>
+<option>New</option>
+<option>Confirmed</option>
+<option>Preparing</option>
+<option>Delivered</option>
+<option>Cancelled</option>
+</select>
+</label>
+<span id="ordersCount" class="hint">
+</span>
+</div>
+<div id="ordersList" tabindex="0" role="region" aria-label="Scrollable customer orders">
+</div>
+</section>
+<section class="panel" id="recordsPanel">
+<h2>Customer, order, payment and delivery-partner records</h2>
+<p class="hint">Administrator-only, read-only database records. Search every record with pagination; no passwords, tokens or receipt images appear here. Use the Orders panel above to update order status or verify individual payment receipts.</p>
+<div class="row"><button class="btn" id="recordsUnlock" type="button">Open all records</button></div>
+<div id="recordsControls" hidden>
+<div class="row">
+<label class="field"><span>Record type</span><select id="recordsView"><option value="customers">Customers</option><option value="orders">All orders</option><option value="payments">Payments</option><option value="partners">Delivery partners</option></select></label>
+<label class="field"><span>Search name, mobile or order ID</span><input id="recordsSearch" type="search" maxlength="80" autocomplete="off" placeholder="Find records"></label>
+<button class="btn secondary" id="recordsRefresh" type="button">Refresh records</button>
+</div>
+</div>
+<p id="recordsMessage" class="hint" role="status" aria-live="polite">Sign in as administrator to view records.</p>
+<div class="grid-scroll records-scroll" id="recordsBody" role="region" tabindex="0" aria-label="Customer and order records"><table class="product-grid" id="recordsTable"></table></div>
+<div class="row records-paging">
+<button class="btn secondary" id="recordsPrevious" type="button" disabled>Previous</button>
+<span class="hint" id="recordsSummary"></span>
+<button class="btn secondary" id="recordsNext" type="button" disabled>Next</button>
+</div>
+<div class="records-detail" id="recordsDetail" hidden></div>
+</section>
+<section class="panel" id="publishPanel">
+<h2>Review and publish</h2>
+<p class="hint">Saving here updates the live catalog on cserver. The page keeps unsaved edits in this browser until you reload. A backup download does not publish changes.</p>
+<div class="row">
+<button class="btn" id="saveBottom">Save to server</button>
+<button class="btn secondary" id="validate">Validate catalog</button>
+<button class="btn secondary" id="exportBottom">Download backup</button>
+</div>
+</section>
+<dialog aria-labelledby="adminTitle" id="adminDialog" style="border:0;border-radius:16px;max-width:420px;width:calc(100% - 30px);padding:24px;box-shadow:0 20px 80px #173b2a66">
+<form id="adminForm">
+<h2 id="adminTitle">Administrator sign-in</h2>
+<p class="hint">Enter the administrator password once for a 30-minute session. Orders, publishing and notifications use this session.</p>
+<label class="field">
+<span>Admin password</span>
+<input id="adminPassword" type="password" autocomplete="current-password" required>
+</label>
+<p id="adminError" role="alert" aria-live="polite"></p>
+<div class="row" style="justify-content:flex-end;margin-top:20px">
+<button class="btn secondary" type="button" id="adminCancel">Cancel</button>
+<button class="btn" type="submit" id="adminSubmit">Sign in</button>
+</div>
+</form>
+</dialog>
+<dialog id="productDialog" class="record-dialog" aria-labelledby="productTitle">
+<form id="productForm" novalidate>
+<h2 id="productTitle">Product record</h2>
+<p id="productFormMessage" role="alert"></p>
+<div id="productFields" class="grid"></div>
+<p class="hint">Changes are saved to this browser draft. Save to server publishes them.</p>
+<div class="row"><button id="productCancel" type="button" class="btn secondary">Cancel</button><button id="productSubmit" type="submit" class="btn">Update draft</button></div>
+</form></dialog>
+<section class="admin-help" id="adminHelp" aria-labelledby="adminHelpTitle">
+ <h2 id="adminHelpTitle">Easy Mandi · Staff working guide</h2>
+ <p class="hint">Each page uses the same server-side data and 30-minute administrator session. Do not use the Back button to repeat submissions. Refresh the relevant queue or records after a change.</p>
+ <div class="admin-help-grid">
+  <article><h3>1 · Operations Desk</h3><ol><li><a href="./">Open Operations Desk</a> and unlock with the administrator password.</li><li>Review the New orders queue, quantities, address, contact details and totals before confirming.</li><li>Review UPI evidence or collect cash on delivery. Mark payment paid only after actual verification or collection.</li><li>Prepare items, print a packing checklist, then import for delivery if needed.</li><li>Assign an active partner, track progress, and check exceptions before closing the day.</li></ol></article>
+  <article><h3>2 · Products Master</h3><ol><li><a href="products.html">Open Products Master</a> and review Store settings.</li><li>Add categories before products. Update product details, price, stock availability and images in the catalog grid.</li><li>Insert, Update and Delete edit a <strong>local draft</strong>, not the live catalog.</li><li>Choose Validate catalog, then Save to server to publish.</li><li>Use Download backup before important bulk changes. Reload published catalog only when it is safe to discard unsaved edits.</li></ol></article>
+  <article><h3>3 · Customers Master</h3><ol><li><a href="customers.html">Open Customers Master</a> and unlock private records.</li><li>Search by customer name or mobile number.</li><li>Open row details to inspect saved addresses and historical orders where available.</li><li>Use Operations Desk for any order processing or customer delivery follow-up.</li><li>Customer profiles are <strong>read-only</strong> in this initial release; do not expect edit or delete controls.</li></ol></article>
+  <article><h3>4 · Delivery Partners Master</h3><ol><li><a href="delivery-partners.html">Open Delivery Partners Master</a> and check registered partners, active status and jobs.</li><li>Search or view details here; private records are read-only.</li><li>For creating/editing partners, photographs, credentials or changing assignments, open <a href="https://programmer-s-picnic.github.io/delivery-app/web/" target="_blank" rel="noopener noreferrer">Delivery administration ↗</a>.</li><li>Use the Operations Desk to track current customer-order dispatches and resend handoff details through existing delivery tools.</li></ol></article>
+ </div>
+ <div class="admin-help-grid">
+  <article><h3>Session and privacy</h3><p>An administrator session expires after 30 minutes. Sign in again when prompted. Avoid sharing screenshots of customer mobile numbers, addresses or handoff codes. Lock order records after working on a shared computer.</p></article>
+  <article><h3>Useful troubleshooting</h3><p>If an order appears missing, clear search or filters and use All orders or the paginated record explorer. If a catalog change does not appear for customers, ensure Save to server succeeded. If partner actions are unavailable here, use Delivery administration.</p></article>
+ </div>
+</section>
+</main>
+</div>
+<footer>Developed and maintained by <a href="https://learnwithchampak.live">Champak Roy</a>
+</footer>
+<script src="auth-dialog.js?v=20261001-icons" defer></script>
+<script src="catalog.js?v=20261008-gallery-fields" defer>
+</script>
+<script src="packing.js?v=20261008-checklist" defer></script>
+<script src="orders.js?v=20261008-client12" defer>
+</script>
+<script src="records.js?v=20261008-admin-records" defer></script>
+<script src="operations-desk.js?v=20261009-ops-help" defer></script>
+<script src="../shared/password-ui.js?v=20261001-access" defer></script>
+<script src="admin-pages.js?v=20261009-four-page-v1" defer></script>
+</body>
+</html>
+
