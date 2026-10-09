@@ -93,7 +93,11 @@ function detail(){
  items.append(ul);pair(items,'Subtotal',rupees(o.subtotal));pair(items,'Delivery fee',rupees(o.delivery_fee));pair(items,'Total',rupees(o.total));
  const packing=make('div',undefined,'ops-actions');
  action(packing,'Print packing checklist',async()=>{if(!window.EasyMandiPacking?.printSheet)throw Error('Packing tool unavailable. Use legacy orders below.');window.EasyMandiPacking.printSheet(o);},true);
- items.append(packing);target.append(items);
+ items.append(packing);
+ if(window.EasyMandiPacking?.append){
+  window.EasyMandiPacking.append(o,items,payload=>call(api+'admin-order-notes.php',payload));
+ }
+ target.append(items);
  const pay=make('section',undefined,'ops-detail-block');pay.append(make('h4','Payment'));
  pair(pay,'Payment',String(o.payment_method).toUpperCase()+' · '+o.payment_status);
  if(o.upi_reference)pair(pay,'UPI reference',o.upi_reference);
