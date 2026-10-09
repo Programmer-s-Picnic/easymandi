@@ -23,6 +23,15 @@
   function setEnabled(next){
     enabled=!!next;
     try{if(enabled)sessionStorage.setItem(key,'1');else sessionStorage.removeItem(key);}catch(_){}
+    // Switching testing OFF also clears the opt-in query flag. Otherwise a
+    // normal reload of ?testAlerts=1 would unexpectedly turn alerts back on.
+    if(!enabled&&params.get('testAlerts')==='1'){
+      try{
+        const url=new URL(location.href);
+        url.searchParams.delete('testAlerts');
+        history.replaceState(null,'',url.pathname+url.search+url.hash);
+      }catch(_){}
+    }
     if(enabled){
       entries.length=0;
       report('TEST','ENABLED','Open Catalogue, Orders and Deliveries. Record the alerts shown.',{popup:true});
