@@ -458,10 +458,8 @@ el('orderForm').onsubmit=async e=>{
       const payTitle=document.createElement('h4');payTitle.textContent=t('upiPayment');
       const payInfo=document.createElement('p');
       payInfo.textContent=t('paymentLoading');
-      const payLink=document.createElement('a');
-      payLink.className='btn';payLink.textContent=t('openUpi');payLink.hidden=true;
       const qrHolder=document.createElement('div');qrHolder.className='payment-qr';
-      payWrap.append(payTitle,payInfo,qrHolder,payLink);
+      payWrap.append(payTitle,payInfo,qrHolder);
       // Match the Flutter app: obtain the UPI payee and QR from the payment API.
       (async()=>{
         try{
@@ -474,7 +472,6 @@ el('orderForm').onsubmit=async e=>{
           const uri=String(payment.upiUri||'');
           if(!uri.startsWith('upi://pay?'))throw Error(t('paymentLoadError'));
           payInfo.textContent=t('payInfo',{total:money(result.total),name:String(payment.payeeName||''),upi:String(payment.upiId||'')});
-          payLink.href=uri;payLink.hidden=false;
           if(typeof window.QRCode==='function')new window.QRCode(qrHolder,{text:uri,width:208,height:208,
             colorDark:'#123c30',colorLight:'#ffffff',correctLevel:window.QRCode.CorrectLevel.M});
           else qrHolder.textContent=String(payment.upiId||'');
@@ -525,7 +522,6 @@ el('orderForm').onsubmit=async e=>{
       if(panel){
         panel.querySelector('h4').textContent=t('upiPayment');
         // Dynamic UPI payee information comes from the authenticated payment status API.
-        panel.querySelector('a').textContent=t('openUpi');
         panel.querySelector('input').placeholder=t('upiReference');
       }
     };
