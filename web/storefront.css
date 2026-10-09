@@ -609,3 +609,16 @@ body[data-customer-section="deliveries"] #deliveryPanel:not([hidden]){
   color:#164769;background:#c4e6fc;font-weight:bold;padding:2px 7px;
 }
 @media(max-width:600px){.customer-test-toast-stack{top:6px;right:6px;width:calc(100vw - 12px)}}
+
+/* Test-mode shortcuts exercise the real customer navigation path. */
+.customer-test-alerts-shortcuts{
+  display:flex;gap:6px;padding:8px 10px 2px;flex-wrap:wrap;background:#152d45
+}
+.customer-test-alerts-shortcuts button{
+  flex:1;min-width:80px;background:#e5f2ff;color:#174768;
+  border:1px solid #8dbdd8;border-radius:7px;
+  padding:7px 6px;font-size:11px;font-weight:750;cursor:pointer
+}
+.customer-test-alerts-shortcuts button:focus-visible{
+  outline:3px solid #aadafb;outline-offset:2px
+}
