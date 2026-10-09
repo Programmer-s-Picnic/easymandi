@@ -1,5 +1,16 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const base=path.resolve(__dirname,'..');
+// QR-only checkout: neither client may offer the deep link to open a UPI app.
+// Keep the QR code and payment screenshot submission workflow intact.
+const websitePayment=fs.readFileSync(path.join(base,'web/storefront.js'),'utf8');
+const androidPayment=fs.readFileSync(path.join(base,'lib/main.dart'),'utf8');
+assert.doesNotMatch(websitePayment,/payLink|\bt\('openUpi'\)/);
+assert.match(websitePayment,/new window\.QRCode\(qrHolder/);
+assert.match(websitePayment,/receiptBase64:base64/);
+assert.doesNotMatch(androidPayment,/Open UPI app|UPI ऐप खोलें/);
+assert.match(androidPayment,/QrImageView\(data: payment\['upiUri'\]/);
+assert.match(androidPayment,/submitPaymentReceipt\(/);
+
 class Element {
  constructor(tag='div'){this.tagName=tag;this.children=[];this.listeners={};this.dataset={};this.value='';this.hidden=false;this.textContent='';this.style={};this.parentElement={hidden:false};this.open=false;this.attributes={};this.previousElementSibling={textContent:''};}
  append(...nodes){if(this.tagName==='select'&&!this.children.length&&nodes[0])this.value=nodes[0].value;this.children.push(...nodes);nodes.forEach(n=>{if(n&&typeof n==='object')n.parentElement=this;});}
