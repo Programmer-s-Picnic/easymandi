@@ -276,7 +276,7 @@ function validate(){
       errors.push('Category image mapping must be an object');
     else{
       for(const [name,url] of Object.entries(data.categoryImages)){
-        if(name==='All'||!data.categories.includes(name)||!/^https:\/\/[^\s/]+\/[^\s]*$/i.test(url)||url.length>500)
+        if(name==='All'||!data.categories.includes(name)||typeof url!=='string'||!/^https:\/\/[^\s/]+\/[^\s]*$/i.test(url)||url.length>500)
           errors.push('Invalid image URL for category '+name);
       }
     }
