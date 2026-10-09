@@ -19,16 +19,19 @@
    if(id!=='catalog'&&!window.CustomerAccount?.user){
      afterSignIn=id;
      closeMenu();
-     byId('accountButton')?.click();
+     // A saved session may still be restoring; do not display a sign-in dialog.
+     if(!window.CustomerAccount?.restoring)byId('accountButton')?.click();
      return false;
    }
+   const reopened=current===id;
    current=id;
    document.querySelectorAll('[data-customer-section]').forEach(section=>{
      section.hidden=section.dataset.customerSection!==id;
    });
    document.body.dataset.customerSection=id;
    if(push&&location.hash!=='#'+id)history.pushState(null,'',location.pathname+location.search+'#'+id);
-   window.dispatchEvent(new CustomEvent('customer-section-opened',{detail:{section:id}}));
+   // Always notify data controllers, even when reselecting an already open view.
+   window.dispatchEvent(new CustomEvent('customer-section-opened',{detail:{section:id,reopened}}));
    closeMenu();
    if(scroll)window.scrollTo({top:0,behavior:'auto'});
    return true;
@@ -49,6 +52,15 @@
    if(!window.CustomerAccount?.user){
      if(current!=='catalog')activate('catalog',{push:false,scroll:false});
    }else if(afterSignIn){const target=afterSignIn;afterSignIn=null;activate(target,{push:true});}
+ });
+ window.addEventListener('customer-account-ready',()=>{
+   // A deep-linked private section requested while login restoration was pending.
+   if(afterSignIn&&!window.CustomerAccount?.user&&!window.CustomerAccount?.restoring)
+     byId('accountButton')?.click();
+ });
+ window.addEventListener('pageshow',event=>{
+   // Back/forward cache restores the page without rerunning scripts.
+   if(event.persisted)activate(viewFromHash(),{scroll:false});
  });
  window.addEventListener('popstate',()=>activate(viewFromHash(),{scroll:false}));
  window.addEventListener('hashchange',()=>activate(viewFromHash(),{scroll:false}));
