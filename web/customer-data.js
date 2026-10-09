@@ -168,12 +168,16 @@
       message.textContent='';
       window.EasyMandiCatalog?.setPreviousIds(previousItems.map(item=>item.product_id));
       render();
+      window.EasyMandiTestAlerts?.report('previous','RENDERED',
+        previousItems.length+' guest recent items · Visible: '+(!by('recentSection').hidden),
+        {popup:window.EasyMandiTestAlerts?.recent('catalog')});
       window.dispatchEvent(new Event('customer-recent-items-updated'));
       return;
     }
     previousLoading=true;
     previousError='';
     renderPreviouslyOrdered();
+    window.EasyMandiTestAlerts?.report('previous','LOADING','Fetching previous purchases');
     try{
       const result=await window.CustomerAccount.request('customer-data',{authorized:true});
       if(request!==refreshSerial||window.CustomerAccount?.user?.id!==account.id)return;
@@ -184,6 +188,9 @@
       previousLoading=false;
       window.EasyMandiCatalog?.setPreviousIds(previousItems.map(item=>item.product_id));
       render();
+      window.EasyMandiTestAlerts?.report('previous','RENDERED',
+        previousItems.length+' previous products · Visible: '+(!by('recentSection').hidden),
+        {popup:window.EasyMandiTestAlerts?.recent('catalog')});
     }catch(error){
       if(request===refreshSerial&&window.CustomerAccount?.user?.id===account.id){
         try{
@@ -195,6 +202,9 @@
         previousLoading=false;
         message.textContent=previousError||t('addressLoadError');
         renderPreviouslyOrdered();
+        window.EasyMandiTestAlerts?.report('previous',previousError?'ERROR':'FALLBACK LOADED',
+          (previousError||previousItems.length+' products from order history'),
+          {popup:window.EasyMandiTestAlerts?.recent('catalog')});
       }
     }
   }
