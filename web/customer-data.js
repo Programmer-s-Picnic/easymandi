@@ -18,8 +18,69 @@
   controls.append(title,select,save,remove,message);
   by('orderForm').prepend(controls);
   const history=document.createElement('section');
-  history.className='panel';
+  history.className='panel previously-purchased';
+  history.setAttribute('aria-labelledby','previouslyOrderedHeading');
   by('products').before(history);
+
+  function renderPreviouslyOrdered(){
+    const signedIn=!!window.CustomerAccount?.user;
+    history.hidden=!signedIn;
+    history.replaceChildren();
+    if(!signedIn)return;
+    const heading=document.createElement('h2');
+    heading.id='previouslyOrderedHeading';
+    heading.textContent=t('previouslyOrdered');
+    history.append(heading);
+    if(!previousItems.length){
+      const empty=document.createElement('p');
+      empty.textContent=t('noPrevious');
+      history.append(empty);
+      return;
+    }
+    const catalog=window.EasyMandiCatalog;
+    if(!catalog?.ready()){
+      const loading=document.createElement('p');
+      loading.textContent=t('loading');
+      history.append(loading);
+      return;
+    }
+    const grid=document.createElement('div');
+    grid.className='grid previously-purchased-grid';
+    const seen=new Set();
+    for(const item of previousItems){
+      const id=String(item.product_id??'');
+      if(!id||seen.has(id))continue;
+      seen.add(id);
+      const current=catalog.getProduct(id);
+      if(current){
+        // Identical live catalog card: image, both names, unit, current price
+        // and +/- controls connected to the same basket as the shop grid.
+        grid.append(catalog.createCard(current));
+      }else{
+        // Keep historical purchases visible even when a product is deleted
+        // from the current catalog. Never allow adding an unavailable item.
+        const card=document.createElement('article');
+        card.className='card previous-product-unavailable';
+        const art=document.createElement('div');
+        art.className='illustration';
+        art.textContent='🛒';
+        art.setAttribute('aria-hidden','true');
+        const name=document.createElement('h3');
+        name.textContent=item.name||t('unavailable');
+        const unit=document.createElement('small');
+        unit.textContent=item.unit||'';
+        const row=document.createElement('div');
+        row.className='row';
+        const unavailable=document.createElement('span');
+        unavailable.className='previous-product-status';
+        unavailable.textContent=t('unavailable');
+        row.append(unavailable);
+        card.append(art,name,unit,row);
+        grid.append(card);
+      }
+    }
+    history.append(grid);
+  }
 
   function render(){
     const signedIn=!!window.CustomerAccount?.user;
@@ -43,25 +104,7 @@
     select.value=selected===null?'':String(selected);
     remove.hidden=selected===null;
 
-    history.replaceChildren();
-    if(!signedIn)return;
-    const heading=document.createElement('h2');
-    heading.textContent=t('previouslyOrdered');
-    history.append(heading);
-    if(!previousItems.length){
-      const empty=document.createElement('p');
-      empty.textContent=t('noPrevious');
-      history.append(empty);
-    }
-    for(const item of previousItems){
-      const current=data?.products.find(p=>String(p.id)===String(item.product_id));
-      const button=document.createElement('button');
-      button.type='button';button.className='btn ghost';
-      button.textContent=(current?labelFor(current):item.name)+' · '+(current?'₹'+Number(current.price).toFixed(2):t('unavailable'));
-      button.disabled=!current?.available;
-      button.addEventListener('click',()=>{if(current?.available)change(current.id,1);});
-      history.append(button);
-    }
+    renderPreviouslyOrdered();
   }
 
   async function refresh(){
@@ -125,6 +168,7 @@
   window.addEventListener('customer-account-changed',refresh);
   window.addEventListener('customer-order-placed',refresh);
   window.addEventListener('languagechange',render);
+  window.addEventListener('easy-mandi-catalog-rendered',renderPreviouslyOrdered);
   by('basketButton').addEventListener('click',refresh);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
   window.addEventListener('focus',()=>{if(!document.hidden)refresh();});

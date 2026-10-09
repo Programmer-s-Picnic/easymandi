@@ -409,3 +409,17 @@ header>div{max-width:1200px;padding:12px 22px;gap:12px}
  .wrap{padding:12px}
 }
 @media(prefers-reduced-motion:reduce){.btn,.hero-shop-link{transition:none}}
+
+/* Full catalog cards for products purchased previously (customer account only). */
+.previously-purchased{margin:16px 0 18px}
+.previously-purchased h2{margin-bottom:14px}
+.previously-purchased-grid{align-items:stretch}
+.previously-purchased-grid .card{border:1px solid #e0ede2;box-shadow:0 3px 10px rgba(19,81,49,.05)}
+.previously-purchased-grid .card h3{overflow-wrap:anywhere}
+.previous-product-unavailable .illustration{background:#f0f2f0;filter:grayscale(1);opacity:.75}
+.previous-product-status{font-size:13px;color:#69786d;font-weight:700}
+@media(max-width:600px){
+  .previously-purchased{padding:12px}
+  .previously-purchased h2{font-size:19px}
+  .previously-purchased-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
