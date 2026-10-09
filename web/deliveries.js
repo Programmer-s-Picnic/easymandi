@@ -133,9 +133,10 @@
       notice.textContent='';
       render();
       window.dispatchEvent(new CustomEvent('customer-view-rendered',{detail:{section:'deliveries',count:lastOrders.length}}));
-      window.EasyMandiTestAlerts?.report('deliveries','RENDERED',
-        lastOrders.length+' deliveries · Visible: '+(!panel.hidden&&!byId('deliveriesSection')?.hidden),
-        {popup:window.EasyMandiTestAlerts?.recent('deliveries')});
+      const active=window.EasyMandiSections?.current==='deliveries';
+      window.EasyMandiTestAlerts?.report('deliveries',active?'RENDERED IN OPEN SECTION':'PRELOADED IN BACKGROUND',
+        lastOrders.length+' deliveries · '+(active?'Selected panel is open':'Hidden because another section is selected'),
+        {popup:active&&window.EasyMandiTestAlerts?.recent('deliveries')});
     }catch(error){
       if(serial===requestNumber&&window.CustomerAccount?.user?.id===account.id){
         notice.textContent=error.message||t('Could not load deliveries. Try again.','डिलीवरी नहीं खुली। दोबारा प्रयास करें।');
