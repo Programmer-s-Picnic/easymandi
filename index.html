@@ -102,6 +102,13 @@
 </section>
 </section>
 </main>
+<dialog id="aboutDialog" class="app-about-dialog" aria-labelledby="aboutTitle">
+ <h2 id="aboutTitle">Easy Mandi</h2>
+ <p data-i18n="developedBy">Developed and maintained by Champak Roy</p>
+ <p><a href="https://easymandi.in/" rel="noopener noreferrer">easymandi.in</a></p>
+ <p><a href="https://learnwithchampak.live" target="_blank" rel="noopener noreferrer">learnwithchampak.live</a></p>
+ <div class="actions"><button class="btn" type="button" id="closeAbout" data-i18n="close">Close</button></div>
+</dialog>
 <dialog id="basket">
 <h2 data-i18n="yourBasket">Your basket</h2>
 <div id="items">
@@ -115,6 +122,7 @@
 <p class="note" id="deliveryNote">
 </p>
 <form class="form" id="orderForm">
+<label class="save-checkout-address"><input id="saveCheckoutAddress" type="checkbox" checked> <span data-i18n="saveDeviceAddress">Save this address</span></label>
 <input name="name" data-i18n-placeholder="yourName" placeholder="Your name" minlength="2" maxlength="100" required>
 <label for="mobile"><span data-i18n="mobileNumber">Mobile number</span> (<span id="countryCode">+91</span>)</label>
 <input id="mobile" name="phone" type="tel" placeholder="9876543210" pattern="[6-9][0-9]{9}" maxlength="10" inputmode="numeric" autocomplete="tel-national" title="10 digits starting with 6, 7, 8 or 9" required>
