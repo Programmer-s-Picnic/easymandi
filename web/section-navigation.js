@@ -75,8 +75,17 @@
    // Back/forward cache restores the page without rerunning scripts.
    if(event.persisted)activate(viewFromHash(),{scroll:false});
  });
- window.addEventListener('focus',()=>{if(!document.hidden)refreshCurrent(current);});
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCurrent(current);});
+ let lastReturnRefresh=0;
+ const onReturn=()=>{
+   if(document.hidden)return;
+   // Mobile browsers often emit focus and visibilitychange together.
+   const now=Date.now();
+   if(now-lastReturnRefresh<1000)return;
+   lastReturnRefresh=now;
+   refreshCurrent(current);
+ };
+ window.addEventListener('focus',onReturn);
+ document.addEventListener('visibilitychange',onReturn);
  window.addEventListener('popstate',()=>activate(viewFromHash(),{scroll:false}));
  window.addEventListener('hashchange',()=>activate(viewFromHash(),{scroll:false}));
  activate(viewFromHash(),{scroll:false});
