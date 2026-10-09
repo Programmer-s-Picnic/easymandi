@@ -518,3 +518,45 @@ body>header{z-index:10}
 .basket-quantity button:disabled{opacity:.4;cursor:not-allowed}
 .basket-quantity strong{min-width:15px;text-align:center}
 @media(max-width:520px){.basket-line{gap:7px}.basket-name{min-width:100%}.basket-line>.btn{padding:7px 9px;font-size:12px}}
+
+/* Repeat-purchase zone has its own violet identity, distinct from today's green catalogue. */
+#recentSection.app-recent-section{
+  background:linear-gradient(120deg,#f3eeff 0%,#f9f5ff 58%,#eee8ff 100%);
+  border:2px solid #c9baf0;
+  border-left:6px solid #7955bd;
+  box-shadow:0 6px 21px rgba(86,61,136,.11);
+}
+#recentSection .recent-section-heading h2{color:#493478;font-weight:850;display:flex;align-items:center;gap:8px}
+#recentSection .recent-section-heading h2::before{
+  content:"↻";display:grid;place-items:center;
+  width:29px;height:29px;flex:none;border-radius:50%;
+  background:#e1d5fd;color:#6240ab;font-size:21px;
+}
+#recentSection #refreshRecent{
+  color:#594194;border-color:#c6b6ec;background:#ffffffcf;
+}
+#recentSection #refreshRecent:hover{background:#e8ddff}
+#recentSection .previously-purchased{background:transparent}
+#recentSection .previously-purchased-grid .card{
+  background:#fffaff;border:1px solid #ccbced!important;
+  box-shadow:0 3px 11px rgba(90,58,147,.08)!important;
+  cursor:pointer;
+}
+#recentSection .previously-purchased-grid .card:hover{
+  border-color:#9c7bd3!important;
+  box-shadow:0 5px 16px rgba(90,58,147,.15)!important;
+}
+#recentSection .previously-purchased-grid .card h3{color:#4c367e}
+#recentSection .previously-purchased-grid .illustration{background:#eae1fc}
+#recentSection .previously-purchased-grid .card .price{color:#6243a2}
+#recentSection .previously-purchased-grid .step button{
+  background:#7051b2;color:white;border-color:#7051b2;
+}
+#recentSection .previously-purchased-grid .step button:hover{background:#563890}
+#recentSection .previously-purchased-grid .step button:focus-visible,
+#recentSection #refreshRecent:focus-visible{outline:3px solid #b092ee;outline-offset:2px}
+#recentSection .previous-product-status{color:#6c597f}
+@media(max-width:600px){
+  #recentSection.app-recent-section{border-left-width:4px}
+  #recentSection .recent-section-heading h2::before{width:24px;height:24px;font-size:17px}
+}
