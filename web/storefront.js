@@ -400,6 +400,9 @@ el('orderForm').onsubmit=async e=>{
     button.textContent=t('placeOrder')
   }
 };
+window.addEventListener('customer-section-opened',event=>{
+  if(event.detail?.section==='catalog')load(true);
+});
 window.addEventListener('languagechange',()=>{
   if(data){render();if(el('basket').open)renderBasket();if(el('itemDetail').open)renderItemDetail();}
   showLocationStatus(el('locationStatus').dataset.locationState||'hint');
