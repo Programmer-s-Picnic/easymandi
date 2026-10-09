@@ -20,8 +20,8 @@
 <meta name="twitter:description" content="Fresh vegetables for Varanasi. Order in English or Hindi.">
 <meta name="twitter:image" content="https://easymandi.in/web/og-image.svg">
 <title>Easy Mandi | Fresh vegetables</title>
-<link rel="stylesheet" href="storefront.css?v=20261009-sections-v1">
-<script src="i18n.js?v=20261009-sections-v1" defer></script>
+<link rel="stylesheet" href="storefront.css?v=20261009-apk-parity-v3">
+<script src="i18n.js?v=20261009-apk-parity-v3" defer></script>
 <link rel="stylesheet" href="../shared/notifications.css?v=20261008-animate">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
 </script>
@@ -73,7 +73,7 @@
 </section>
 <p id="status" class="status" role="status">
 </p>
-<input class="search" id="search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products" data-i18n-aria-label="searchAria">
+<div class="catalog-search-tools"><input class="search" id="search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products" data-i18n-aria-label="searchAria"><button type="button" id="clearSearch" class="btn ghost" data-i18n="clearSearch">Clear search</button><button type="button" id="favoritesFilter" class="btn ghost" aria-pressed="false" data-i18n="showFavorites">♡ Favorites</button></div>
 <div class="filters" id="filters">
 </div>
 <div class="head" id="shopCatalog">
@@ -83,6 +83,7 @@
 </div>
 <button class="btn ghost" id="refresh" data-i18n="refreshCatalog">Refresh catalog</button>
 </div>
+<div class="delivery-progress-banner" id="deliveryProgressBanner" role="status" aria-live="polite"><span aria-hidden="true">🚚</span> <span id="deliveryProgress"></span><div class="delivery-progress-track" aria-hidden="true"><span id="deliveryProgressFill"></span></div></div>
 <div class="grid" id="products">
 </div>
 
@@ -250,7 +251,7 @@
  <p>Fresh essentials, straightforward ordering. <a href="https://learnwithchampak.live" rel="noopener noreferrer">Developed &amp; maintained by Champak Roy</a></p>
  <small>easymandi.in · Customer assistance is available through the order confirmation details.</small>
 </footer>
-<script src="storefront.js?v=20261009-tab-refresh-v2" defer>
+<script src="storefront.js?v=20261009-apk-parity-v3" defer>
 </script>
 <script src="auth.js?v=20261009-orders" defer>
 </script>
