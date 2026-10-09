@@ -4,7 +4,7 @@
   const key = 'easy-mandi-language';
   const messages = {
     en: {
-      chooseLanguage:'Choose language', signIn:'Sign in', basket:'Basket', eyebrow:'FRESH FROM THE MANDI',
+      chooseLanguage:'Choose language', signIn:'Sign in', basket:'Basket', marketNav:'Market / मंडी', eyebrow:'FRESH FROM THE MANDI',
       heroTitle:'Good food starts fresh.', heroText:'Onions, potatoes and vegetables for your everyday kitchen · Varanasi',
       browseCatalog:"Browse today's catalog",freshEssentials:'Fresh essentials',paymentChoices:'UPI & Cash on Delivery',yourAccountKicker:'YOUR EASY MANDI ACCOUNT',ordersDescription:'Every saved order, including those awaiting delivery assignment.',
       shopFresh:'Shop fresh', refreshCatalog:'Refresh catalog', searchPlaceholder:'Search onions, potatoes, tomatoes...',
@@ -63,7 +63,7 @@
       welcomeWhatsapp:'Hello Easy Mandi, my order {id} has been placed.'
     },
     hi: {
-      chooseLanguage:'भाषा चुनें', signIn:'लॉग इन', basket:'टोकरी', eyebrow:'मंडी से सीधे आपके घर',
+      chooseLanguage:'भाषा चुनें', signIn:'लॉग इन', basket:'टोकरी', marketNav:'मंडी / Market', eyebrow:'मंडी से सीधे आपके घर',
       heroTitle:'ताज़ी सब्ज़ियाँ, बेहतर भोजन।', heroText:'आपकी रसोई के लिए प्याज़, आलू और ताज़ी सब्ज़ियाँ · वाराणसी',
       browseCatalog:'आज का सामान देखें',freshEssentials:'ताज़ी ज़रूरी चीज़ें',paymentChoices:'UPI और कैश ऑन डिलीवरी',yourAccountKicker:'आपका ईज़ी मंडी खाता',ordersDescription:'आपके सभी दर्ज ऑर्डर, जिनके लिए अभी डिलीवरी साथी तय नहीं हुआ है वे भी।',
       shopFresh:'ताज़ी सब्ज़ियाँ खरीदें', refreshCatalog:'सामान अपडेट करें', searchPlaceholder:'प्याज़, आलू, टमाटर खोजें...',
