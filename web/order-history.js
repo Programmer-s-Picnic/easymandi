@@ -96,15 +96,16 @@
   }
   async function fetchPage(reset=false){
     const current=window.CustomerAccount?.user;
-    if(!current){nonce++;rows=[];page=0;hasMore=false;render();return;}
+    if(!current){nonce++;rows=[];page=0;hasMore=false;render();window.EasyMandiTestAlerts?.report('orders','NOT SIGNED IN');return;}
     // An existing request for this account will update the opened section.
     // Restarting overlapping fetches repeatedly used to discard the response.
-    if(loading)return;
+    if(loading){window.EasyMandiTestAlerts?.report('orders','REQUEST IN FLIGHT','Waiting for the current request');return;}
     if(reset){nonce++;page=0;}
     const serial=nonce,owner=current.id;
     loading=true;
     refreshButton.disabled=moreButton.disabled=true;
     notice.textContent=t('Loading your saved orders…','आपके ऑर्डर लोड हो रहे हैं…');
+    window.EasyMandiTestAlerts?.report('orders','LOADING','Fetching order history from server');
     try{
       const result=await window.CustomerAccount.request('my-orders',{authorized:true});
       if(serial!==nonce||window.CustomerAccount?.user?.id!==owner)return;
@@ -113,8 +114,15 @@
       hasMore=!!result.hasMore;
       notice.textContent=t('Showing orders for your signed-in account · Times in IST','आपके खाते के ऑर्डर · समय भारतीय मानक समय (IST) में');
       render();
+      window.EasyMandiTestAlerts?.report('orders','RENDERED',
+        rows.length+' orders · Visible: '+(!panel.hidden&&!byId('ordersSection')?.hidden),
+        {popup:window.EasyMandiTestAlerts?.recent('orders')});
     }catch(error){
-      if(serial===nonce)notice.textContent=error.message||t('Could not load orders.','ऑर्डर लोड नहीं हो सके।');
+      if(serial===nonce){
+        notice.textContent=error.message||t('Could not load orders.','ऑर्डर लोड नहीं हो सके।');
+        window.EasyMandiTestAlerts?.report('orders','ERROR',error.message||'Request failed',
+          {popup:window.EasyMandiTestAlerts?.recent('orders')});
+      }
     }finally{
       if(serial===nonce){loading=false;refreshButton.disabled=moreButton.disabled=false;}
     }
