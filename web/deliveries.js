@@ -144,7 +144,10 @@
   }
   refreshButton.addEventListener('click',refresh);
   window.addEventListener('customer-section-opened',event=>{
-    if(event.detail?.section==='deliveries')refresh();
+    if(event.detail?.section==='deliveries'){
+      render(); // cached delivery cards and active codes appear immediately
+      refresh(); // update current status and codes in the background
+    }
   });
   window.addEventListener('customer-account-changed',()=>{
     requestNumber++;

@@ -255,7 +255,12 @@
 
   window.addEventListener('customer-account-changed',refresh);
   window.addEventListener('customer-section-opened',event=>{
-    if(event.detail?.section==='previous')refresh();
+    // Previous purchases are now part of the catalogue (APK-style), so
+    // refresh them whenever the catalogue is revisited, not an obsolete tab.
+    if(event.detail?.section==='catalog'){
+      renderPreviouslyOrdered(); // show the last known products immediately
+      refresh();
+    }
   });
   window.addEventListener('customer-order-placed',event=>{
     if(!signedIn()&&Array.isArray(event.detail?.items)){

@@ -68,7 +68,12 @@ function showLocationStatus(state){
   element.textContent=t(names[state]||names.hint,{coords:deliveryLocation?deliveryLocation.locationLat.toFixed(5)+', '+deliveryLocation.locationLng.toFixed(5):''});
 }
 async function load(silent=false){
-  if(catalogLoading)return;
+  if(catalogLoading){
+    // Keep the already loaded catalogue visible when a user returns while
+    // another network refresh is still in flight.
+    if(data)render();
+    return;
+  }
   catalogLoading=true;
   if(!silent)el('status').textContent=t('loading');
   try{
@@ -511,7 +516,11 @@ el('orderForm').onsubmit=async e=>{
   }
 };
 window.addEventListener('customer-section-opened',event=>{
-  if(event.detail?.section==='catalog')load(true);
+  if(event.detail?.section==='catalog'){
+    // Paint cached products instantly, then retrieve fresh prices in the background.
+    if(data)render();
+    load(true);
+  }
 });
 window.addEventListener('languagechange',()=>{
   if(data){render();if(el('basket').open)renderBasket();if(el('itemDetail').open)renderItemDetail();}
