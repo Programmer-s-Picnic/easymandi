@@ -17,6 +17,7 @@ import 'google_customer_sign_in.dart';
 import 'delivery_page.dart';
 import 'my_orders_page.dart';
 import 'local_store.dart';
+import 'recent_order_items.dart';
 import 'product.dart';
 import 'store_gallery.dart';
 import 'checkout_utils.dart';
@@ -84,6 +85,8 @@ class _StorePageState extends State<StorePage> {
   List<Product> products = [];
   List<String> popularProductIds = [];
   List<RecentItem> recentItems = [];
+  bool recentItemsLoading = false;
+  String? recentItemsError;
   AuthUser? signedInUser;
   Map<String, dynamic> store = {};
   Map<String, dynamic> checkoutRules = {};
@@ -153,18 +156,62 @@ class _StorePageState extends State<StorePage> {
     await AuthService.instance.saveServerAddress({...address.toRow(),if(address.id!=null)'id':address.id});
   }
   bool syncingCustomerData=false;
+  Future<List<RecentItem>> loadPreviouslyOrderedFromHistory() async {
+    final orderRows=<dynamic>[];
+    for(var page=1;page<=5;page++){
+      final response=await AuthService.instance.myOrders(page:page);
+      orderRows.addAll(response['orders'] as List<dynamic>? ?? []);
+      final items=RecentOrderItems.fromOrderHistory(orderRows);
+      if(items.length>=20||response['hasMore']!=true)return items;
+    }
+    return RecentOrderItems.fromOrderHistory(orderRows);
+  }
+
   Future<void> syncCustomerData() async {
-    final user=AuthService.instance.user;if(user==null||syncingCustomerData)return;
+    final user=AuthService.instance.user;
+    if(user==null||syncingCustomerData)return;
     syncingCustomerData=true;
+    if(mounted)setState((){
+      recentItemsLoading=true;
+      recentItemsError=null;
+    });
     try {
+      // Load orders BEFORE optional address migration. Migration failures must
+      // never suppress or delay the previously ordered products.
+      List<RecentItem> items=[];
+      try{
+        final response=await AuthService.instance.customerData();
+        items=RecentOrderItems.fromCustomerData(response['items']);
+      }catch(_){
+        // The full customer order ledger is an independent, authenticated API.
+      }
+      if(items.isEmpty)items=await loadPreviouslyOrderedFromHistory();
+      if(!mounted||AuthService.instance.user?.id!=user.id)return;
+      setState((){
+        recentItems=items;
+        recentItemsError=null;
+      });
+    }catch(_){
+      if(mounted&&AuthService.instance.user?.id==user.id){
+        setState(()=>recentItemsError=tr('Could not load previous orders. Tap retry.',
+            'पहले के ऑर्डर नहीं खुल सके। फिर से प्रयास करें।'));
+      }
+    }finally{
+      syncingCustomerData=false;
+      if(mounted)setState(()=>recentItemsLoading=false);
+    }
+    // Address migration is independent; do not block order history on it.
+    try{
       final prefs=await SharedPreferences.getInstance();
       final migrationKey='server-address-migration-${user.id}';
-      if(prefs.getBool(migrationKey)!=true){for(final address in await LocalStore.instance.loadAddresses()){if(AuthService.instance.user?.id!=user.id)return;await AuthService.instance.saveServerAddress(address.toRow());}await prefs.setBool(migrationKey,true);}
-      final response=await AuthService.instance.customerData();
-      if(!mounted || AuthService.instance.user?.id!=user.id)return;
-      final rows=response['items'] as List<dynamic>? ?? [];
-      setState(()=>recentItems=rows.map((raw){final r=raw as Map<String,dynamic>;return RecentItem(productId:r['product_id'] as String,name:r['name'] as String,unit:r['unit'] as String,emoji:'🥬',quantity:int.tryParse('${r['quantity']}')??1,requestedAt:0);}).toList());
-    } catch (_) { /* Device history remains available offline. */ } finally {syncingCustomerData=false;}
+      if(prefs.getBool(migrationKey)!=true){
+        for(final address in await LocalStore.instance.loadAddresses()){
+          if(AuthService.instance.user?.id!=user.id)return;
+          await AuthService.instance.saveServerAddress(address.toRow());
+        }
+        await prefs.setBool(migrationKey,true);
+      }
+    }catch(_){/* Saved addresses can be retried independently. */}
   }
   Future<void> checkNotifications() async {
     final account=AuthService.instance.user;
@@ -332,7 +379,7 @@ class _StorePageState extends State<StorePage> {
       if (!mounted) return;
       setState(() {
         products = parsed;
-        recentItems = recent;
+        if(AuthService.instance.user==null)recentItems = recent;
         store = data['store'] as Map<String, dynamic>;
         checkoutRules = data['checkout'] as Map<String, dynamic>? ?? {};
         categories = (data['categories'] as List).cast<String>();
@@ -933,46 +980,70 @@ class _StorePageState extends State<StorePage> {
             if(favoritesOnly)Padding(padding:const EdgeInsets.only(top:5),
               child:Text(tr('Showing favorites only','केवल पसंदीदा उत्पाद'),
                 style:const TextStyle(color:Color(0xFFD82971),fontSize:11))),
-            if(recentItems.isNotEmpty)ExpansionTile(
+            if(recentItems.isNotEmpty||signedInUser!=null)ExpansionTile(
               key:const PageStorageKey('recently-ordered'),
+              initiallyExpanded:true,
               tilePadding:EdgeInsets.zero,childrenPadding:EdgeInsets.zero,
               dense:true,
-              title:Text(tr('Previously ordered items','पहले मँगाए गए सामान'),
-                style:const TextStyle(fontWeight:FontWeight.w700,fontSize:12)),
-              children:[SizedBox(height:80,child:ListView.separated(
-                scrollDirection:Axis.horizontal,
-                itemCount:recentItems.length,
-                separatorBuilder:(_,__)=>const SizedBox(width:6),
-                itemBuilder:(ctx,i){
-                  final item=recentItems[i];
-                  Product? found;
-                  for(final p in products){if(p.id==item.productId){found=p;break;}}
-                  final target=found;
-                  return SizedBox(width:155,child:Card(
-                    color:Colors.white,elevation:0,
-                    child:InkWell(onTap:target==null?null:()=>showProductDetail(target),
-                      child:Padding(padding:const EdgeInsets.all(7),
-                        child:Row(children:[
-                          Text(target?.emoji??item.emoji,style:const TextStyle(fontSize:26)),
-                          const SizedBox(width:5),
-                          Expanded(child:Column(mainAxisAlignment:MainAxisAlignment.center,
-                            crossAxisAlignment:CrossAxisAlignment.start,children:[
-                              Text(target==null?item.name:productName(target.name,target.hindi),
-                                maxLines:1,overflow:TextOverflow.ellipsis,
-                                style:const TextStyle(fontSize:11,fontWeight:FontWeight.w700)),
-                              if(target!=null&&target.available)
-                                InkWell(onTap:()=>changeQuantity(target,1),
-                                  child:Text(tr('Add again +','फिर जोड़ें +'),
-                                    style:const TextStyle(color:forest,fontSize:11))),
-                              if(target==null||!target.available)
-                                Text(tr('Unavailable','उपलब्ध नहीं'),
-                                  style:const TextStyle(fontSize:11,color:Colors.grey)),
-                            ])),
-                        ])),
-                    ),
-                  ));
-                },
-              ))],
+              title:Row(children:[
+                const Icon(Icons.history,color:forest,size:20),
+                const SizedBox(width:6),
+                Expanded(child:Text(tr('Previously ordered items','पहले मँगाए गए सामान'),
+                  style:const TextStyle(fontWeight:FontWeight.w800,fontSize:13))),
+                if(signedInUser!=null)
+                  IconButton(
+                    tooltip:tr('Refresh previous orders','पिछले ऑर्डर अपडेट करें'),
+                    icon:recentItemsLoading
+                      ?const SizedBox(height:16,width:16,child:CircularProgressIndicator(strokeWidth:2))
+                      :const Icon(Icons.refresh,size:20),
+                    onPressed:recentItemsLoading?null:syncCustomerData),
+              ]),
+              children:recentItems.isEmpty?[
+                Padding(padding:const EdgeInsets.fromLTRB(8,0,8,12),
+                  child:Text(recentItemsError??(recentItemsLoading
+                    ?tr('Loading your previous purchases…','आपकी पिछली खरीदारी खुल रही है…')
+                    :tr('No previously ordered products yet. Products from your orders appear here automatically.',
+                      'अभी पहले मँगाए गए सामान नहीं हैं। ऑर्डर करते ही वे यहाँ दिखेंगे।')),
+                    style:const TextStyle(fontSize:12,color:Color(0xFF546A76)))),
+              ]:[
+                SizedBox(height:105,child:ListView.separated(
+                  scrollDirection:Axis.horizontal,
+                  itemCount:recentItems.length,
+                  separatorBuilder:(_,__)=>const SizedBox(width:6),
+                  itemBuilder:(ctx,i){
+                    final item=recentItems[i];
+                    Product? found;
+                    for(final p in products){if(p.id==item.productId){found=p;break;}}
+                    final target=found;
+                    return SizedBox(width:175,child:Card(
+                      color:Colors.white,elevation:0,
+                      child:InkWell(onTap:target==null?null:()=>showProductDetail(target),
+                        child:Padding(padding:const EdgeInsets.all(9),
+                          child:Row(children:[
+                            Text(target?.emoji??item.emoji,style:const TextStyle(fontSize:27)),
+                            const SizedBox(width:6),
+                            Expanded(child:Column(mainAxisAlignment:MainAxisAlignment.center,
+                              crossAxisAlignment:CrossAxisAlignment.start,children:[
+                                Text(target==null?item.name:productName(target.name,target.hindi),
+                                  maxLines:2,overflow:TextOverflow.ellipsis,
+                                  style:const TextStyle(fontSize:12,fontWeight:FontWeight.w700)),
+                                Text(item.unit,maxLines:1,overflow:TextOverflow.ellipsis,
+                                  style:const TextStyle(fontSize:10,color:Colors.grey)),
+                                if(target!=null&&target.available)
+                                  InkWell(onTap:()=>changeQuantity(target,1),
+                                    child:Padding(padding:const EdgeInsets.symmetric(vertical:4),
+                                      child:Text(tr('Add again +','फिर जोड़ें +'),
+                                        style:const TextStyle(color:forest,fontSize:12,fontWeight:FontWeight.w800)))),
+                                if(target==null||!target.available)
+                                  Text(tr('Currently unavailable','अभी उपलब्ध नहीं'),
+                                    style:const TextStyle(fontSize:10,color:Colors.grey)),
+                              ])),
+                          ])),
+                      ),
+                    ));
+                  },
+                )),
+              ],
             ),
           ])),
           Expanded(child:StoreGallery(
