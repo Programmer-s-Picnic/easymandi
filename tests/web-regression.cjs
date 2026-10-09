@@ -12,7 +12,7 @@ assert.match(androidPayment,/QrImageView\(data: payment\['upiUri'\]/);
 assert.match(androidPayment,/submitPaymentReceipt\(/);
 
 class Element {
- constructor(tag='div'){this.tagName=tag;this.children=[];this.listeners={};this.dataset={};this.value='';this.hidden=false;this.textContent='';this.style={};this.parentElement={hidden:false};this.open=false;this.attributes={};this.previousElementSibling={textContent:''};}
+ constructor(tag='div'){this.tagName=tag;this.children=[];this.listeners={};this.dataset={};this.value='';this.hidden=false;this.textContent='';this.style={};this.classList={add(){},remove(){},toggle(){},contains(){return false}};this.parentElement={hidden:false};this.open=false;this.attributes={};this.previousElementSibling={textContent:''};}
  append(...nodes){if(this.tagName==='select'&&!this.children.length&&nodes[0])this.value=nodes[0].value;this.children.push(...nodes);nodes.forEach(n=>{if(n&&typeof n==='object')n.parentElement=this;});}
  replaceChildren(...nodes){this.children=[];this.append(...nodes);}
  before(){} prepend(...nodes){this.children.unshift(...nodes)} after(){} insertBefore(n){this.append(n)} closest(){return null} remove(){} focus(){} scrollIntoView(){}
