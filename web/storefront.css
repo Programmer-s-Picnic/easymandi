@@ -538,3 +538,8 @@ header>div{max-width:1200px;padding:12px 22px;gap:12px}
 #localityMap[aria-disabled="true"]{opacity:.45;pointer-events:none}
 #serviceLocalityStatus{font-size:12px;line-height:1.5}
 @media(max-width:500px){.service-locality-group{padding:11px}.service-locality-actions{align-items:stretch}.service-locality-actions .btn{width:100%;justify-content:center;text-align:center}}
+
+/* Browsing remains public; order submission has an explicit account gate. */
+.checkout-login-gate{margin:14px 0;padding:18px;border:1px solid #a1cdb4;background:#edf8f0;border-radius:14px;color:#16482e}
+.checkout-login-gate p{margin:0 0 12px;font-weight:650;line-height:1.5}
+.checkout-login-gate .btn{width:100%;max-width:350px}
