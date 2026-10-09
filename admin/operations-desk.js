@@ -171,6 +171,32 @@ async function load(keepSelection=false){
  }catch(e){if(serial===state.seq){$('opsLastSync').textContent='Refresh failed';show(e.message,true);}}
  finally{$('opsRefresh').disabled=false;}
 }
+// In-context operator guide: queue links are actual filters, never placeholders.
+const howTo=$('opsHowTo');
+for(const button of howTo.querySelectorAll('[data-ops-guide-queue]')){
+ button.addEventListener('click',()=>{
+  const queue=button.dataset.opsGuideQueue;
+  if(!['new','payment','packing','unassigned','active','exceptions','completed','all'].includes(queue))return;
+  state.filter=queue;
+  state.page=1;
+  state.selected=null;
+  state.search='';
+  $('opsSearch').value='';
+  $('opsQueue').value=queue;
+  howTo.open=false;
+  $('opsDesk').scrollIntoView({behavior:'smooth',block:'start'});
+  if(!window.AdminSession.token){
+   $('opsSignIn').focus();
+   show('Unlock operations to open the '+button.textContent.trim().replace(/\s*→$/,'')+' queue.');
+   return;
+  }
+  load();
+ });
+}
+for(const anchor of document.querySelectorAll('a[href="#opsHowTo"]')){
+ anchor.addEventListener('click',()=>{howTo.open=true;});
+}
+
 let searchTimer;
 $('opsQueue').onchange=()=>{state.filter=$('opsQueue').value;state.page=1;state.selected=null;load();};
 $('opsSearch').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{state.search=$('opsSearch').value.trim();state.page=1;load();},300);};
