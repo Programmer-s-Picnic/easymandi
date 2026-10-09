@@ -59,6 +59,11 @@ class AuthService {
       final data = jsonDecode(raw);
       if (data is! Map<String, dynamic>) throw const AuthException('Unexpected server response.');
       if (response.statusCode < 200 || response.statusCode >= 300) {
+        if (authenticated && response.statusCode == 401) {
+          await _storage.delete(key: _key);
+          _token = null;
+          user = null;
+        }
         throw AuthException(data['error'] as String? ?? 'Request failed. Please try again.', response.statusCode);
       }
       return data;
@@ -154,8 +159,10 @@ class AuthService {
   Future<void> saveServerAddress(Map<String,Object?> address) async { await _request('customer-data',method:'POST',body:address,authenticated:true); }
   Future<void> deleteServerAddress(int id) async { await _request('customer-data',method:'POST',body:{'operation':'delete','id':id},authenticated:true); }
 
-  Future<Map<String, dynamic>> createOrder(Map<String, Object?> order) =>
-      _request('order-create', method: 'POST', body: order);
+  Future<Map<String, dynamic>> createOrder(Map<String, Object?> order) {
+    if (user == null) throw const AuthException('Please sign in before placing an order.', 401);
+    return _request('order-create', method: 'POST', body: order, authenticated: true);
+  }
 
   Future<Map<String, dynamic>> paymentStatus({
     required String orderId,
