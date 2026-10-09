@@ -560,3 +560,20 @@ body>header{z-index:10}
   #recentSection.app-recent-section{border-left-width:4px}
   #recentSection .recent-section-heading h2::before{width:24px;height:24px;font-size:17px}
 }
+
+/* Temporary diagnostics: only shown when the user enables testing alerts. */
+.customer-test-alerts[hidden]{display:none!important}
+.customer-test-alerts{
+  position:fixed;right:12px;bottom:12px;z-index:999;
+  width:min(460px,calc(100vw - 24px));max-height:min(43vh,360px);
+  overflow:hidden;display:flex;flex-direction:column;
+  background:#152d45;color:#e6f5ff;border:2px solid #6aadd4;
+  border-radius:13px;box-shadow:0 11px 32px #10243855;
+  font-size:12px;
+}
+.customer-test-alerts-head{padding:8px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#244663}
+.customer-test-alerts-head strong{font-size:11px;letter-spacing:.025em}
+.customer-test-alerts-head button{background:#e4f5ff;color:#173b54;border:0;border-radius:7px;padding:6px 9px;font:inherit;font-weight:700;cursor:pointer}
+.customer-test-alerts-log{margin:0;padding:10px 12px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;font:11px/1.6 ui-monospace,monospace}
+#testAlertsToggle[aria-pressed="true"]{background:#e9f6ff;color:#165781}
+@media(max-width:600px){.customer-test-alerts{right:6px;bottom:6px;width:calc(100vw - 12px);max-height:31vh}}

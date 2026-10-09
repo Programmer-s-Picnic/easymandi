@@ -18,12 +18,22 @@
  // and does not require navigating away or reloading the document to update.
  const refreshCurrent=id=>{
    const calls=id==='catalog'
-     ?[window.EasyMandiCatalog?.refresh,window.EasyMandiCustomerData?.refresh]
-     :id==='orders'?[window.EasyMandiOrders?.refresh]
-     :[window.EasyMandiDeliveries?.refresh];
-   for(const task of calls){
-     if(typeof task!=='function')continue;
-     try{Promise.resolve(task()).catch(()=>{});}catch(_){}
+     ?[['Catalog API',window.EasyMandiCatalog?.refresh],['Previous purchases',window.EasyMandiCustomerData?.refresh]]
+     :id==='orders'?[['Orders API',window.EasyMandiOrders?.refresh]]
+     :[['Deliveries API',window.EasyMandiDeliveries?.refresh]];
+   for(const [label,task] of calls){
+     if(typeof task!=='function'){
+       window.EasyMandiTestAlerts?.report(id,'CONTROLLER MISSING',label,{popup:true});
+       continue;
+     }
+     window.EasyMandiTestAlerts?.report(id,'REFRESH CALLED',label);
+     try{
+       Promise.resolve(task()).catch(error=>{
+         window.EasyMandiTestAlerts?.report(id,'UNHANDLED ERROR',label+' '+(error?.message||'Request failed'),{popup:true});
+       });
+     }catch(error){
+       window.EasyMandiTestAlerts?.report(id,'SYNC ERROR',label+' '+(error?.message||'Request failed'),{popup:true});
+     }
    }
  };
  function activate(id,{push=false,scroll=true}={}){
@@ -31,7 +41,8 @@
    if(id!=='catalog'&&!window.CustomerAccount?.user){
      afterSignIn=id;
      closeMenu();
-     // A saved session may still be restoring; do not display a sign-in dialog.
+     window.EasyMandiTestAlerts?.report(id,'SIGN IN REQUIRED',
+       window.CustomerAccount?.restoring?'Waiting for saved login':'Customer not signed in',{popup:true});
      if(!window.CustomerAccount?.restoring)byId('accountButton')?.click();
      return false;
    }
@@ -42,7 +53,8 @@
    });
    document.body.dataset.customerSection=id;
    if(push&&location.hash!=='#'+id)history.pushState(null,'',location.pathname+location.search+'#'+id);
-   // Always notify data controllers, even when reselecting an already open view.
+   window.EasyMandiTestAlerts?.begin(id,
+     'Reopened: '+(reopened?'yes':'no')+' · Signed in: '+(window.CustomerAccount?.user?'yes':'no'));
    window.dispatchEvent(new CustomEvent('customer-section-opened',{detail:{section:id,reopened}}));
    refreshCurrent(id);
    closeMenu();
