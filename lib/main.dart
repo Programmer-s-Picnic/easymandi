@@ -43,6 +43,7 @@ Future<void> main() async {
       await prefs.remove(key);
     }
     await prefs.remove('cart');
+    await prefs.remove('easy-mandi-favorites');
     await prefs.setBool(migrationKey,true);
   }
   await EasyMandiLanguage.load();
