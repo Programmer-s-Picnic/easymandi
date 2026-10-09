@@ -396,6 +396,9 @@
     user = null;
     sessionStorage.removeItem(tokenKey);
     localStorage.removeItem('easy-mandi-cart');
+    // Match Flutter sign-out: clear personal browser data but keep favorites/language.
+    localStorage.removeItem('easy-mandi-guest-addresses-v1');
+    localStorage.removeItem('easy-mandi-guest-recent-v1');
     // The storefront script owns this local basket.
     for (const key of Object.keys(cart)) delete cart[key];
     byId('orderForm').reset();
