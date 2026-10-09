@@ -6,7 +6,7 @@ class RecentOrderItems {
   static int _quantity(dynamic raw) {
     final value = raw is num ? raw.toInt() : int.tryParse('$raw');
     if (value == null || value < 1) return 1;
-    return value.clamp(1, 999999);
+    return value > 999999 ? 999999 : value;
   }
 
   static String _text(dynamic value) =>
