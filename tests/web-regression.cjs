@@ -19,7 +19,8 @@ class Element {
  setAttribute(k,v){this.attributes[k]=v} getAttribute(k){return this.attributes[k]}
  addEventListener(name,fn){(this.listeners[name]??=[]).push(fn)}
  async fire(name){for(const f of this.listeners[name]||[])await f({target:this,currentTarget:this,preventDefault(){}});if(this['on'+name])await this['on'+name]({target:this,currentTarget:this,preventDefault(){}})}
- querySelectorAll(sel){const all=this.children.filter(n=>n&&typeof n==='object').flatMap(n=>[n,...n.querySelectorAll(sel)]);return all.filter(n=>sel==='[data-order-status]'?'orderStatus' in n.dataset:sel==='.order'?n.className==='order':true)}
+ querySelector(){return {after:node=>this.prepend(node)}}
+  querySelectorAll(sel){const all=this.children.filter(n=>n&&typeof n==='object').flatMap(n=>[n,...n.querySelectorAll(sel)]);return all.filter(n=>sel==='[data-order-status]'?'orderStatus' in n.dataset:sel==='.order'?n.className==='order':true)}
  showModal(){this.open=true} close(){this.open=false} setCustomValidity(){} reportValidity(){return true}
  set innerHTML(v){this.children=[];this._html=v} get innerHTML(){return this._html||''}
 }
