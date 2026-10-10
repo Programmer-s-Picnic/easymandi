@@ -162,7 +162,7 @@ function createProductCard(p,{context='catalog'}={}){
   const strike=tier.active?tier.retailPrice:compareAt(p);
   if(strike){
     const compare=document.createElement('del');compare.className='compare-price';compare.textContent=money(strike);
-    const saving=document.createElement('small');saving.className='product-savings';saving.textContent=t('saveAmount',{amount:money(strike-Number(p.price))});
+    const saving=document.createElement('small');saving.className='product-savings';saving.textContent=t('saveAmount',{amount:rupees(strike-Number(tier.unitPrice))});
     price.append(compare,saving);
   }
   const step=document.createElement('span');
