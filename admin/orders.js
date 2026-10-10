@@ -71,7 +71,7 @@
     searchTimer=setTimeout(refresh,350);
   });byId('ordersControls').append(search);
   const dashboard=document.createElement('div');dashboard.className='order-count-grid';dashboard.id='orderDashboard';byId('ordersControls').append(dashboard);
-  function selectStatus(status){byId('ordersFilter').value=status;deliveryFilter.value='All';search.value='';refresh();byId('ordersPanel').scrollIntoView({behavior:'smooth'});}
+  function selectStatus(status){byId('ordersFilter').value=status;deliveryFilter.value='All';search.value='';applyFilters();refresh();byId('ordersPanel').scrollIntoView({behavior:'smooth'});}
   function renderCounts(){
     const counts=statusCounts||Object.fromEntries(statuses.map(status=>[status,orders.filter(o=>o.status===status).length]));
     dashboard.replaceChildren();
