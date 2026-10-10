@@ -40,8 +40,14 @@ function mandiChart(){
  const pick=make('select');
  for(const d of [7,14,30,90]){const item=make('option',d+' days');item.value=d;item.selected=d===state.mandiDays;pick.append(item);}
  pick.onchange=()=>{state.mandiDays=Number(pick.value);load(true);};node.append(pick);
+ const max=Math.max(1,...state.mandiDaily.map(x=>Number(x.revenue)||0));
  for(const day of state.mandiDaily){
-  const bar=make('div',day.day+' · '+rupees(day.revenue)+' · saved '+rupees(day.savings),'ops-mandi-row');
+  const bar=make('div',undefined,'ops-mandi-row');
+  const label=make('span',day.day+' · '+day.orders+' orders');
+  const track=make('div',undefined,'ops-mandi-track');
+  const fill=make('div',undefined,'ops-mandi-fill');
+  fill.style.width=Math.max(1,Number(day.revenue)/max*100)+'%';track.append(fill);
+  bar.append(label,track,make('span',rupees(day.revenue)+' · saved '+rupees(day.savings)));
   node.append(bar);
  }
 }
