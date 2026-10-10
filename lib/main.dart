@@ -14,7 +14,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'account_page.dart';
 import 'auth_service.dart';
 import 'google_customer_sign_in.dart';
-import 'delivery_page.dart';
 import 'my_orders_page.dart';
 import 'local_store.dart';
 import 'recent_order_items.dart';
@@ -1090,17 +1089,9 @@ class _StorePageState extends State<StorePage> {
               if(choice=='refresh'){await loadCatalog();return;}
               if(choice=='about'){showCredits();return;}
               if(choice=='orders'){await openOrders();return;}
-              if(choice=='deliveries'){
-                if(signedInUser==null)await openAccount();
-                if(mounted && signedInUser!=null){
-                  await Navigator.push(context,
-                    MaterialPageRoute<void>(builder:(_)=>const DeliveryPage()));
-                }
-              }
             },
             itemBuilder:(ctx)=>[
-              PopupMenuItem(value:'orders',child:Text(tr('My orders · all statuses','मेरे सभी ऑर्डर'))),
-              PopupMenuItem(value:'deliveries',child:Text(tr('My deliveries and QR','मेरी डिलीवरी और QR'))),
+              PopupMenuItem(value:'orders',child:Text(tr('My orders, deliveries & QR','मेरे ऑर्डर, डिलीवरी और QR'))),
               PopupMenuItem(value:'refresh',child:Text(tr('Refresh catalog','कैटलॉग रीफ़्रेश करें'))),
               PopupMenuItem(value:'about',child:Text(tr('About Easy Mandi','Easy Mandi के बारे में'))),
             ],
