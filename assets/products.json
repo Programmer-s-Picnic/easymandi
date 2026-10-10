@@ -27,7 +27,12 @@
       "price": 40,
       "description": "Everyday kitchen onions",
       "emoji": "🧅",
-      "available": true
+      "available": true,
+      "mandi": {
+        "enabled": true,
+        "minimumQuantity": 5,
+        "unitPrice": 36
+      }
     },
     {
       "id": "potato",
@@ -38,7 +43,12 @@
       "price": 35,
       "description": "Fresh potatoes for daily cooking",
       "emoji": "🥔",
-      "available": true
+      "available": true,
+      "mandi": {
+        "enabled": true,
+        "minimumQuantity": 5,
+        "unitPrice": 31.5
+      }
     },
     {
       "id": "tomato",
@@ -49,7 +59,12 @@
       "price": 50,
       "description": "Ripe, versatile tomatoes",
       "emoji": "🍅",
-      "available": true
+      "available": true,
+      "mandi": {
+        "enabled": true,
+        "minimumQuantity": 5,
+        "unitPrice": 45
+      }
     },
     {
       "id": "carrot",
@@ -60,7 +75,12 @@
       "price": 35,
       "description": "Crisp seasonal carrots",
       "emoji": "🥕",
-      "available": true
+      "available": true,
+      "mandi": {
+        "enabled": true,
+        "minimumQuantity": 5,
+        "unitPrice": 31.5
+      }
     },
     {
       "id": "cauliflower",
@@ -71,7 +91,12 @@
       "price": 45,
       "description": "Fresh whole cauliflower",
       "emoji": "🥦",
-      "available": true
+      "available": true,
+      "mandi": {
+        "enabled": true,
+        "minimumQuantity": 5,
+        "unitPrice": 40.5
+      }
     },
     {
       "id": "cabbage",
@@ -82,7 +107,12 @@
       "price": 40,
       "description": "Firm and fresh cabbage",
       "emoji": "🥬",
-      "available": true
+      "available": true,
+      "mandi": {
+        "enabled": true,
+        "minimumQuantity": 5,
+        "unitPrice": 36
+      }
     },
     {
       "id": "spinach",
@@ -93,7 +123,12 @@
       "price": 25,
       "description": "Fresh leafy spinach",
       "emoji": "🥬",
-      "available": true
+      "available": true,
+      "mandi": {
+        "enabled": true,
+        "minimumQuantity": 5,
+        "unitPrice": 22.5
+      }
     },
     {
       "id": "coriander",
@@ -104,7 +139,12 @@
       "price": 15,
       "description": "Fragrant coriander leaves",
       "emoji": "🌿",
-      "available": true
+      "available": true,
+      "mandi": {
+        "enabled": true,
+        "minimumQuantity": 5,
+        "unitPrice": 13.5
+      }
     },
     {
       "id": "green_chilli",
@@ -115,7 +155,12 @@
       "price": 15,
       "description": "Add a fresh kick to meals",
       "emoji": "🌶️",
-      "available": true
+      "available": true,
+      "mandi": {
+        "enabled": true,
+        "minimumQuantity": 5,
+        "unitPrice": 13.5
+      }
     },
     {
       "id": "ginger",
@@ -126,7 +171,12 @@
       "price": 40,
       "description": "Fresh ginger for cooking and tea",
       "emoji": "🫚",
-      "available": true
+      "available": true,
+      "mandi": {
+        "enabled": true,
+        "minimumQuantity": 5,
+        "unitPrice": 36
+      }
     },
     {
       "id": "garlic",
@@ -137,7 +187,12 @@
       "price": 45,
       "description": "Aromatic garlic bulbs",
       "emoji": "🧄",
-      "available": true
+      "available": true,
+      "mandi": {
+        "enabled": true,
+        "minimumQuantity": 5,
+        "unitPrice": 40.5
+      }
     }
   ],
   "checkout": {
@@ -150,4 +205,3 @@
     "addressExample": "House 12, Lanka, Varanasi, Uttar Pradesh 221005"
   }
 }
-
