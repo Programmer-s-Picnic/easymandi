@@ -133,7 +133,7 @@ function openProduct(original=null, mode='insert'){
   mandiOn.checked=config.enabled===true;mandiOn.disabled=mode==='delete';
   enabled.append(mandiOn,document.createTextNode('Enable Mandi quantity price'));root.append(enabled);
   for(const [key,label,value] of [['mandiMin','Mandi threshold (units)',config.minimumQuantity],['mandiPrice','Mandi unit price (₹)',config.unitPrice]]){
-    const wrap=field(label,value,()=>{},{type:'number'});
+    const wrap=field(label,String(value),()=>{},{type:'number'});
     wrap.children[1].id='product_'+key;wrap.children[1].disabled=mode==='delete';
     root.append(wrap);
   }
