@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'auth_service.dart';
 import 'i18n.dart';
+import 'customer_navigation.dart';
 
 class MyOrdersPage extends StatefulWidget {
   const MyOrdersPage({super.key});
@@ -118,5 +119,10 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
       if(loading)const Padding(padding:EdgeInsets.all(22),
         child:Center(child:CircularProgressIndicator())),
     ])),
+    bottomNavigationBar: SafeArea(top:false,child:CustomerNavigation(
+      active:CustomerNavPage.orders,
+      onMarket:()=>Navigator.of(context).popUntil((route)=>route.isFirst),
+      onOrders:(){refresh();},
+    )),
   );
 }
