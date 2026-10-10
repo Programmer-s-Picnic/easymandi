@@ -67,6 +67,10 @@ class LocalStore {
   static Future<void> _createRecentItems(Database db) => db.execute(
     'CREATE TABLE recent_items (product_id TEXT PRIMARY KEY, name TEXT NOT NULL, unit TEXT NOT NULL, emoji TEXT NOT NULL, quantity INTEGER NOT NULL, requested_at INTEGER NOT NULL)');
 
+  Future<void> clearPreviousSales() async {
+    await (await database).delete('recent_items');
+  }
+
   Future<List<RecentItem>> loadRecentItems() async =>
       (await (await database).query('recent_items', orderBy: 'requested_at DESC', limit: 20))
           .map(RecentItem.fromRow).toList();
