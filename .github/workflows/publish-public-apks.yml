@@ -1,0 +1,85 @@
+name: Publish verified APKs to easymandi.in/apk
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apk/release-config.json'
+      - '.github/workflows/publish-public-apks.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: easymandi-public-apk-links
+  cancel-in-progress: true
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check pinned versions and download verified source files
+        run: |
+          set -euo pipefail
+          test "$(cat CNAME)" = "easymandi.in"
+          test "$(jq -er '.domain' apk/release-config.json)" = "easymandi.in"
+          cver="$(jq -er '.customer.version' apk/release-config.json)"
+          dver="$(jq -er '.delivery.version' apk/release-config.json)"
+          csha="$(jq -er '.customer.sourceCommit' apk/release-config.json)"
+          dsha="$(jq -er '.delivery.sourceCommit' apk/release-config.json)"
+          test "$(jq -er '.customer.sourceRepo' apk/release-config.json)" = 'Programmer-s-Picnic/easymandidata'
+          test "$(jq -er '.delivery.sourceRepo' apk/release-config.json)" = 'Programmer-s-Picnic/json-images'
+          test "$(jq -er '.customer.a64' apk/release-config.json)" = 'easymani64.apk'
+          test "$(jq -er '.customer.a32' apk/release-config.json)" = 'easymani32.apk'
+          test "$(jq -er '.delivery.apk' apk/release-config.json)" = 'easymanideliverypartner.apk'
+          [[ "$csha" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$dsha" =~ ^[a-f0-9]{40}$ ]]
+
+          CUSTOMER=https://raw.githubusercontent.com/Programmer-s-Picnic/easymandidata/main/releases
+          DELIVERY=https://raw.githubusercontent.com/Programmer-s-Picnic/json-images/main/delivery
+          mkdir -p /tmp/easymandi-apks
+          curl -fLsS --retry 5 "$CUSTOMER/build.json" -o /tmp/easymandi-apks/customer-build.json
+          curl -fLsS --retry 5 "$DELIVERY/build.json" -o /tmp/easymandi-apks/delivery-build.json
+          jq -e --arg version "$cver" --arg sha "$csha" \
+            '.version==$version and .sourceCommit==$sha and (.workflowRun|type=="number")' \
+            /tmp/easymandi-apks/customer-build.json
+          jq -e --arg version "$dver" --arg sha "$dsha" \
+            '.version==$version and .sourceCommit==$sha and (.workflowRun|type=="number")' \
+            /tmp/easymandi-apks/delivery-build.json
+          curl -fLsS --retry 5 "$CUSTOMER/SHA256SUMS" -o /tmp/easymandi-apks/customer-sha256sums
+          curl -fLsS --retry 5 "$DELIVERY/SHA256SUMS" -o /tmp/easymandi-apks/delivery-sha256sums
+          curl -fLsS --retry 5 "$CUSTOMER/EasyMandi-64.apk" -o /tmp/easymandi-apks/easymani64.apk
+          curl -fLsS --retry 5 "$CUSTOMER/EasyMandi-32.apk" -o /tmp/easymandi-apks/easymani32.apk
+          curl -fLsS --retry 5 "$DELIVERY/DeliveryPartner.apk" -o /tmp/easymandi-apks/easymanideliverypartner.apk
+
+          verify_sha() {
+            file="$1"; manifest="$2"; source_name="$3"
+            expected=$(awk -v wanted="$source_name" '$2 == wanted {print $1}' "$manifest")
+            test -n "$expected"
+            actual=$(sha256sum "/tmp/easymandi-apks/$file" | cut -d ' ' -f1)
+            test "$expected" = "$actual" || { echo "::error::APK checksum mismatch for $file"; exit 1; }
+            test "$(stat -c '%s' "/tmp/easymandi-apks/$file")" -gt 1000000
+            unzip -tq "/tmp/easymandi-apks/$file" >/dev/null
+          }
+          verify_sha easymani64.apk /tmp/easymandi-apks/customer-sha256sums EasyMandi-64.apk
+          verify_sha easymani32.apk /tmp/easymandi-apks/customer-sha256sums EasyMandi-32.apk
+          verify_sha easymanideliverypartner.apk /tmp/easymandi-apks/delivery-sha256sums DeliveryPartner.apk
+      - name: Publish APKs unchanged at requested domain paths
+        run: |
+          set -euo pipefail
+          for apk in easymani64.apk easymani32.apk easymanideliverypartner.apk; do
+            install -m 644 "/tmp/easymandi-apks/$apk" "apk/$apk"
+          done
+          (cd apk && sha256sum easymani64.apk easymani32.apk easymanideliverypartner.apk > SHA256SUMS)
+          jq -n \
+            --arg customerVersion "$(jq -r .customer.version apk/release-config.json)" \
+            --arg customerCommit "$(jq -r .customer.sourceCommit apk/release-config.json)" \
+            --arg deliveryVersion "$(jq -r .delivery.version apk/release-config.json)" \
+            --arg deliveryCommit "$(jq -r .delivery.sourceCommit apk/release-config.json)" \
+            '{domain:"easymandi.in",customer:{version:$customerVersion,sourceCommit:$customerCommit},delivery:{version:$deliveryVersion,sourceCommit:$deliveryCommit},paths:["/apk/easymani64.apk","/apk/easymani32.apk","/apk/easymanideliverypartner.apk"]}' > apk/build.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apk/easymani64.apk apk/easymani32.apk apk/easymanideliverypartner.apk apk/SHA256SUMS apk/build.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Publish verified customer and delivery APKs at easymandi.in/apk'
+            git pull --rebase origin main
+            git push origin main
+          fi
