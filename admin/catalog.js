@@ -213,7 +213,10 @@ $('productForm').onsubmit=event=>{
     const errors=productErrors(value,editingProduct);
     for(const [,key] of productSpecs){$('product_error_'+key).textContent=errors[key]||'';$('product_'+key).setAttribute('aria-invalid',errors[key]?'true':'false');}
     if(Object.keys(errors).length){$('productFormMessage').textContent='Please correct the highlighted fields.';$('product_'+Object.keys(errors)[0]).focus();return;}
-    const minimum=Number($('product_mandiMin').value),unitPrice=Number($('product_mandiPrice').value);
+    const minimum=Number($('product_mandiMin').value);
+    let unitPrice=Number($('product_mandiPrice').value);
+    if(!editingProduct&&unitPrice===0&&Number(value.price)>0)
+      unitPrice=Math.round(Number(value.price)*90)/100;
     const enabled=$('product_mandiEnabled').checked;
     if(!Number.isInteger(minimum)||minimum<2||minimum>99||
        !Number.isFinite(unitPrice)||unitPrice<0||unitPrice>Number(value.price)||
