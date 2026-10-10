@@ -109,10 +109,10 @@
     notice.textContent=t('Loading your saved orders…','आपके ऑर्डर लोड हो रहे हैं…');
     try{
       const result=await window.CustomerAccount.request('my-orders',{authorized:true});
-      // Delivery codes are retrieved only for this signed-in customer's orders.
-      // A delivery API failure must never hide the order history.
-      await window.EasyMandiHandoff?.refresh().catch(()=>{});
       if(serial!==nonce||window.CustomerAccount?.user?.id!==owner)return;
+      // Orders render immediately. The live QR refreshes separately and triggers
+      // an in-place order-card update; a slow delivery API never blocks history.
+      window.EasyMandiHandoff?.refresh().catch(()=>{});
       rows=Array.isArray(result.orders)?result.orders:[];
       page=1;
       hasMore=!!result.hasMore;
