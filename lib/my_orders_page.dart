@@ -132,92 +132,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
   String? codeFor(Map<String,dynamic> delivery){
     if(!['assigned','picked_up','out_for_delivery'].contains(delivery['status']))return null;
     final code=delivery['handoff_code']?.toString();
-    return code!=null&&RegExp(r'^[0-9]{6}
-    padding:const EdgeInsets.symmetric(vertical:3),
-    child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Expanded(child:Text(label)),
-      Expanded(child:Text(value,textAlign:TextAlign.end,
-        style:const TextStyle(fontWeight:FontWeight.w700))),
-    ]),
-  );
-
-  Widget orderCard(Map<String,dynamic> o){
-    final items=o['items'] as List<dynamic>? ?? [];
-    final assigned=o['delivery_status']!=null;
-    final address=[o['house'],o['locality'],o['landmark'],o['city'],o['state'],o['pin']]
-      .where((v)=>v!=null&&'$v'.trim().isNotEmpty).join(', ');
-    return Card(margin:const EdgeInsets.symmetric(horizontal:12,vertical:6),
-      child:ExpansionTile(
-        title:Text(o['public_id']?.toString()??'—',style:const TextStyle(fontWeight:FontWeight.w800)),
-        subtitle:Text('${ist(o['created_at'])}\n${o['status']} · ${assigned?o['delivery_status']:tr('Awaiting assignment','साथी नियुक्त नहीं')}',
-          style:const TextStyle(fontSize:12)),
-        trailing:Text(money(o['total']),style:const TextStyle(color:Color(0xFF176B46),fontWeight:FontWeight.w900)),
-        children:[Padding(padding:const EdgeInsets.fromLTRB(16,0,16,16),
-          child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-            const Divider(),
-            Text(tr('Items','सामान'),style:const TextStyle(fontWeight:FontWeight.w800)),
-            for(final raw in items) Builder(builder:(context){
-              final line=raw as Map<String,dynamic>;
-              return detail('${line['product_name']} · ${line['unit']} × ${line['quantity']}',
-                money(line['line_total']));
-            }),
-            const Divider(),
-            detail(tr('Subtotal','सामान कुल'),money(o['subtotal'])),
-            detail(tr('Delivery fee','डिलीवरी शुल्क'),money(o['delivery_fee'])),
-            detail(tr('Total','कुल'),money(o['total'])),
-            const SizedBox(height:9),
-            Text(tr('Payment','भुगतान'),style:const TextStyle(fontWeight:FontWeight.w800)),
-            Text('${(o['payment_method']??'COD').toString().toUpperCase()} · ${o['payment_status']??'pending'}'),
-            if(o['upi_reference']!=null&&'${o['upi_reference']}'.isNotEmpty)
-              Text('UPI: ${o['upi_reference']}'),
-            if(o['has_receipt']==true)Text(tr('Receipt submitted','रसीद जमा की गई')),
-            if(o['submitted_at']!=null)Text('${tr('Submitted','जमा')}: ${ist(o['submitted_at'])}'),
-            if(o['verified_at']!=null)Text('${tr('Verified','सत्यापित')}: ${ist(o['verified_at'])}'),
-            const SizedBox(height:9),
-            Text(tr('Delivery address','डिलीवरी पता'),style:const TextStyle(fontWeight:FontWeight.w800)),
-            Text('${o['customer_name']}\n$address'),
-            if(o['customer_note']!=null&&'${o['customer_note']}'.trim().isNotEmpty)
-              Text('${tr('Instructions','निर्देश')}: ${o['customer_note']}'),
-            if(o['delivery_partner_name']!=null)
-              Text('${tr('Delivery partner','डिलीवरी साथी')}: ${o['delivery_partner_name']}'),
-            Text('${tr('Updated','अपडेट')}: ${ist(o['updated_at'])}',
-              style:const TextStyle(fontSize:12,color:Colors.grey)),
-            deliverySection(o),
-          ]))],
-      ));
-  }
-
-  @override Widget build(BuildContext context)=>Scaffold(
-    appBar:AppBar(title:Text(tr('My orders & deliveries','मेरे ऑर्डर और डिलीवरी')),actions:[
-      const LanguageButton(),
-      IconButton(onPressed:loading?null:refresh,icon:const Icon(Icons.refresh),
-        tooltip:tr('Refresh','ताज़ा करें'))]),
-    body:RefreshIndicator(onRefresh:refresh,child:ListView(children:[
-      Padding(padding:const EdgeInsets.all(15),
-        child:Text(tr('All saved orders, including those awaiting assignment. All times in IST.',
-          'सभी ऑर्डर, जिनकी डिलीवरी अभी तय नहीं हुई वे भी। समय IST में।'))),
-      if(error!=null)Padding(padding:const EdgeInsets.all(16),child:Text(error!,style:const TextStyle(color:Colors.red))),
-      if(orders.isEmpty&&!loading)Padding(padding:const EdgeInsets.all(20),
-        child:Text(tr('No orders yet.','अभी कोई ऑर्डर नहीं।'),textAlign:TextAlign.center)),
-      for(final o in orders)orderCard(o),
-      if(deliveryError!=null)Padding(padding:const EdgeInsets.symmetric(horizontal:18),
-        child:Text(deliveryError!,style:const TextStyle(color:Color(0xFF866100)))),
-      noticeList(tr('Order notifications','ऑर्डर सूचनाएँ'),orderUpdates,order:true),
-      noticeList(tr('Delivery notifications','डिलीवरी सूचनाएँ'),deliveryUpdates,order:false),
-      if(hasMore)Padding(padding:const EdgeInsets.all(16),
-        child:FilledButton(onPressed:loading?null:load,
-          child:Text(tr('Load more','और देखें')))),
-      if(loading)const Padding(padding:EdgeInsets.all(22),
-        child:Center(child:CircularProgressIndicator())),
-    ])),
-    bottomNavigationBar: SafeArea(top:false,child:CustomerNavigation(
-      active:CustomerNavPage.orders,
-      onMarket:()=>Navigator.of(context).popUntil((route)=>route.isFirst),
-      onOrders:(){refresh();},
-    )),
-  );
-}
-).hasMatch(code)?code:null;
+    return code!=null&&RegExp(r'^[0-9]{6}$').hasMatch(code)?code:null;
   }
   String qrFor(Map<String,dynamic> delivery,String code){
     final ref=Uri.encodeQueryComponent(delivery['external_order_id'].toString());
@@ -358,15 +273,13 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
               Text('${tr('Delivery partner','डिलीवरी साथी')}: ${o['delivery_partner_name']}'),
             Text('${tr('Updated','अपडेट')}: ${ist(o['updated_at'])}',
               style:const TextStyle(fontSize:12,color:Colors.grey)),
-            if(!assigned)Text(tr('Order saved. No delivery partner assigned yet.',
-              'ऑर्डर सुरक्षित है, डिलीवरी साथी अभी नियुक्त नहीं हुआ है।'),
-              style:const TextStyle(color:Color(0xFF866100))),
+            deliverySection(o),
           ]))],
       ));
   }
 
   @override Widget build(BuildContext context)=>Scaffold(
-    appBar:AppBar(title:Text(tr('My orders','मेरे ऑर्डर')),actions:[
+    appBar:AppBar(title:Text(tr('My orders & deliveries','मेरे ऑर्डर और डिलीवरी')),actions:[
       const LanguageButton(),
       IconButton(onPressed:loading?null:refresh,icon:const Icon(Icons.refresh),
         tooltip:tr('Refresh','ताज़ा करें'))]),
@@ -378,6 +291,10 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
       if(orders.isEmpty&&!loading)Padding(padding:const EdgeInsets.all(20),
         child:Text(tr('No orders yet.','अभी कोई ऑर्डर नहीं।'),textAlign:TextAlign.center)),
       for(final o in orders)orderCard(o),
+      if(deliveryError!=null)Padding(padding:const EdgeInsets.symmetric(horizontal:18),
+        child:Text(deliveryError!,style:const TextStyle(color:Color(0xFF866100)))),
+      noticeList(tr('Order notifications','ऑर्डर सूचनाएँ'),orderUpdates,order:true),
+      noticeList(tr('Delivery notifications','डिलीवरी सूचनाएँ'),deliveryUpdates,order:false),
       if(hasMore)Padding(padding:const EdgeInsets.all(16),
         child:FilledButton(onPressed:loading?null:load,
           child:Text(tr('Load more','और देखें')))),
