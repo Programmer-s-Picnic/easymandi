@@ -27,7 +27,7 @@
   }
   const validCode=code=>typeof code==='string'&&/^[0-9]{6}$/.test(code);
   const validQr=(order,code)=>typeof order.handoff_qr==='string' &&
-    order.handoff_qr==='easymandi://handoff?delivery='+String(order.id)+'&code='+code;
+    order.handoff_qr==='easymandi://handoff?order='+encodeURIComponent(String(order.external_order_id))+'&delivery='+String(order.id)+'&code='+code;
   function render(){
     const loggedIn=!!window.CustomerAccount?.user;
     panel.hidden=!loggedIn;
