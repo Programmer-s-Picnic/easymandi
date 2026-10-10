@@ -79,7 +79,7 @@
  </details>
  <div class="ops-kpis" id="opsKpis" aria-label="Operation queue totals"></div>
  <div class="ops-layout">
-  <div class="ops-list-column"><div class="ops-list-top"><h3>Work queue</h3><label class="ops-search-label"><span class="sr-only">Search orders</span><input type="search" id="opsSearch" placeholder="Order ID, name, mobile or locality" autocomplete="off"></label><div class="ops-filter-line"><label for="opsQueue">Show</label><select id="opsQueue"><option value="new">New orders</option><option value="payment">UPI verification</option><option value="packing">Preparing / packing</option><option value="unassigned">Awaiting assignment</option><option value="active">Active deliveries</option><option value="exceptions">Exceptions</option><option value="completed">Completed</option><option value="all">All orders</option></select></div><p id="opsCount" class="ops-muted" role="status"></p></div><div id="opsList" class="ops-queue-list" role="list" aria-label="Orders awaiting work"></div><div class="ops-paging"><button id="opsPrev" type="button" class="btn secondary" disabled>Previous</button><span id="opsPage">Page 1</span><button id="opsNext" type="button" class="btn secondary" disabled>Next</button></div></div>
+  <div class="ops-list-column"><div class="ops-list-top"><h3>Work queue</h3><label class="ops-search-label"><span class="sr-only">Search orders</span><input type="search" id="opsSearch" placeholder="Daily # (10-10-26-001), ID, name or mobile" autocomplete="off"></label><div class="ops-filter-line"><label for="opsQueue">Show</label><select id="opsQueue"><option value="new">New orders</option><option value="payment">UPI verification</option><option value="packing">Preparing / packing</option><option value="unassigned">Awaiting assignment</option><option value="active">Active deliveries</option><option value="exceptions">Exceptions</option><option value="completed">Completed</option><option value="all">All orders</option></select></div><p id="opsCount" class="ops-muted" role="status"></p></div><div id="opsList" class="ops-queue-list" role="list" aria-label="Orders awaiting work"></div><div class="ops-paging"><button id="opsPrev" type="button" class="btn secondary" disabled>Previous</button><span id="opsPage">Page 1</span><button id="opsNext" type="button" class="btn secondary" disabled>Next</button></div></div>
   <div class="ops-detail-column"><div class="ops-detail-heading"><h3>Selected order</h3><span id="opsDetailStatus" class="ops-muted">Select an order from the queue</span></div><div id="opsDetail" class="ops-detail" role="region" aria-label="Selected order processing details"><p class="ops-muted">Sign in and select an order to review its items, payment, packing and delivery.</p></div><p id="opsMessage" role="status" aria-live="polite"></p></div>
  </div>
  <div class="ops-tools"><a href="#ordersPanel">Legacy order tools</a><a href="products.html#productsPanel">Product catalog</a><a href="customers.html#recordsPanel">Customer records</a><a href="https://programmer-s-picnic.github.io/delivery-app/web/">Advanced delivery management</a></div>
@@ -303,10 +303,10 @@
 <script src="catalog.js?v=20261009-media-v1" defer>
 </script>
 <script src="packing.js?v=20261008-checklist" defer></script>
-<script src="orders.js?v=20261008-client12" defer>
+<script src="orders.js?v=20261010-daily-index-v1" defer>
 </script>
 <script src="records.js?v=20261008-admin-records" defer></script>
-<script src="operations-desk.js?v=20261009-ops-help" defer></script>
+<script src="operations-desk.js?v=20261010-daily-index-v1" defer></script>
 <script src="../shared/password-ui.js?v=20261001-access" defer></script>
 <script src="admin-pages.js?v=20261009-localities-v1" defer></script>
 <script src="localities.js?v=20261009-localities-v1" defer></script>
