@@ -22,6 +22,8 @@ import 'product.dart';
 import 'store_gallery.dart';
 import 'checkout_utils.dart';
 import 'notification_overlay.dart';
+import 'customer_dialog_title.dart';
+import 'customer_navigation.dart';
 import 'i18n.dart';
 
 const catalogUrl =
@@ -95,6 +97,7 @@ class _StorePageState extends State<StorePage> {
   final Set<String> favoriteIds = {};
   bool favoritesOnly = false;
   final Map<String, int> cart = {};
+  final TextEditingController _searchController = TextEditingController();
   Future<void> _cartWrite = Future.value();
   String? _pendingOrderKey;
   String category = 'All', query = '', message = '';
@@ -128,6 +131,7 @@ class _StorePageState extends State<StorePage> {
   void dispose(){
     EasyMandiLanguage.hindi.removeListener(_languageChanged);
     notificationTimer?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
   Future<void> loadFavorites() async {
@@ -264,11 +268,29 @@ class _StorePageState extends State<StorePage> {
     }
   }
 
+  void showMarket() {
+    FocusScope.of(context).unfocus();
+    _searchController.clear();
+    setState(() {
+      category = 'All';
+      query = '';
+      favoritesOnly = false;
+    });
+  }
+
+  Future<void> openOrders() async {
+    if (signedInUser == null || AuthService.instance.user == null) await openAccount();
+    if (!mounted || signedInUser == null || AuthService.instance.user == null) return;
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => const MyOrdersPage(),
+    ));
+  }
+
   Future<void> changeCustomerPassword() async {
     final current=TextEditingController(),next=TextEditingController(),confirm=TextEditingController();
     try{
       final values=await showDialog<List<String>>(context:context,builder:(ctx)=>AlertDialog(
-        title:Text(tr('Change password','पासवर्ड बदलें')),
+        title:customerDialogTitle(ctx,tr('Change password','पासवर्ड बदलें')),
         content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
           TextField(controller:current,obscureText:true,decoration:InputDecoration(labelText:tr('Current password','पुराना पासवर्ड'))),
           TextField(controller:next,obscureText:true,decoration:InputDecoration(labelText:tr('New password','नया पासवर्ड'))),
@@ -316,7 +338,7 @@ class _StorePageState extends State<StorePage> {
     }
     final account = signedInUser!;
     await showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
-      title: Text(tr('My account','मेरा खाता')),
+      title: customerDialogTitle(dialogContext,tr('My account','मेरा खाता')),
       content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
         children: [Text(account.name), Text('+91 ${account.mobile}'),
           if (account.email != null && account.email!.isNotEmpty) Text(account.email!),
@@ -447,7 +469,7 @@ class _StorePageState extends State<StorePage> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(builder: (dialogContext, updateDialog) => AlertDialog(
-        title: Text(tr('UPI payment · $orderId','UPI भुगतान · $orderId')),
+        title: customerDialogTitle(dialogContext,tr('UPI payment · $orderId','UPI भुगतान · $orderId'),canClose: !uploading),
         content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(tr('Pay exactly ${money(total)}','ठीक ${money(total)} भुगतान करें'), style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
@@ -574,7 +596,7 @@ class _StorePageState extends State<StorePage> {
     final submitted = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(builder: (dialogContext, updateDialog) => AlertDialog(
-        title: Text(tr('Place order','ऑर्डर करें')),
+        title: customerDialogTitle(dialogContext,tr('Place order','ऑर्डर करें')),
         content: Form(
           key: form,
           child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -807,7 +829,7 @@ class _StorePageState extends State<StorePage> {
     final shareReference = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr('Order received · $orderId','ऑर्डर दर्ज हुआ · $orderId')),
+        title: customerDialogTitle(ctx,tr('Order received · $orderId','ऑर्डर दर्ज हुआ · $orderId')),
         content: Column(mainAxisSize: MainAxisSize.min,crossAxisAlignment: CrossAxisAlignment.start,children:[
           Text(tr('Saved total: ${money(savedTotal)}','सहेजी गई कुल राशि: ${money(savedTotal)}')),
           const SizedBox(height: 8),
@@ -856,7 +878,15 @@ class _StorePageState extends State<StorePage> {
         return SafeArea(child: Padding(
           padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text(tr('Your basket','आपकी टोकरी'), style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+            Row(children: [
+              Expanded(child: Text(tr('Your basket','आपकी टोकरी'),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold))),
+              IconButton(
+                icon: const Icon(Icons.close),
+                tooltip: tr('Close basket','टोकरी बंद करें'),
+                onPressed: () => Navigator.pop(sheetContext),
+              ),
+            ]),
             const SizedBox(height: 12),
             if (chosen.isEmpty) Padding(padding: const EdgeInsets.symmetric(vertical: 32), child: Center(child: Text(tr('Your basket is empty. Add some fresh vegetables!','आपकी टोकरी खाली है। कुछ ताज़ी सब्ज़ियाँ जोड़ें!')))),
             if (chosen.isNotEmpty) ...[
@@ -890,7 +920,14 @@ class _StorePageState extends State<StorePage> {
           refreshCart?.call();
         }
         return Scaffold(
-          appBar: AppBar(title: Text(productName(product.name, product.hindi))),
+          appBar: AppBar(
+             title: Text(productName(product.name, product.hindi)),
+             actions: [IconButton(
+               icon: const Icon(Icons.close),
+               tooltip: tr('Close product details','उत्पाद विवरण बंद करें'),
+               onPressed: () => Navigator.of(detailContext).pop(),
+             )],
+           ),
           body: SafeArea(child: LayoutBuilder(builder: (context, bounds) => SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Center(child: ConstrainedBox(
@@ -956,7 +993,7 @@ class _StorePageState extends State<StorePage> {
   void showCredits() => showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      title: const Text('Easy Mandi'),
+      title: customerDialogTitle(dialogContext,'Easy Mandi'),
       content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(tr('Developed and maintained by Champak Roy','विकसित और अनुरक्षित: Champak Roy')),
         TextButton.icon(onPressed: openOfficialStore, icon: const Icon(Icons.storefront_outlined), label: const Text('easymandi.in')),
@@ -998,12 +1035,7 @@ class _StorePageState extends State<StorePage> {
             onSelected:(choice)async{
               if(choice=='refresh'){await loadCatalog();return;}
               if(choice=='about'){showCredits();return;}
-              if(choice=='orders'){
-                if(signedInUser==null)await openAccount();
-                if(mounted&&signedInUser!=null)await Navigator.push(context,
-                  MaterialPageRoute<void>(builder:(_)=>const MyOrdersPage()));
-                return;
-              }
+              if(choice=='orders'){await openOrders();return;}
               if(choice=='deliveries'){
                 if(signedInUser==null)await openAccount();
                 if(mounted && signedInUser!=null){
@@ -1037,6 +1069,7 @@ class _StorePageState extends State<StorePage> {
             ]),
             const SizedBox(height:9),
             SizedBox(height:45,child:TextField(
+              controller:_searchController,
               onChanged:(value)=>setState(()=>query=value),
               decoration:InputDecoration(
                 contentPadding:const EdgeInsets.symmetric(horizontal:10),
@@ -1045,7 +1078,7 @@ class _StorePageState extends State<StorePage> {
                 prefixIcon:const Icon(Icons.search,size:21),
                 suffixIcon:query.isEmpty?null:IconButton(
                   tooltip:tr('Clear search','खोज साफ करें'),
-                  onPressed:()=>setState(()=>query=''),
+                  onPressed:(){_searchController.clear();setState(()=>query='');},
                   icon:const Icon(Icons.close,size:17)),
               ),
             )),
@@ -1129,7 +1162,13 @@ class _StorePageState extends State<StorePage> {
           )),
         ]),
       bottomNavigationBar:SafeArea(top:false,
-        child:Container(
+        child:Column(mainAxisSize:MainAxisSize.min,children:[
+          CustomerNavigation(
+            active: CustomerNavPage.market,
+            onMarket: showMarket,
+            onOrders: () { openOrders(); },
+          ),
+          Container(
           padding:const EdgeInsets.fromLTRB(13,7,13,9),
           decoration:const BoxDecoration(color:Color(0xFF273743),
             borderRadius:BorderRadius.vertical(top:Radius.circular(19))),
@@ -1157,7 +1196,8 @@ class _StorePageState extends State<StorePage> {
               )),
             ],
           ]),
-        )),
+        ),
+        ])),
     );
   }
 }
