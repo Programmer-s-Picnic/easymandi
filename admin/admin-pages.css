@@ -141,3 +141,11 @@ html[data-admin-page="localities"] #adminHelp{display:none!important}
 .locality-active{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:13px}
 #localityStatus[data-error="yes"]{color:#a42e22}
 @media(max-width:780px){.locality-master-row{grid-template-columns:1fr 1fr}.locality-master-row input:nth-child(1),.locality-master-row input:nth-child(2){grid-column:1/-1}}
+
+/* Mandi revenue and savings graph, operator desk. */
+.ops-mandi-report{margin:12px 0;padding:12px;border:1px solid #c8e1d6;border-radius:12px;background:#f6fcf9}
+.ops-mandi-report select{margin:4px 12px;padding:6px;border-radius:8px}
+.ops-mandi-row{display:grid;grid-template-columns:minmax(135px,1fr) minmax(110px,2fr) minmax(140px,1fr);align-items:center;gap:9px;padding:6px 2px;font-size:12px}
+.ops-mandi-track{height:14px;border-radius:8px;overflow:hidden;background:#e3eae6}
+.ops-mandi-fill{height:100%;background:linear-gradient(90deg,#a4d7ba,#237648);border-radius:8px}
+@media(max-width:620px){.ops-mandi-row{grid-template-columns:1fr 1fr}.ops-mandi-track{grid-column:1/-1;grid-row:2}}
