@@ -31,6 +31,9 @@
       settings.setAttribute('aria-label','Notification sound and vibration settings');
       settings.onclick=()=>this.preferences.open();
       head.append(settings);
+      this.counts=document.createElement('span');
+      this.counts.className='notification-count-badge';
+      head.append(this.counts);
       this.preview=document.createElement('div');
       this.preview.className='notification-preview';
       this.preview.textContent=this.lockedMessage;
