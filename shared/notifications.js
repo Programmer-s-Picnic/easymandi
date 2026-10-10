@@ -262,6 +262,7 @@
       this.counts.hidden=!data.unreadCount;
       const unread=data.notifications.filter(n=>!n.read_at);
       this.preview.textContent=(unread.length?unread:data.notifications).slice(0,3).map(n=>n.message).join('\n\n')||'No notifications yet.';
+      this.onDockResize();
       this.list.replaceChildren();
       const heading=document.createElement('h2');
       heading.textContent=this.title.textContent;
