@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'auth_service.dart';
 import 'google_customer_sign_in.dart';
 import 'i18n.dart';
+import 'customer_dialog_title.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -103,7 +104,7 @@ class _AccountPageState extends State<AccountPage> {
       return await showDialog<String>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: Text(tr('Complete Google registration', 'Google पंजीकरण पूरा करें')),
+          title: customerDialogTitle(dialogContext,tr('Complete Google registration', 'Google पंजीकरण पूरा करें')),
           content: TextField(
             controller: mobile,
             keyboardType: TextInputType.phone,
@@ -149,7 +150,7 @@ class _AccountPageState extends State<AccountPage> {
     final email=TextEditingController(text:_login.text.contains('@')?_login.text:'');
     try{
       final value=await showDialog<String>(context:context,builder:(ctx)=>AlertDialog(
-        title:Text(tr('Reset password','पासवर्ड रीसेट करें')),
+        title:customerDialogTitle(ctx,tr('Reset password','पासवर्ड रीसेट करें')),
         content:TextField(controller:email,keyboardType:TextInputType.emailAddress,
           decoration:InputDecoration(labelText:tr('Registered email','पंजीकृत ईमेल'))),
         actions:[
