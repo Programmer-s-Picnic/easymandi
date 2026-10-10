@@ -149,7 +149,7 @@ function renderProducts(){
   category.value=data.categories.includes(selected)?selected:'All';
   const query=$('filter').value.trim().toLocaleLowerCase(), available=$('productAvailabilityFilter').value||'all';
   const rows=data.products.filter(p=>(p.name+' '+p.hindi+' '+p.id+' '+p.category).toLocaleLowerCase().includes(query)&&(category.value==='All'||p.category===category.value)&&(available==='all'||Boolean(p.available)===(available==='yes'))&&(mandiFilter==='all'||Boolean(p.mandi?.enabled)===(mandiFilter==='enabled')));
-  rows.sort((a,b)=>{const result=productSort==='price'?Number(a.price)-Number(b.price):String(a[productSort]??'').localeCompare(String(b[productSort]??''));return productAscending?result:-result;});
+  rows.sort((a,b)=>{const result=productSort==='price'?Number(a.price)-Number(b.price):productSort==='mandi'?Number(a.mandi?.unitPrice??a.price)-Number(b.mandi?.unitPrice??b.price):String(a[productSort]??'').localeCompare(String(b[productSort]??''));return productAscending?result:-result;});
   const pages=Math.max(1,Math.ceil(rows.length/pageSize));productPage=Math.min(productPage,pages);
   const bulk=document.createElement('div');bulk.className='row mandi-bulk-toolbar';
   const selectAll=document.createElement('button');selectAll.type='button';selectAll.className='btn secondary';
