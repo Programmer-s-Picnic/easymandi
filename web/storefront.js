@@ -353,6 +353,7 @@ el('basketButton').onclick=()=>{
   el('basket').showModal()
 };
 el('close').onclick=()=>el('basket').close();
+el('basketCloseTop').onclick=()=>el('basket').close();
 el('checkoutSignIn').onclick=()=>window.CustomerAccount?.openSignIn();
 window.addEventListener('customer-account-changed',()=>{
   if(data&&el('basket').open)renderBasket();
