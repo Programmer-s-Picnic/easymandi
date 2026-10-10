@@ -136,8 +136,14 @@
     const dialog=document.createElement('dialog');dialog.className='account-password-dialog';
     const form=document.createElement('form');form.className='form';form.noValidate=false;
     const heading=document.createElement('h2');heading.textContent=title;
+    const header=document.createElement('div');header.className='customer-dialog-header';
+    const closeTop=document.createElement('button');closeTop.type='button';
+    closeTop.className='customer-dialog-close';closeTop.textContent='×';
+    closeTop.setAttribute('aria-label','Close / बंद करें');
+    closeTop.onclick=()=>dialog.close();
+    header.append(heading,closeTop);
     const feedback=document.createElement('p');feedback.setAttribute('role','status');
-    form.append(heading,feedback);
+    form.append(header,feedback);
     const controls={};
     for(const f of fields){
       const label=document.createElement('label');
@@ -268,6 +274,7 @@
     byId('accountDialog').showModal();
   });
   byId('accountClose').addEventListener('click', () => byId('accountDialog').close());
+  byId('accountCloseTop').addEventListener('click', () => byId('accountDialog').close());
   byId('accountSwitch').addEventListener('click', () => mode(!registering));
   // Keep Google sign-in visible even when the backend is not configured.
   // Never ship a guessed OAuth client ID or suppress configuration errors.
