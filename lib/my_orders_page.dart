@@ -68,28 +68,30 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
   }
 
   Future<void> fetchDeliveryAndUpdates() async {
+    // The order ledger and live handoff endpoint are independent. A failed
+    // notification refresh must not suppress an otherwise valid delivery QR.
     try {
-      final results=await Future.wait([
-        AuthService.instance.deliveryRequest(),
-        AuthService.instance.orderNotifications(),
-      ]);
+      final deliveryData=await AuthService.instance.deliveryRequest();
       if(!mounted)return;
       final byRef=<String,Map<String,dynamic>>{};
-      for(final raw in (results[0]['orders'] as List<dynamic>? ?? [])){
+      for(final raw in (deliveryData['orders'] as List<dynamic>? ?? [])){
         if(raw is Map<String,dynamic> && raw['external_order_id']!=null){
           byRef[raw['external_order_id'].toString()]=raw;
         }
       }
       setState((){
         deliveries..clear()..addAll(byRef);
-        deliveryUpdates=results[0]['notifications'] as List<dynamic>? ?? [];
-        orderUpdates=results[1]['notifications'] as List<dynamic>? ?? [];
+        deliveryUpdates=deliveryData['notifications'] as List<dynamic>? ?? [];
         deliveryError=null;
       });
     }catch(_){
       if(mounted)setState(()=>deliveryError=tr('Delivery updates are unavailable. Pull down to retry.',
         'डिलीवरी जानकारी उपलब्ध नहीं है। दोबारा प्रयास के लिए नीचे खींचें।'));
     }
+    try {
+      final updates=await AuthService.instance.orderNotifications();
+      if(mounted)setState(()=>orderUpdates=updates['notifications'] as List<dynamic>? ?? []);
+    }catch(_){/* Keep orders and available handoff codes visible. */}
   }
   Future<void> refreshLive() async {
     if(!mounted||loading)return;
@@ -234,13 +236,18 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
 
   Widget orderCard(Map<String,dynamic> o){
     final items=o['items'] as List<dynamic>? ?? [];
-    final assigned=o['delivery_status']!=null;
+    final ref=o['public_id']?.toString();
+    final deliveryStage=(deliveries[ref]?['status']??o['delivery_status'])?.toString();
+    final orderStage=o['status']?.toString()??'';
+    final stageText=deliveryStage==null?tr('Awaiting assignment','साथी नियुक्त नहीं'):
+      orderStage.toLowerCase()==deliveryStage.toLowerCase()?statusText(deliveryStage):
+      '$orderStage · ${statusText(deliveryStage)}';
     final address=[o['house'],o['locality'],o['landmark'],o['city'],o['state'],o['pin']]
       .where((v)=>v!=null&&'$v'.trim().isNotEmpty).join(', ');
     return Card(margin:const EdgeInsets.symmetric(horizontal:12,vertical:6),
       child:ExpansionTile(
         title:Text(o['public_id']?.toString()??'—',style:const TextStyle(fontWeight:FontWeight.w800)),
-        subtitle:Text('${ist(o['created_at'])}\n${o['status']} · ${assigned?o['delivery_status']:tr('Awaiting assignment','साथी नियुक्त नहीं')}',
+        subtitle:Text('${ist(o['created_at'])}\n$stageText',
           style:const TextStyle(fontSize:12)),
         trailing:Text(money(o['total']),style:const TextStyle(color:Color(0xFF176B46),fontWeight:FontWeight.w900)),
         children:[Padding(padding:const EdgeInsets.fromLTRB(16,0,16,16),
