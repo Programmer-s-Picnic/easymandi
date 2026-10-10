@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'auth_service.dart';
 import 'i18n.dart';
+import 'customer_dialog_title.dart';
 
 class DeliveryPage extends StatefulWidget {
   const DeliveryPage({super.key});
@@ -37,7 +38,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
     final receiver=TextEditingController();
     try {
       final name=await showDialog<String>(context:context,builder:(ctx)=>AlertDialog(
-        title:Text(tr('Share delivery with another receiver','किसी और को डिलीवरी लेने के लिए भेजें')),
+        title:customerDialogTitle(ctx,tr('Share delivery with another receiver','किसी और को डिलीवरी लेने के लिए भेजें')),
         content:Column(mainAxisSize:MainAxisSize.min,children:[
           Text(tr('The person you share with can complete this delivery. Share only with someone you trust.','जिसके पास यह कोड होगा वह डिलीवरी प्राप्त कर सकेगा। केवल भरोसेमंद व्यक्ति से साझा करें।')),
           const SizedBox(height:12),
