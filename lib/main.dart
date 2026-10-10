@@ -245,7 +245,7 @@ class _StorePageState extends State<StorePage> {
           final key='${entry.key}:${raw['id']}';
           if(raw['read_at']==null && !shownNotifications.contains(key)){
             fresh.add(raw['message'] as String? ?? 'Order update');
-            freshNotices.add({...Map<String,dynamic>.from(raw as Map),'_audience':entry.key});
+            freshNotices.add({...Map<String,dynamic>.from(raw),'_audience':entry.key});
           }
           shownNotifications.add(key);
         }
