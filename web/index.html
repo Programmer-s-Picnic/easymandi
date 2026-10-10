@@ -68,8 +68,8 @@
 <section id="myOrdersPanel" class="my-orders-panel" hidden aria-labelledby="myOrdersHeading">
   <div class="delivery-panel-top">
     <div><small class="section-kicker" data-i18n="yourAccountKicker">YOUR EASY MANDI ACCOUNT</small>
-      <h2 id="myOrdersHeading">My orders · full history</h2>
-      <p class="note" data-i18n="ordersDescription">Every saved order, including those awaiting delivery assignment.</p>
+      <h2 id="myOrdersHeading">My orders, delivery & QR</h2>
+      <p class="note" data-i18n="ordersDescription">Every order with its items, payment, delivery status and active handoff QR.</p>
     </div>
     <button id="refreshMyOrders" class="btn ghost" type="button">Refresh orders</button>
   </div>
@@ -77,14 +77,7 @@
   <div id="myOrdersList" class="my-orders-list"></div>
   <button id="moreMyOrders" class="btn ghost" type="button" hidden>Load more orders</button>
 </section>
-<section id="deliveryPanel" class="delivery-panel" hidden aria-labelledby="deliveryHeading">
-  <div class="delivery-panel-top">
-    <h2 id="deliveryHeading">My deliveries · code &amp; QR</h2>
-    <button id="refreshDeliveries" class="btn ghost" type="button">Refresh deliveries</button>
-  </div>
-  <p id="deliveryStatus" class="status" role="status" aria-live="polite"></p>
-  <div id="customerDeliveries" class="delivery-list"></div>
-</section>
+
 <div class="catalog-search-tools"><input class="search" id="search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products" data-i18n-aria-label="searchAria"><button type="button" class="btn ghost" id="clearSearch" data-i18n="clearSearch">Clear search</button><button type="button" class="btn ghost" id="favoritesFilter" aria-pressed="false" data-i18n="showFavorites">♡ Favorites</button></div>
 <div class="filters" id="filters">
 </div>
@@ -239,8 +232,8 @@
 </script>
 <script src="customer-data.js?v=20261010-branding-v15" defer></script>
 <script src="vendor/qrcode.min.js?v=20261008" defer></script>
-<script src="deliveries.js?v=20261010-public-order-ref-v1" defer></script>
-<script src="order-history.js?v=20261010-permanent-ref-v2" defer></script>
+<script src="deliveries.js?v=20261010-merged-orders-v1" defer></script>
+<script src="order-history.js?v=20261010-merged-orders-v1" defer></script>
 </body>
 </html>
 
