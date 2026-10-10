@@ -1,12 +1,12 @@
 {
   "domain": "easymandi.in",
   "customer": {
-    "version": "1.3.12+23",
-    "sourceCommit": "c55c115cae236235fc744235c92c26f25de1f510"
+    "version": "1.3.13+24",
+    "sourceCommit": "fc0e87c2f74988a469efc7ef14701bd7980ab804"
   },
   "delivery": {
-    "version": "1.3.3+13",
-    "sourceCommit": "98c890c8735bc8e5c5ccd52f086ec15692fcc2f6"
+    "version": "1.3.4+14",
+    "sourceCommit": "8580dce498ebdc7da8628fd299d626e6bb9738d6"
   },
   "paths": [
     "/apk/easymani64.apk",
