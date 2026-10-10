@@ -359,6 +359,10 @@ class _StorePageState extends State<StorePage> {
           child:Text(tr('Change password','पासवर्ड बदलें'))),
         TextButton(onPressed: () async {Navigator.pop(dialogContext);await linkCustomerGoogle();},
           child:Text(tr('Link Google','Google खाता जोड़ें'))),
+        TextButton(onPressed: () async {Navigator.pop(dialogContext);await openPrivacyPolicy();},
+          child:Text(tr('Privacy policy','गोपनीयता नीति'))),
+        TextButton(onPressed: () async {Navigator.pop(dialogContext);await openAccountDeletionPage();},
+          child:Text(tr('Request account deletion','खाता हटाने का अनुरोध'))),
         TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('Close','बंद करें'))),
         FilledButton(onPressed: () async {
           Navigator.pop(dialogContext);
@@ -993,6 +997,31 @@ class _StorePageState extends State<StorePage> {
     }
   }
 
+  Future<void> openPrivacyPolicy() async {
+    await openCustomerLegalPage('https://easymandi.in/privacy.html');
+  }
+
+  Future<void> openAccountDeletionPage() async {
+    await openCustomerLegalPage('https://easymandi.in/delete-account.html');
+  }
+
+  Future<void> openCustomerLegalPage(String url) async {
+    try {
+      final opened = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(
+          'Could not open the page. Visit easymandi.in in your browser.',
+          'पेज नहीं खुल सका। ब्राउज़र में easymandi.in खोलें।'))));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(
+          'Could not open the page. Please try again.',
+          'पेज नहीं खुल सका। दोबारा प्रयास करें।'))));
+      }
+    }
+  }
+
   void showCredits() => showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
@@ -1001,6 +1030,10 @@ class _StorePageState extends State<StorePage> {
         Text(tr('Developed and maintained by Champak Roy','विकसित और अनुरक्षित: Champak Roy')),
         TextButton.icon(onPressed: openOfficialStore, icon: const Icon(Icons.storefront_outlined), label: const Text('easymandi.in')),
         TextButton.icon(onPressed: openDeveloperSite, icon: const Icon(Icons.open_in_new), label: const Text('learnwithchampak.live')),
+        TextButton.icon(onPressed: openPrivacyPolicy, icon: const Icon(Icons.privacy_tip_outlined),
+          label: Text(tr('Privacy policy','गोपनीयता नीति'))),
+        TextButton.icon(onPressed: openAccountDeletionPage, icon: const Icon(Icons.person_remove_outlined),
+          label: Text(tr('Request account deletion','खाता हटाने का अनुरोध'))),
       ]),
       actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: Text(tr('Close','बंद करें')))],
     ),
