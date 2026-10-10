@@ -70,6 +70,7 @@ function renderStore(){
   },opts||{
   }))
 }
+let mandiSelected=new Set();
 let productPage=1, productSort='name', productAscending=true, editingProduct=null, productMode='insert';
 const pageSize=10;
 const productSpecs=[['ID','id'],['English name','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price (₹)','price'],['Emoji','emoji'],['Photo HTTPS URL (optional)','imageUrl'],['Compare-at price ₹ (optional)','compareAtPrice'],['Description','description']];
@@ -149,6 +150,29 @@ function renderProducts(){
   const rows=data.products.filter(p=>(p.name+' '+p.hindi+' '+p.id+' '+p.category).toLocaleLowerCase().includes(query)&&(category.value==='All'||p.category===category.value)&&(available==='all'||Boolean(p.available)===(available==='yes')));
   rows.sort((a,b)=>{const result=productSort==='price'?Number(a.price)-Number(b.price):String(a[productSort]??'').localeCompare(String(b[productSort]??''));return productAscending?result:-result;});
   const pages=Math.max(1,Math.ceil(rows.length/pageSize));productPage=Math.min(productPage,pages);
+  const bulk=document.createElement('div');bulk.className='row mandi-bulk-toolbar';
+  const selectAll=document.createElement('button');selectAll.type='button';selectAll.className='btn secondary';
+  selectAll.textContent='Select shown';selectAll.onclick=()=>{for(const p of rows.slice((productPage-1)*pageSize,productPage*pageSize))mandiSelected.add(p.id);renderProducts();};
+  const clear=document.createElement('button');clear.type='button';clear.className='btn secondary';clear.textContent='Clear selection';
+  clear.onclick=()=>{mandiSelected.clear();renderProducts();};
+  const qty=document.createElement('input');qty.type='number';qty.min=2;qty.max=99;qty.value='5';qty.title='Minimum quantity';qty.setAttribute('aria-label','Mandi quantity threshold');
+  const percent=document.createElement('input');percent.type='number';percent.min=1;percent.max=99;percent.value='10';percent.title='Percent off retail';percent.setAttribute('aria-label','Mandi percent discount');
+  const apply=document.createElement('button');apply.type='button';apply.className='btn';
+  apply.textContent='Apply Mandi to selected';
+  apply.onclick=()=>{
+     const threshold=Number(qty.value),discount=Number(percent.value);
+     if(!mandiSelected.size||!Number.isInteger(threshold)||threshold<2||threshold>99||
+        !Number.isFinite(discount)||discount<=0||discount>=100){notify('Select products and enter a valid quantity (2–99) and discount (1–99%).','error');return;}
+     const selected=data.products.filter(p=>mandiSelected.has(p.id));
+     if(!confirm('Apply a single '+discount+'% Mandi discount from '+threshold+' units to '+selected.length+' selected products?'))return;
+     for(const p of selected){
+       const rate=Math.round(Number(p.price)*(100-discount))/100;
+       p.mandi={enabled:rate>0&&rate<Number(p.price),minimumQuantity:threshold,unitPrice:rate>0?rate:Number(p.price)};
+     }
+     persist();mandiSelected.clear();renderProducts();notify('Mandi draft updated. Save catalog to server to publish.');
+  };
+  bulk.append(selectAll,clear,document.createTextNode('Qty ≥'),qty,document.createTextNode('Discount %'),percent,apply);
+  root.append(bulk);
   const scroll=document.createElement('div');scroll.className='grid-scroll';
   const table=document.createElement('table');table.className='product-grid';
   const caption=document.createElement('caption');caption.textContent='Product records';table.append(caption);
@@ -158,10 +182,15 @@ function renderProducts(){
     const button=document.createElement('button');button.type='button';button.className='sort-button';button.textContent=label+(productSort===key?(productAscending?' ↑':' ↓'):'');
     button.onclick=()=>{productAscending=productSort===key?!productAscending:true;productSort=key;productPage=1;renderProducts();};th.append(button);header.append(th);
   }
+  const selectHead=document.createElement('th');selectHead.textContent='Select';header.prepend(selectHead);
   const actions=document.createElement('th');actions.textContent='Actions';actions.setAttribute('scope','col');header.append(actions);head.append(header);table.append(head);
   const body=document.createElement('tbody');
   for(const p of rows.slice((productPage-1)*pageSize,productPage*pageSize)){
     const row=document.createElement('tr');
+    const selectedCell=document.createElement('td');const pick=document.createElement('input');pick.type='checkbox';
+    pick.checked=mandiSelected.has(p.id);pick.setAttribute('aria-label','Select '+p.name+' for Mandi bulk pricing');
+    pick.onchange=()=>{if(pick.checked)mandiSelected.add(p.id);else mandiSelected.delete(p.id);};
+    selectedCell.append(pick);row.append(selectedCell);
     for(const value of [p.id,(p.emoji||'')+' '+p.name,p.hindi,p.category,p.unit,'₹'+Number(p.price).toFixed(2),p.mandi?.enabled?'₹'+Number(p.mandi.unitPrice).toFixed(2)+' from '+p.mandi.minimumQuantity:'Not set',p.available?'Yes':'No']){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
     const cell=document.createElement('td');const controls=document.createElement('div');controls.className='row';
     for(const [label,mode] of [['Update','update'],['Delete','delete']]){const button=document.createElement('button');button.type='button';button.className=mode==='delete'?'btn danger':'btn secondary';button.textContent=label;button.setAttribute('aria-label',label+' '+p.name);button.onclick=()=>openProduct(p,mode);controls.append(button);}
