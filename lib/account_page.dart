@@ -202,7 +202,14 @@ class _AccountPageState extends State<AccountPage> {
           title: Text(_register
               ? tr('Create account', 'खाता बनाएँ')
               : tr('Sign in', 'साइन इन')),
-          actions: const [LanguageButton()],
+          actions: [
+            const LanguageButton(),
+            IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: tr('Close', 'बंद करें'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
         ),
         body: Center(
           child: ConstrainedBox(
