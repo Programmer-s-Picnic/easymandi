@@ -1,8 +1,8 @@
 {
   "domain": "easymandi.in",
   "customer": {
-    "version": "1.3.13+24",
-    "sourceCommit": "fc0e87c2f74988a469efc7ef14701bd7980ab804",
+    "version": "1.3.14+25",
+    "sourceCommit": "8d8c16745bff4b4e973a5c1bcc7a6595517be235",
     "sourceRepo": "Programmer-s-Picnic/easymandidata",
     "a64": "easymani64.apk",
     "a32": "easymani32.apk"
