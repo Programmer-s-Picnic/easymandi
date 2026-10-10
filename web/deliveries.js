@@ -31,7 +31,10 @@
     for(const row of data.orders||[]){
       if(row&&row.external_order_id)next.set(String(row.external_order_id),row);
     }
+    const previous=JSON.stringify([...orders].map(([ref,o])=>[ref,o.status,o.handoff_code,o.code_expires_at]));
+    const current=JSON.stringify([...next].map(([ref,o])=>[ref,o.status,o.handoff_code,o.code_expires_at]));
     orders=next;lastOwner=owner;lastError='';
+    if(previous!==current)window.dispatchEvent(new Event('easy-mandi-handoff-updated'));
   }
   function reset(){orders=new Map();lastOwner=null;lastError='';}
   function renderFor(order){
@@ -117,4 +120,9 @@
   }
   window.EasyMandiHandoff={refresh,reset,renderFor, get error(){return lastError;}};
   window.addEventListener('customer-account-changed',reset);
+  setInterval(()=>{
+    if(!document.hidden&&window.CustomerAccount?.user){
+      refresh().catch(()=>{/* Keep the current order ledger available. */});
+    }
+  },60000);
 })();
