@@ -1,0 +1,35 @@
+name: Verify public privacy and deletion pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-privacy-pages.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate public privacy policy and account deletion request
+        run: |
+          set -euo pipefail
+          for item in privacy.html delete-account.html; do
+            test -s "$item"
+            grep -q 'champaksworld@gmail.com' "$item"
+            grep -q 'Easy Mandi' "$item"
+            ok=0
+            for attempt in $(seq 1 25); do
+              status=$(curl -L -sS -m 20 -o "/tmp/$item" -w "%{http_code}" "https://easymandi.in/$item" || true)
+              if [ "$status" = 200 ]; then
+                grep -qi 'Easy Mandi' "/tmp/$item"
+                grep -q 'champaksworld@gmail.com' "/tmp/$item"
+                echo "Verified live https://easymandi.in/$item"
+                ok=1; break
+              fi
+              echo "Waiting for public page $item (HTTP $status, attempt $attempt)"
+              sleep 15
+            done
+            test "$ok" -eq 1 || { echo "::error::Public privacy page unavailable: $item"; exit 1; }
+          done
