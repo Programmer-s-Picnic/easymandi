@@ -210,6 +210,9 @@ $('productForm').onsubmit=event=>{
     const value={...(editingProduct||{})};
     for(const [,key] of productSpecs)value[key]=$('product_'+key).value.trim();
     value.available=$('product_available').checked;
+    const errors=productErrors(value,editingProduct);
+    for(const [,key] of productSpecs){$('product_error_'+key).textContent=errors[key]||'';$('product_'+key).setAttribute('aria-invalid',errors[key]?'true':'false');}
+    if(Object.keys(errors).length){$('productFormMessage').textContent='Please correct the highlighted fields.';$('product_'+Object.keys(errors)[0]).focus();return;}
     const minimum=Number($('product_mandiMin').value),unitPrice=Number($('product_mandiPrice').value);
     const enabled=$('product_mandiEnabled').checked;
     if(!Number.isInteger(minimum)||minimum<2||minimum>99||
@@ -220,9 +223,6 @@ $('productForm').onsubmit=event=>{
        return;
     }
     value.mandi={enabled,minimumQuantity:minimum,unitPrice};
-    const errors=productErrors(value,editingProduct);
-    for(const [,key] of productSpecs){$('product_error_'+key).textContent=errors[key]||'';$('product_'+key).setAttribute('aria-invalid',errors[key]?'true':'false');}
-    if(Object.keys(errors).length){$('productFormMessage').textContent='Please correct the highlighted fields.';$('product_'+Object.keys(errors)[0]).focus();return;}
     value.price=Number(value.price);
     if(value.compareAtPrice==='')delete value.compareAtPrice;
     else value.compareAtPrice=Number(value.compareAtPrice);
