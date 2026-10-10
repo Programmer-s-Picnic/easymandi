@@ -22,6 +22,7 @@ import 'product.dart';
 import 'store_gallery.dart';
 import 'checkout_utils.dart';
 import 'notification_overlay.dart';
+import 'notification_settings.dart';
 import 'customer_dialog_title.dart';
 import 'customer_navigation.dart';
 import 'i18n.dart';
@@ -105,6 +106,7 @@ class _StorePageState extends State<StorePage> {
   Timer? notificationTimer;
   bool checkingNotifications=false;
   int? notificationUserId;
+  bool notificationsPrimed=false;
   final Set<String> shownNotifications={};
   bool loading = true;
 
@@ -221,11 +223,11 @@ class _StorePageState extends State<StorePage> {
   }
   Future<void> checkNotifications() async {
     final account=AuthService.instance.user;
-    if(account==null){notificationFeed.value=[];shownNotifications.clear();notificationUserId=null;return;}
+    if(account==null){notificationFeed.value=[];shownNotifications.clear();notificationUserId=null;notificationsPrimed=false;return;}
     if(checkingNotifications || WidgetsBinding.instance.lifecycleState!=AppLifecycleState.resumed)return;
     checkingNotifications=true;
     await syncCustomerData();
-    if(notificationUserId!=account.id){shownNotifications.clear();notificationUserId=account.id;}
+    if(notificationUserId!=account.id){shownNotifications.clear();notificationUserId=account.id;notificationsPrimed=false;}
     try {
       final feeds=await Future.wait([
         AuthService.instance.orderNotifications().catchError((Object _) => <String,dynamic>{}),
@@ -235,17 +237,23 @@ class _StorePageState extends State<StorePage> {
       final orders=feeds[0], deliveries=feeds[1];
       if(!mounted || AuthService.instance.user?.id!=account.id)return;
       final fresh=<String>[];
+      final freshNotices=<Map<String,dynamic>>[];
       final feed=<Map<String,dynamic>>[];
       for(final entry in {'order':orders,'delivery':deliveries}.entries){
         for(final raw in entry.value['notifications'] as List<dynamic>? ?? []){
           feed.add({...Map<String,dynamic>.from(raw as Map),'_audience':entry.key});
           final key='${entry.key}:${raw['id']}';
-          if(raw['read_at']==null && !shownNotifications.contains(key))fresh.add(raw['message'] as String? ?? 'Order update');
+          if(raw['read_at']==null && !shownNotifications.contains(key)){
+            fresh.add(raw['message'] as String? ?? 'Order update');
+            freshNotices.add({...Map<String,dynamic>.from(raw as Map),'_audience':entry.key});
+          }
           shownNotifications.add(key);
         }
       }
       feed.sort((a,b)=>(b['created_at']?.toString() ?? '').compareTo(a['created_at']?.toString() ?? ''));
       notificationFeed.value=feed;
+      if(notificationsPrimed&&freshNotices.isNotEmpty)unawaited(MandiNoticeSettings.instance.notify('customer',freshNotices));
+      notificationsPrimed=true;
       if(fresh.isNotEmpty)ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         duration:const Duration(seconds:20),content:Text(tr('${fresh.length} new notification(s): ${fresh.first}','${fresh.length} नई सूचना: ${fresh.first}'))));
     }catch(_){/* Retry automatically at the next check without a password prompt. */}
@@ -355,6 +363,10 @@ class _StorePageState extends State<StorePage> {
         },child:Text(tr('My orders','मेरे ऑर्डर'))),
         TextButton(onPressed: () async {Navigator.pop(dialogContext);await showNotificationModal();},
           child:Text(tr('Notifications','सूचनाएँ'))),
+        TextButton(onPressed: () async {
+          Navigator.pop(dialogContext);
+          if(mounted)await Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>MandiNotificationSettingsPage(role:'customer',hindi:EasyMandiLanguage.hindi.value)));
+        },child:Text(tr('Notification settings','सूचना सेटिंग्स'))),
         TextButton(onPressed: () async {Navigator.pop(dialogContext);await changeCustomerPassword();},
           child:Text(tr('Change password','पासवर्ड बदलें'))),
         TextButton(onPressed: () async {Navigator.pop(dialogContext);await linkCustomerGoogle();},
