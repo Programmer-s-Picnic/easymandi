@@ -462,7 +462,8 @@ class _StorePageState extends State<StorePage> {
   }
 
   int get count => cart.values.fold(0, (a, b) => a + b);
-  num get subtotal => products.fold<num>(0, (sum, p) => sum + p.price * (cart[p.id] ?? 0));
+  num get subtotal => products.fold<num>(0, (sum,p)=>sum + p.lineTotal(cart[p.id]??0));
+  num get mandiSavings => products.fold<num>(0,(sum,p)=>sum+p.mandiSavings(cart[p.id]??0));
   num get fee => subtotal == 0 || subtotal >= (store['freeDeliveryAbove'] as num? ?? 499) ? 0 : (store['deliveryFee'] as num? ?? 30);
   String money(num amount) => formatMoney(amount);
 
@@ -910,10 +911,11 @@ class _StorePageState extends State<StorePage> {
             if (chosen.isNotEmpty) ...[
               ConstrainedBox(constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .42), child: ListView.builder(shrinkWrap: true, itemCount: chosen.length, itemBuilder: (_, i) {
                 final p = chosen[i];
-                return ListTile(contentPadding: EdgeInsets.zero, leading: Text(p.emoji, style: const TextStyle(fontSize: 30)), title: Text(productName(p.name,p.hindi)), subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(tr('${money(p.price)} / ${p.unit} · Tap for details','${money(p.price)} / ${p.unit} · विवरण के लिए टैप करें')), TextButton.icon(onPressed: () => update(p, -(cart[p.id] ?? 0)), icon: const Icon(Icons.delete_outline, size: 18), label: Text(tr('Remove','हटाएँ')), style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 40), alignment: Alignment.centerLeft))]), trailing: Row(mainAxisSize: MainAxisSize.min, children: [IconButton(tooltip: 'Remove one ${p.name}', onPressed: () => update(p, -1), icon: const Icon(Icons.remove_circle_outline)), Text('${cart[p.id]}'), IconButton(tooltip: 'Add one ${p.name}', onPressed: () => update(p, 1), icon: const Icon(Icons.add_circle_outline))]), onTap: () => showProductDetail(p, refreshCart: () => updateSheet(() {})));
+                return ListTile(contentPadding: EdgeInsets.zero, leading: Text(p.emoji, style: const TextStyle(fontSize: 30)), title: Text(productName(p.name,p.hindi)), subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(tr('${money(p.unitPrice(cart[p.id]??0))} / ${p.unit} · ${p.mandiActive(cart[p.id]??0)?'MANDI':'Mandi from ${p.mandiQuantity}'}','${money(p.unitPrice(cart[p.id]??0))} / ${p.unit} · ${p.mandiActive(cart[p.id]??0)?'मंडी भाव':'${p.mandiQuantity} से मंडी भाव'}')), TextButton.icon(onPressed: () => update(p, -(cart[p.id] ?? 0)), icon: const Icon(Icons.delete_outline, size: 18), label: Text(tr('Remove','हटाएँ')), style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 40), alignment: Alignment.centerLeft))]), trailing: Row(mainAxisSize: MainAxisSize.min, children: [IconButton(tooltip: 'Remove one ${p.name}', onPressed: () => update(p, -1), icon: const Icon(Icons.remove_circle_outline)), Text('${cart[p.id]}'), IconButton(tooltip: 'Add one ${p.name}', onPressed: () => update(p, 1), icon: const Icon(Icons.add_circle_outline))]), onTap: () => showProductDetail(p, refreshCart: () => updateSheet(() {})));
               })),
               const Divider(),
               _totalRow(tr('Subtotal','उप-योग'), money(subtotal)),
+              if(mandiSavings>0)_totalRow(tr('Mandi savings','मंडी बचत'),money(mandiSavings)), 
               _totalRow(tr('Delivery','डिलीवरी'), fee == 0 ? tr('Free','मुफ़्त') : money(fee)),
               const SizedBox(height: 6),
               _totalRow(tr('Estimated total','अनुमानित कुल'), money(subtotal + fee), bold: true),
@@ -964,7 +966,11 @@ class _StorePageState extends State<StorePage> {
                 Text(productName(product.name, product.hindi), style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
                 if (product.hindi.isNotEmpty) Text(EasyMandiLanguage.hindi.value ? product.name : product.hindi, style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 10),
-                Text('${money(product.price)} / ${product.unit}', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: forest, fontWeight: FontWeight.bold)),
+                Text('${money(product.unitPrice(quantity))} / ${product.unit}', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: forest, fontWeight: FontWeight.bold)),
+                if(product.mandiEnabled)Text(product.mandiActive(quantity)
+                  ?tr('🏷 MANDI RATE ACTIVE · Save ${money(product.mandiSavings(quantity))}','🏷 मंडी भाव लागू · बचत ${money(product.mandiSavings(quantity))}')
+                  :tr('🏷 Add ${product.mandiQuantity-quantity} more for Mandi rate ${money(product.mandiPrice)}','🏷 मंडी भाव ${money(product.mandiPrice)} के लिए ${product.mandiQuantity-quantity} और जोड़ें'),
+                   style:const TextStyle(color:Color(0xFF16814D),fontWeight:FontWeight.bold)),
                 if (product.description.isNotEmpty) ...[const SizedBox(height: 18), Text(productDescription(product.description))],
                 const SizedBox(height: 24),
                 Row(children: [
@@ -975,7 +981,7 @@ class _StorePageState extends State<StorePage> {
                   IconButton.filledTonal(tooltip: 'Add one ${product.name}', onPressed: !product.available || quantity >= 99 ? null : () => adjust(1), icon: const Icon(Icons.add)),
                 ]),
                 const SizedBox(height: 12),
-                Text(tr('Item total: ${money(product.price * quantity)}','सामान का कुल: ${money(product.price * quantity)}'), style: Theme.of(context).textTheme.titleMedium),
+                Text(tr('Item total: ${money(product.lineTotal(quantity))}','सामान का कुल: ${money(product.lineTotal(quantity))}'), style: Theme.of(context).textTheme.titleMedium),
               ]),
             )),
           ))),
