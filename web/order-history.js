@@ -65,7 +65,11 @@
       const items=make('ul',undefined,'order-history-items');
       for(const line of o.items||[]){
         const li=make('li');
-        li.append(make('span',line.product_name+' · '+line.unit+' × '+line.quantity));
+        const name=make('span',line.product_name+' · '+line.unit+' × '+line.quantity);
+        if(Number(line.mandi_applied)===1||line.mandi_applied===true){
+          name.append(make('small',t(' · 🏷 MANDI · Saved ',' · 🏷 मंडी बचत ')+cash(line.discount_amount),'mandi-hint'));
+        }
+        li.append(name);
         li.append(make('strong',cash(line.line_total)));
         items.append(li);
       }
@@ -76,6 +80,8 @@
         [t('Delivery fee','डिलीवरी शुल्क'),o.delivery_fee],
         [t('Grand total','कुल राशि'),o.total]
       ]){totals.append(make('dt',name),make('dd',cash(val)));}
+      const totalSavings=(o.items||[]).reduce((sum,line)=>sum+Number(line.discount_amount||0),0);
+      if(totalSavings>0)totals.append(make('dt',t('Mandi savings','मंडी बचत')),make('dd',cash(totalSavings)));
       detail.append(totals);
       const info=make('div',undefined,'order-history-info');
       info.append(make('h4',t('Delivery address','डिलीवरी का पता')));
