@@ -73,7 +73,8 @@ class _DeliveryPageState extends State<DeliveryPage> {
 
   String qrFor(Map<String, dynamic> order, String code) {
     final deliveryId = order['id'];
-    final expected = 'easymandi://handoff?delivery=$deliveryId&code=$code';
+    final ref = Uri.encodeQueryComponent(order['external_order_id'].toString());
+    final expected = 'easymandi://handoff?order=$ref&delivery=$deliveryId&code=$code';
     final qr = order['handoff_qr'];
     return qr == expected ? qr as String : expected;
   }
