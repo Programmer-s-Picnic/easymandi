@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#176b46">
-<meta name="easy-mandi-web-release" content="20261009-login-required-v13">
+<meta name="easy-mandi-web-release" content="20261010-close-nav-v14">
 <meta name="referrer" content="no-referrer">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta name="description" content="Shop fresh vegetables in Varanasi with Easy Mandi. Browse daily essentials, choose delivery and pay by cash or UPI. Available in English and Hindi.">
@@ -19,8 +19,8 @@
 <meta name="twitter:description" content="Fresh vegetables for Varanasi. Order in English or Hindi.">
 <meta name="twitter:image" content="https://easymandi.in/web/og-image.svg">
 <title>Easy Mandi | Fresh vegetables</title>
-<link rel="stylesheet" href="storefront.css?v=20261009-login-required-v13">
-<script src="i18n.js?v=20261009-login-required-v13" defer></script>
+<link rel="stylesheet" href="storefront.css?v=20261010-close-nav-v14">
+<script src="i18n.js?v=20261010-close-nav-v14" defer></script>
 <link rel="stylesheet" href="../shared/notifications.css?v=20261008-animate">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
 </script>
@@ -96,8 +96,11 @@
 <div class="grid" id="products">
 </div>
 </main>
-<dialog id="basket">
-<h2 data-i18n="yourBasket">Your basket</h2>
+<dialog id="basket" aria-labelledby="basketHeading">
+<div class="customer-dialog-header">
+  <h2 id="basketHeading" data-i18n="yourBasket">Your basket</h2>
+  <button type="button" class="customer-dialog-close" id="basketCloseTop" aria-label="Close basket / टोकरी बंद करें" title="Close / बंद करें">×</button>
+</div>
 <div id="items">
 </div>
 <div id="totals">
@@ -151,7 +154,7 @@
 <div class="detail-top">
 <h2 id="detailTitle">
 </h2>
-<button type="button" class="btn ghost" id="detailClose" data-i18n="close" aria-label="Close product details">Close</button>
+<button type="button" class="btn ghost" id="detailClose" aria-label="Close product details / उत्पाद विवरण बंद करें"><span aria-hidden="true">×</span> <span data-i18n="close">Close</span></button>
 </div>
 <div id="detailArt" class="detail-art" aria-hidden="true">
 </div>
@@ -174,8 +177,11 @@
 </p>
 </div>
 </dialog>
-<dialog id="accountDialog">
-<h2 id="accountTitle" data-i18n="accountTitle">Sign in</h2>
+<dialog id="accountDialog" aria-labelledby="accountTitle">
+<div class="customer-dialog-header">
+  <h2 id="accountTitle" data-i18n="accountTitle">Sign in</h2>
+  <button type="button" class="customer-dialog-close" id="accountCloseTop" aria-label="Close account / खाता बंद करें" title="Close / बंद करें">×</button>
+</div>
 <p class="status" id="accountError" role="alert">
 </p>
 <form class="form" id="accountForm">
@@ -221,12 +227,12 @@
  <p>Fresh essentials, straightforward ordering. <a href="https://learnwithchampak.live" rel="noopener noreferrer">Developed &amp; maintained by Champak Roy</a></p>
  <small>easymandi.in · Customer assistance is available through the order confirmation details.</small>
 </footer>
-<script src="localities.js?v=20261009-login-required-v13" defer></script>
-<script src="storefront.js?v=20261009-login-required-v13" defer>
+<script src="localities.js?v=20261010-close-nav-v14" defer></script>
+<script src="storefront.js?v=20261010-close-nav-v14" defer>
 </script>
-<script src="auth.js?v=20261009-login-required-v13" defer>
+<script src="auth.js?v=20261010-close-nav-v14" defer>
 </script>
-<script src="customer-data.js?v=20261009-login-required-v13" defer></script>
+<script src="customer-data.js?v=20261010-close-nav-v14" defer></script>
 <script src="vendor/qrcode.min.js?v=20261008" defer></script>
 <script src="deliveries.js?v=20261009-stable-recovery-v11" defer></script>
 <script src="order-history.js?v=20261009-stable-recovery-v11" defer></script>
