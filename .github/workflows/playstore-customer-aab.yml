@@ -4,6 +4,9 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/playstore-customer-aab.yml'
+      - 'lib/**'
+      - 'pubspec.yaml'
+      - 'tool/make_icon.py'
   workflow_dispatch:
 permissions:
   contents: read
