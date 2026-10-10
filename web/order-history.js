@@ -148,6 +148,9 @@
     if(accountId!==null)fetchPage(true);
   });
   window.addEventListener('customer-order-placed',()=>fetchPage(true));
+  window.addEventListener('easy-mandi-handoff-updated',()=>{
+    if(window.CustomerAccount?.user&&rows.length)render();
+  });
   window.addEventListener('languagechange',render);
 
   render();
