@@ -26,7 +26,7 @@ class Element {
 }
 function harness(html){
  const nodes={};for(const [,id]of html.matchAll(/\bid="([^"]+)"/g))nodes[id]=new Element();
- const all=[];const document={hidden:false,documentElement:new Element('html'),head:new Element(),body:new Element(),getElementById:id=>nodes[id]||all.find(n=>n.id===id),createElement:tag=>{const n=new Element(tag);all.push(n);return n},createTextNode:text=>text,querySelectorAll:()=>[],addEventListener(){}};
+ const all=[];const document={hidden:false,documentElement:new Element('html'),head:new Element(),body:new Element(),getElementById:id=>nodes[id]||all.findLast(n=>n.id===id),createElement:tag=>{const n=new Element(tag);all.push(n);return n},createTextNode:text=>text,querySelectorAll:()=>[],addEventListener(){}};
  document.documentElement.dataset.adminPage=/data-admin-page="([^"]+)"/.exec(html)?.[1]||'';
  const memory=new Map(),storage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,String(v)),removeItem:k=>memory.delete(k)};
  const events={},timers=[];const window={innerWidth:1024,innerHeight:768,removeEventListener:(n,f)=>{events[n]=(events[n]||[]).filter(fn=>fn!==f)},addEventListener:(n,f)=>(events[n]??=[]).push(f),dispatchEvent:e=>(events[e.type]||[]).forEach(f=>f())};
