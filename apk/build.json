@@ -1,0 +1,16 @@
+{
+  "domain": "easymandi.in",
+  "customer": {
+    "version": "1.3.11+22",
+    "sourceCommit": "bd6c8e900268aeef12b4f75c27a0830ca2637380"
+  },
+  "delivery": {
+    "version": "1.3.2+12",
+    "sourceCommit": "e4abf8a28b0bbbce085a7a4b25e134556013ce37"
+  },
+  "paths": [
+    "/apk/easymani64.apk",
+    "/apk/easymani32.apk",
+    "/apk/easymanideliverypartner.apk"
+  ]
+}
