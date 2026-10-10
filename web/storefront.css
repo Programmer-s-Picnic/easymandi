@@ -543,3 +543,12 @@ header>div{max-width:1200px;padding:12px 22px;gap:12px}
 .checkout-login-gate{margin:14px 0;padding:18px;border:1px solid #a1cdb4;background:#edf8f0;border-radius:14px;color:#16482e}
 .checkout-login-gate p{margin:0 0 12px;font-weight:650;line-height:1.5}
 .checkout-login-gate .btn{width:100%;max-width:350px}
+
+/* Every customer dialog has an accessible, high-contrast close button at its top. */
+.customer-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}
+.customer-dialog-header h2{margin:0;min-width:0;overflow-wrap:anywhere}
+.customer-dialog-close{display:grid;place-items:center;flex:none;width:44px;height:44px;border:1px solid #cadfd2;border-radius:12px;background:#eef7f1;color:#176b46;font-size:27px;line-height:1;cursor:pointer}
+.customer-dialog-close:hover{background:#dcefe2}
+.customer-dialog-close:focus-visible{outline:3px solid #176b46;outline-offset:2px}
+#detailClose{display:inline-flex;align-items:center;gap:6px;min-height:44px}
+#detailClose span[aria-hidden="true"]{font-size:23px;line-height:1}
