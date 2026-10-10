@@ -1,5 +1,9 @@
 name: Build Play Store customer AAB (release upload key)
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/playstore-customer-aab.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -27,6 +31,10 @@ jobs:
           chmod 600 "$RUNNER_TEMP/easy-mandi-play-upload.jks"
           keytool -list -keystore "$RUNNER_TEMP/easy-mandi-play-upload.jks" \
             -storepass "$PLAY_UPLOAD_STORE_PASSWORD" -alias "$PLAY_UPLOAD_KEY_ALIAS" >/dev/null
+          # Refuse the testing certificate even if someone accidentally loads it as a secret.
+          cert_sha1="$(keytool -list -v -keystore "$RUNNER_TEMP/easy-mandi-play-upload.jks" -storepass "$PLAY_UPLOAD_STORE_PASSWORD" -alias "$PLAY_UPLOAD_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA1: //p' | head -1 | tr '[:upper:]' '[:lower:]')"
+          test "$cert_sha1" != '98:a4:cc:9b:7c:44:0b:54:8b:41:e5:88:ac:4f:88:04:1f:70:3b:7f' || { echo "::error::Testing signing key is not a valid Play upload key"; exit 1; }
+          test "$PLAY_UPLOAD_KEY_ALIAS" != "androiddebugkey" || { echo "::error::Debug key alias not permitted"; exit 1; }
       - name: Prepare Android package and approved brand icon
         run: |
           flutter create --platforms=android --org in.easymandi .
