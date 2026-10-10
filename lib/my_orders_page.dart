@@ -258,11 +258,15 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
             Text(tr('Items','सामान'),style:const TextStyle(fontWeight:FontWeight.w800)),
             for(final raw in items) Builder(builder:(context){
               final line=raw as Map<String,dynamic>;
-              return detail('${line['product_name']} · ${line['unit']} × ${line['quantity']}',
+              return detail('${line['product_name']} · ${line['unit']} × ${line['quantity']}'
+                 ${(line['mandi_applied']==true||line['mandi_applied']==1)?tr(' · 🏷 MANDI',' · 🏷 मंडी'):''}',
                 money(line['line_total']));
             }),
             const Divider(),
             detail(tr('Subtotal','सामान कुल'),money(o['subtotal'])),
+            if(items.any((line)=>line is Map && ((line['mandi_applied']==true)||(line['mandi_applied']==1))))
+              detail(tr('Mandi savings','मंडी बचत'),money(items.fold<num>(0,(total,line)=>
+                total+(num.tryParse('${(line as Map)['discount_amount']??0}')??0)))),
             detail(tr('Delivery fee','डिलीवरी शुल्क'),money(o['delivery_fee'])),
             detail(tr('Total','कुल'),money(o['total'])),
             const SizedBox(height:9),
