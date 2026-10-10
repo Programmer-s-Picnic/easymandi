@@ -1,0 +1,16 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const ctx={window:{}};vm.createContext(ctx);
+vm.runInContext(fs.readFileSync('web/mandi-pricing.js','utf8'),ctx);
+const p={id:'potato',price:35,mandi:{enabled:true,minimumQuantity:5,unitPrice:29}};
+const quote=qty=>ctx.window.EasyMandiPricing.quote(p,qty);
+assert.equal(quote(4).unitPrice,35);
+assert.equal(quote(4).active,false);
+assert.equal(quote(5).unitPrice,29);
+assert.equal(quote(5).lineTotal,145);
+assert.equal(quote(5).savings,30);
+assert.equal(quote(6).unitPrice,29);
+assert.equal(quote(4).active,false);
+assert.equal(quote(4).unitPrice,35);
+assert.equal(ctx.window.EasyMandiPricing.subtotal([p],{potato:5}),145);
+p.mandi.enabled=false;assert.equal(quote(99).unitPrice,35);
+console.log('Mandi website one-tier threshold and quantity reversal passed');
