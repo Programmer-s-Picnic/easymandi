@@ -258,8 +258,8 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
             Text(tr('Items','सामान'),style:const TextStyle(fontWeight:FontWeight.w800)),
             for(final raw in items) Builder(builder:(context){
               final line=raw as Map<String,dynamic>;
-              return detail('${line['product_name']} · ${line['unit']} × ${line['quantity']}'
-                 ${(line['mandi_applied']==true||line['mandi_applied']==1)?tr(' · 🏷 MANDI',' · 🏷 मंडी'):''}',
+              return detail("${line['product_name']} · ${line['unit']} × ${line['quantity']}" +
+                  ((line['mandi_applied']==true||line['mandi_applied']==1)?tr(' · MANDI',' · मंडी'):''),
                 money(line['line_total']));
             }),
             const Divider(),
