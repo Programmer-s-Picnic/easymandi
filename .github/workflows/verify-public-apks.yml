@@ -1,0 +1,42 @@
+name: Verify live public APK downloads
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-public-apks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check every requested download URL against the exact published APK
+        run: |
+          set -euo pipefail
+          test "$(cat CNAME)" = easymandi.in
+          mkdir -p /tmp/apk-live-verify
+          for name in easymani64.apk easymani32.apk easymanideliverypartner.apk; do
+            expected="$(sha256sum "apk/$name" | cut -d' ' -f1)"
+            echo "Checking https://easymandi.in/apk/$name"
+            ok=0
+            for attempt in $(seq 1 40); do
+              status="$(curl --location --silent --show-error --output /dev/null \
+                --write-out '%{http_code}' --head --connect-timeout 8 --max-time 20 \
+                "https://easymandi.in/apk/$name" || true)"
+              if [ "$status" = 200 ]; then
+                curl --fail --location --silent --show-error --retry 2 --max-time 180 \
+                  "https://easymandi.in/apk/$name" -o "/tmp/apk-live-verify/$name"
+                actual="$(sha256sum "/tmp/apk-live-verify/$name" | cut -d' ' -f1)"
+                test "$actual" = "$expected" || { echo "::error::Live file checksum mismatch: $name"; exit 1; }
+                unzip -tq "/tmp/apk-live-verify/$name" >/dev/null
+                echo "Verified $name ($(stat -c %s "/tmp/apk-live-verify/$name") bytes)"
+                ok=1
+                break
+              fi
+              echo "Waiting for GitHub Pages deployment (attempt $attempt, HTTP $status)"
+              sleep 15
+            done
+            test "$ok" -eq 1 || { echo "::error::URL unavailable: https://easymandi.in/apk/$name"; exit 1; }
+          done
