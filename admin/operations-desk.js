@@ -33,6 +33,18 @@ function counts(){
   $('opsKpis').append(btn);
  }
 }
+function mandiChart(){
+ let node=$('opsMandiReport');
+ if(!node){node=make('div',undefined,'ops-mandi-report');node.id='opsMandiReport';$('opsKpis').after(node);}
+ node.replaceChildren(make('strong','Mandi sales, daily'));
+ const pick=make('select');
+ for(const d of [7,14,30,90]){const item=make('option',d+' days');item.value=d;item.selected=d===state.mandiDays;pick.append(item);}
+ pick.onchange=()=>{state.mandiDays=Number(pick.value);load(true);};node.append(pick);
+ for(const day of state.mandiDaily){
+  const bar=make('div',day.day+' · '+rupees(day.revenue)+' · saved '+rupees(day.savings),'ops-mandi-row');
+  node.append(bar);
+ }
+}
 function list(){
  const list=$('opsList');list.replaceChildren();
  $('opsCount').textContent=state.total+' matching orders';
@@ -170,7 +182,7 @@ async function load(keepSelection=false){
   Object.assign(state,{orders:data.orders,counts:data.counts,mandiSummary:data.mandiSummary||{},mandiDaily:data.mandiDaily||[],total:data.total,hasMore:data.hasMore,partners:delivery.partners||[],loaded:true});
   state.selected=current&&state.orders.some(o=>o.public_id===current)?current:(state.orders[0]?.public_id||null);
   $('opsLastSync').textContent='Updated '+new Intl.DateTimeFormat('en-IN',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Kolkata'}).format(new Date())+' IST';
-  counts();list();detail();
+  counts();mandiChart();list();detail();
  }catch(e){if(serial===state.seq){$('opsLastSync').textContent='Refresh failed';show(e.message,true);}}
  finally{$('opsRefresh').disabled=false;}
 }
