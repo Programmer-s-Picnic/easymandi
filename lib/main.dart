@@ -101,6 +101,7 @@ class _StorePageState extends State<StorePage> {
   Future<void> _cartWrite = Future.value();
   String? _pendingOrderKey;
   String category = 'All', query = '', message = '';
+  int marketResetSerial = 0;
   Timer? notificationTimer;
   bool checkingNotifications=false;
   int? notificationUserId;
@@ -275,6 +276,7 @@ class _StorePageState extends State<StorePage> {
       category = 'All';
       query = '';
       favoritesOnly = false;
+      marketResetSerial++;
     });
   }
 
@@ -284,6 +286,7 @@ class _StorePageState extends State<StorePage> {
     await Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => const MyOrdersPage(),
     ));
+    if (mounted) showMarket();
   }
 
   Future<void> changeCustomerPassword() async {
@@ -1152,6 +1155,7 @@ class _StorePageState extends State<StorePage> {
             ),
           ])),
           Expanded(child:StoreGallery(
+            key:ValueKey(marketResetSerial),
             products:filtered,categories:categories,
             selectedCategory:category,quantities:cart,
             favorites:favoriteIds,
