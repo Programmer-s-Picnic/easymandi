@@ -76,7 +76,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
   await g.nodes.productCancel.fire('click');assert.equal(JSON.parse(g.storage.getItem('easy-mandi-admin-draft-v1')).products.length,before.products.length+1);
   vm.runInContext("openProduct(data.products.find(p=>p.id==='test_product'),'delete')",g.ctx);
   await g.nodes.productForm.fire('submit');assert.equal(JSON.parse(g.storage.getItem('easy-mandi-admin-draft-v1')).products.length,before.products.length);
-  g.nodes.filter.value='nothing_matches';await g.nodes.filter.fire('input');assert.ok(g.nodes.products.children[1].textContent.includes('No matching'));
+  g.nodes.filter.value='nothing_matches';await g.nodes.filter.fire('input');assert.ok(g.nodes.products.children.some(child=>child.textContent.includes('No matching')));
   // Password pop-up retains validation errors and uses the shared session.
   const a=harness(fs.readFileSync(path.join(base,'admin/index.html'),'utf8'));let attempts=0;
   a.ctx.AdminSession={token:null,login:async()=>{if(++attempts===1)throw Error('Incorrect password');a.ctx.AdminSession.token='valid';}};
