@@ -201,7 +201,7 @@ for(const anchor of document.querySelectorAll('a[href="#opsHowTo"]')){
 
 let searchTimer;
 $('opsQueue').onchange=()=>{state.filter=$('opsQueue').value;state.page=1;state.selected=null;load();};
-$('opsSearch').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{state.search=$('opsSearch').value.trim();state.page=1;load();},300);};
+$('opsSearch').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{state.search=$('opsSearch').value.trim();if(state.search){state.filter='all';$('opsQueue').value='all';}state.page=1;state.selected=null;load();},300);};
 $('opsPrev').onclick=()=>{if(state.page>1){state.page--;load();}};
 $('opsNext').onclick=()=>{if(state.hasMore){state.page++;load();}};
 $('opsRefresh').onclick=()=>load(true);
