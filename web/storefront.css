@@ -552,3 +552,12 @@ header>div{max-width:1200px;padding:12px 22px;gap:12px}
 .customer-dialog-close:focus-visible{outline:3px solid #176b46;outline-offset:2px}
 #detailClose{display:inline-flex;align-items:center;gap:6px;min-height:44px}
 #detailClose span[aria-hidden="true"]{font-size:23px;line-height:1}
+
+/* Unified customer order, delivery status and handoff QR. */
+.order-handoff-section{margin:14px 0 0;padding-top:12px;border-top:1px solid #d9e6dd;min-width:0}
+.order-handoff-section h4{font-weight:800;color:#176b46}
+.order-handoff-section>.delivery-state{display:inline-block;margin:4px 0 8px}
+.order-handoff-section .delivery-code-box{margin-top:8px;text-align:center}
+.order-handoff-section .delivery-code-number{display:block;font-size:28px;letter-spacing:5px;overflow-wrap:anywhere}
+.order-handoff-section .delivery-share-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:12px}
+.order-handoff-section .delivery-share-actions button{max-width:100%;white-space:normal}
