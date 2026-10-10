@@ -4,7 +4,7 @@
   const api = 'https://cserver.learnwithchampak.live/easymandi/api/';
   const byId = id => document.getElementById(id);
   const session=window.AdminSession;
-  let orders = [], statusCounts=null, totalOrders=0;
+  let orders = [], statusCounts=null, totalOrders=0, loadSequence=0, searchTimer;
   const notificationRoot=document.createElement('section');
   byId('ordersList').after(notificationRoot);
   const inbox=new NotificationInbox(notificationRoot,
@@ -57,13 +57,17 @@
     byId('ordersFilter').value = 'All';
     deliveryFilter.value = 'All';
     search.value='';
-    render();
+    refresh();
   };
   byId('ordersControls').append(resetFilters);
-  const search=document.createElement('input');search.type='search';search.id='ordersSearch';search.placeholder='Search order, customer, phone or locality';search.setAttribute('aria-label','Search customer orders');
-  search.addEventListener('input',applyFilters);byId('ordersControls').append(search);
+  const search=document.createElement('input');search.type='search';search.id='ordersSearch';search.placeholder='Daily # (10-10-26-001), ID, customer, phone or locality';search.setAttribute('aria-label','Search customer orders');
+  search.addEventListener('input',()=>{
+    applyFilters();
+    clearTimeout(searchTimer);
+    searchTimer=setTimeout(refresh,350);
+  });byId('ordersControls').append(search);
   const dashboard=document.createElement('div');dashboard.className='order-count-grid';dashboard.id='orderDashboard';byId('ordersControls').append(dashboard);
-  function selectStatus(status){byId('ordersFilter').value=status;deliveryFilter.value='All';search.value='';applyFilters();byId('ordersPanel').scrollIntoView({behavior:'smooth'});}
+  function selectStatus(status){byId('ordersFilter').value=status;deliveryFilter.value='All';search.value='';refresh();byId('ordersPanel').scrollIntoView({behavior:'smooth'});}
   function renderCounts(){
     const counts=statusCounts||Object.fromEntries(statuses.map(status=>[status,orders.filter(o=>o.status===status).length]));
     dashboard.replaceChildren();
@@ -154,16 +158,16 @@
     for (const order of orders) {
       const card = document.createElement('details');
       card.className = 'order-card';
-      card.dataset.search=[order.public_id,order.customer_name,order.mobile,order.locality,order.status].join(' ').toLowerCase();
+      card.dataset.search=[order.daily_index,order.public_id,order.customer_name,order.mobile,order.locality,order.status].join(' ').toLowerCase();
       card.dataset.orderId=order.public_id;
       card.dataset.orderStatus=normalized(order.status);
       card.dataset.deliveryStatus=normalized(deliveryStatus(order));
       const title = document.createElement('summary');
       title.className='order-card-heading';
-      for(const [value,style] of [[order.customer_name,'order-customer'],[money(order.total),'order-amount'],['#'+order.public_id,'order-reference'],[order.status,'order-status '+normalized(order.status)]]){const part=document.createElement('span');part.className=style;part.textContent=value;title.append(part);}
+      for(const [value,style] of [[order.customer_name,'order-customer'],[money(order.total),'order-amount'],[order.daily_index||'#'+order.public_id,'order-reference'],[order.status,'order-status '+normalized(order.status)]]){const part=document.createElement('span');part.className=style;part.textContent=value;title.append(part);}
       const date = document.createElement('p');
       date.className = 'hint';
-      date.textContent = order.created_at + ' · ' + order.source;
+      date.textContent = order.created_at + ' · ' + order.source + ' · Permanent ID: ' + order.public_id;
       const progress = document.createElement('p');
       progress.textContent = 'Order status: ' + order.status + ' · Delivery status: ' + (deliveryStatuses[deliveryStatus(order)] || order.delivery_status);
       const customer = document.createElement('p');
@@ -250,6 +254,8 @@
     applyFilters();
   }
   function lock() {
+    loadSequence++;
+    clearTimeout(searchTimer);
     inbox.stop();
     if(session.token)session.clear();
     orders = [];statusCounts=null;totalOrders=0;dashboard.replaceChildren();
@@ -261,11 +267,12 @@
   }
   async function refresh() {
     if (!session.token) return;
+    const currentLoad=++loadSequence;
     message('Loading orders…');
     try {
       const token=session.token;
-      const result = await request('admin-orders');
-      if(!token||session.token!==token)return;
+      const result = await request('admin-orders',{search:search.value.trim()});
+      if(!token||session.token!==token||currentLoad!==loadSequence)return;
       orders = result.orders;
       statusCounts=result.statusCounts||null;totalOrders=result.totalOrders||orders.length;
       inbox.active=true;
