@@ -53,7 +53,6 @@
       const heading=make('div',undefined,'order-history-top');
       const group=make('div');
       group.append(make('h3',t('Order ','ऑर्डर ')+(o.daily_index||o.public_id)));
-      if(o.daily_index)group.append(make('small',t('Permanent ID: ','स्थायी आईडी: ')+o.public_id));
       group.append(make('small',indianDate(o.created_at)));
       const badge=make('span',statusName(o.delivery_status||o.status),'order-status-badge');
       badge.dataset.status=String(o.delivery_status||o.status||'');
