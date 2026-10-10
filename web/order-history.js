@@ -39,8 +39,8 @@
     panel.hidden=!logged;
     topButton.hidden=!logged;
     if(!logged){list.replaceChildren();notice.textContent='';return;}
-    byId('myOrdersHeading').textContent=t('My orders · full history','मेरे ऑर्डर · पूरा इतिहास');
-    refreshButton.textContent=t('Refresh orders','ऑर्डर अपडेट करें');
+    byId('myOrdersHeading').textContent=t('My orders, deliveries & QR','मेरे ऑर्डर, डिलीवरी और QR');
+    refreshButton.textContent=t('Refresh orders & deliveries','ऑर्डर और डिलीवरी अपडेट करें');
     moreButton.textContent=t('Load more orders','और ऑर्डर दिखाएँ');
     moreButton.hidden=!hasMore;
     list.replaceChildren();
@@ -90,6 +90,8 @@
       if(o.customer_note)info.append(make('p',t('Delivery instructions: ','डिलीवरी निर्देश: ')+o.customer_note));
       if(o.delivery_partner_name)info.append(make('p',t('Delivery partner: ','डिलीवरी साथी: ')+o.delivery_partner_name));
       info.append(make('p',t('Updated: ','अपडेट: ')+indianDate(o.updated_at),'order-history-updated'));
+      const handoff=window.EasyMandiHandoff?.renderFor(o);
+      if(handoff)info.append(handoff);
       body.append(detail,info);card.append(body);
       list.append(card);
     }
@@ -107,11 +109,15 @@
     notice.textContent=t('Loading your saved orders…','आपके ऑर्डर लोड हो रहे हैं…');
     try{
       const result=await window.CustomerAccount.request('my-orders',{authorized:true});
+      // Delivery codes are retrieved only for this signed-in customer's orders.
+      // A delivery API failure must never hide the order history.
+      await window.EasyMandiHandoff?.refresh().catch(()=>{});
       if(serial!==nonce||window.CustomerAccount?.user?.id!==owner)return;
       rows=Array.isArray(result.orders)?result.orders:[];
       page=1;
       hasMore=!!result.hasMore;
-      notice.textContent=t('Showing orders for your signed-in account · Times in IST','आपके खाते के ऑर्डर · समय भारतीय मानक समय (IST) में');
+      notice.textContent=t('Orders, delivery details and active QR · Times in IST',
+        'ऑर्डर, डिलीवरी विवरण और सक्रिय QR · समय IST में');
       render();
     }catch(error){
       if(serial===nonce){
