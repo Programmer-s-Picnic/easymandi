@@ -125,6 +125,17 @@ function openProduct(original=null, mode='insert'){
   const wrap=document.createElement('label');wrap.className='row';
   const check=document.createElement('input');check.id='product_available';check.type='checkbox';check.checked=!!value.available;check.disabled=mode==='delete';
   wrap.append(check,document.createTextNode('Available to order'));root.append(wrap);
+  // A single Mandi threshold/rate, independently configured for each item.
+  const config=original?.mandi||{enabled:true,minimumQuantity:5,unitPrice:Math.round(Number(value.price||0)*90)/100};
+  const enabled=document.createElement('label');enabled.className='row';
+  const mandiOn=document.createElement('input');mandiOn.type='checkbox';mandiOn.id='product_mandiEnabled';
+  mandiOn.checked=config.enabled===true;mandiOn.disabled=mode==='delete';
+  enabled.append(mandiOn,document.createTextNode('Enable Mandi quantity price'));root.append(enabled);
+  for(const [key,label,value] of [['mandiMin','Mandi threshold (units)',config.minimumQuantity],['mandiPrice','Mandi unit price (₹)',config.unitPrice]]){
+    const wrap=field(label,value,()=>{},{type:'number'});
+    wrap.children[1].id='product_'+key;wrap.children[1].disabled=mode==='delete';
+    root.append(wrap);
+  }
   $('productDialog').showModal();$('product_id').focus();
 }
 function renderProducts(){
@@ -142,7 +153,7 @@ function renderProducts(){
   const table=document.createElement('table');table.className='product-grid';
   const caption=document.createElement('caption');caption.textContent='Product records';table.append(caption);
   const head=document.createElement('thead'), header=document.createElement('tr');
-  for(const [label,key] of [['ID','id'],['Product','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price','price'],['Available','available']]){
+  for(const [label,key] of [['ID','id'],['Product','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price','price'],['Mandi rate','mandi'],['Available','available']]){
     const th=document.createElement('th');th.setAttribute('scope','col');th.setAttribute('aria-sort',productSort===key?(productAscending?'ascending':'descending'):'none');
     const button=document.createElement('button');button.type='button';button.className='sort-button';button.textContent=label+(productSort===key?(productAscending?' ↑':' ↓'):'');
     button.onclick=()=>{productAscending=productSort===key?!productAscending:true;productSort=key;productPage=1;renderProducts();};th.append(button);header.append(th);
@@ -151,7 +162,7 @@ function renderProducts(){
   const body=document.createElement('tbody');
   for(const p of rows.slice((productPage-1)*pageSize,productPage*pageSize)){
     const row=document.createElement('tr');
-    for(const value of [p.id,(p.emoji||'')+' '+p.name,p.hindi,p.category,p.unit,'₹'+Number(p.price).toFixed(2),p.available?'Yes':'No']){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
+    for(const value of [p.id,(p.emoji||'')+' '+p.name,p.hindi,p.category,p.unit,'₹'+Number(p.price).toFixed(2),p.mandi?.enabled?'₹'+Number(p.mandi.unitPrice).toFixed(2)+' from '+p.mandi.minimumQuantity:'Not set',p.available?'Yes':'No']){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
     const cell=document.createElement('td');const controls=document.createElement('div');controls.className='row';
     for(const [label,mode] of [['Update','update'],['Delete','delete']]){const button=document.createElement('button');button.type='button';button.className=mode==='delete'?'btn danger':'btn secondary';button.textContent=label;button.setAttribute('aria-label',label+' '+p.name);button.onclick=()=>openProduct(p,mode);controls.append(button);}
     cell.append(controls);row.append(cell);body.append(row);
@@ -170,6 +181,16 @@ $('productForm').onsubmit=event=>{
     const value={...(editingProduct||{})};
     for(const [,key] of productSpecs)value[key]=$('product_'+key).value.trim();
     value.available=$('product_available').checked;
+    const minimum=Number($('product_mandiMin').value),unitPrice=Number($('product_mandiPrice').value);
+    const enabled=$('product_mandiEnabled').checked;
+    if(!Number.isInteger(minimum)||minimum<2||minimum>99||
+       !Number.isFinite(unitPrice)||unitPrice<0||unitPrice>Number(value.price)||
+       (enabled&&(unitPrice<=0||unitPrice>=Number(value.price)))||
+       Math.abs(unitPrice*100-Math.round(unitPrice*100))>0.00001){
+       $('productFormMessage').textContent='Mandi: enter quantity 2–99 and a lower unit price (₹).';
+       return;
+    }
+    value.mandi={enabled,minimumQuantity:minimum,unitPrice};
     const errors=productErrors(value,editingProduct);
     for(const [,key] of productSpecs){$('product_error_'+key).textContent=errors[key]||'';$('product_'+key).setAttribute('aria-invalid',errors[key]?'true':'false');}
     if(Object.keys(errors).length){$('productFormMessage').textContent='Please correct the highlighted fields.';$('product_'+Object.keys(errors)[0]).focus();return;}
