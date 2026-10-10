@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id);
 const root=$('opsDesk');if(!root||document.documentElement.dataset.adminPage!=='operations')return;
 const api='https://cserver.learnwithchampak.live/easymandi/api/';
 const deliveryApi='https://cserver.learnwithchampak.live/delivery/api/?action=admin';
-const state={orders:[],counts:{},partners:[],page:1,total:0,mandiSummary:{},hasMore:false,selected:null,busy:false,filter:'new',search:'',timer:null,seq:0,loaded:false};
+const state={orders:[],counts:{},partners:[],page:1,total:0,mandiSummary:{},mandiDaily:[],mandiDays:14,hasMore:false,selected:null,busy:false,filter:'new',search:'',timer:null,seq:0,loaded:false};
 const label={new_orders:'New orders',payment:'UPI verification',packing:'Preparing',unassigned:'Unassigned',active:'In delivery',exceptions:'Exceptions',completed:'Completed',all_orders:'All orders'};
 const rupees=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(Number(n)||0);
 const date=raw=>{if(!raw)return '—';const value=String(raw),d=new Date(value.includes('T')?value:value.replace(' ','T')+'+05:30');return Number.isFinite(d.getTime())?new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Kolkata'}).format(d)+' IST':value+' IST';};
@@ -163,11 +163,11 @@ async function load(keepSelection=false){
  $('opsSignIn').hidden=true;$('opsLastSync').textContent='Refreshing…';$('opsRefresh').disabled=true;
  try{
   const [data,delivery]=await Promise.all([
-   call(api+'admin-operations.php',{queue:state.filter,search:state.search,page:state.page}),
+   call(api+'admin-operations.php',{queue:state.filter,search:state.search,page:state.page,mandiDays:state.mandiDays}),
    call(deliveryApi,{operation:'list'}).catch(()=>({partners:[]}))
   ]);
   if(serial!==state.seq||!window.AdminSession.token)return;
-  Object.assign(state,{orders:data.orders,counts:data.counts,mandiSummary:data.mandiSummary||{},total:data.total,hasMore:data.hasMore,partners:delivery.partners||[],loaded:true});
+  Object.assign(state,{orders:data.orders,counts:data.counts,mandiSummary:data.mandiSummary||{},mandiDaily:data.mandiDaily||[],total:data.total,hasMore:data.hasMore,partners:delivery.partners||[],loaded:true});
   state.selected=current&&state.orders.some(o=>o.public_id===current)?current:(state.orders[0]?.public_id||null);
   $('opsLastSync').textContent='Updated '+new Intl.DateTimeFormat('en-IN',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Kolkata'}).format(new Date())+' IST';
   counts();list();detail();
