@@ -1021,7 +1021,13 @@ class _StorePageState extends State<StorePage> {
     final remaining=(freeAbove-subtotal).clamp(0,double.infinity);
     return Scaffold(
       appBar:AppBar(
-        title:const Text('Easy Mandi',style:TextStyle(fontSize:17,fontWeight:FontWeight.w900)),
+        title:Row(mainAxisSize:MainAxisSize.min,children:[
+          Image.asset('assets/brand-symbol.png',width:35,height:35,
+            errorBuilder:(_,__,___)=>const Icon(Icons.shopping_cart_outlined)),
+          const SizedBox(width:8),
+          const Flexible(child:Text('Easy Mandi',maxLines:1,overflow:TextOverflow.ellipsis,
+            style:TextStyle(fontSize:17,fontWeight:FontWeight.w900))),
+        ]),
         actions:[
           const LanguageButton(),
           IconButton(
