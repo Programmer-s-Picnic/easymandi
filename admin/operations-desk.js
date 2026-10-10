@@ -44,7 +44,8 @@ function list(){
   const card=make('button',undefined,'ops-order');card.type='button';card.dataset.orderId=order.public_id;
   card.dataset.current=String(order.public_id===state.selected);
   const head=make('span',undefined,'ops-order-head');
-  head.append(make('strong','#'+order.public_id),make('strong',rupees(order.total)));
+  head.append(make('strong',order.daily_index||'#'+order.public_id),make('strong',rupees(order.total)));
+   card.title='Permanent order ID: '+order.public_id;
   card.append(head,make('span',order.customer_name+' · '+date(order.created_at),'ops-muted'),
     make('span',status(order),'ops-stage'));
   const action=order.payment_method==='upi'&&order.payment_status==='submitted'?'Receipt to verify':
@@ -76,7 +77,8 @@ function detail(){
  if(!o){$('opsDetailStatus').textContent='Select an order';target.append(make('p','Choose an order to begin processing.','ops-muted'));return;}
  $('opsDetailStatus').textContent=status(o);
  const h=make('section',undefined,'ops-detail-block');
- h.append(make('h4','Order #'+o.public_id));
+ h.append(make('h4','Order '+(o.daily_index||'#'+o.public_id)));
+ pair(h,'Permanent order ID',o.public_id);
  pair(h,'Customer',o.customer_name+' · '+o.mobile);
  pair(h,'Received',date(o.created_at));
  pair(h,'Address',[o.house,o.locality,o.landmark,o.city,o.state,o.pin].filter(Boolean).join(', '));
