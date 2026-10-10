@@ -90,8 +90,10 @@ function detail(){
  target.append(h);
  const items=make('section',undefined,'ops-detail-block');items.append(make('h4','Items to pack'));
  const ul=make('ul',undefined,'ops-items');
- for(const item of o.items||[])ul.append(make('li',item.product_name+' · '+item.quantity+' '+item.unit+' — '+rupees(item.line_total)));
- items.append(ul);pair(items,'Subtotal',rupees(o.subtotal));pair(items,'Delivery fee',rupees(o.delivery_fee));pair(items,'Total',rupees(o.total));
+ for(const item of o.items||[])ul.append(make('li',item.product_name+' · '+item.quantity+' '+item.unit+' — '+rupees(item.line_total)+(Number(item.mandi_applied)?' · 🏷 MANDI saved '+rupees(item.discount_amount):'')));
+ items.append(ul);pair(items,'Subtotal',rupees(o.subtotal));
+ const saved=(o.items||[]).reduce((s,i)=>s+Number(i.discount_amount||0),0);
+ if(saved)pair(items,'Mandi savings',rupees(saved));pair(items,'Delivery fee',rupees(o.delivery_fee));pair(items,'Total',rupees(o.total));
  const packing=make('div',undefined,'ops-actions');
  action(packing,'Print packing checklist',async()=>{if(!window.EasyMandiPacking?.printSheet)throw Error('Packing tool unavailable. Use legacy orders below.');window.EasyMandiPacking.printSheet(o);},true);
  items.append(packing);
