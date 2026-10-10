@@ -48,6 +48,11 @@ Future<void> main() async {
     await prefs.remove('easy-mandi-favorites');
     await prefs.setBool(migrationKey,true);
   }
+  const historyMarker='mandi-v1-history';
+  if(prefs.getBool(historyMarker)!=true){
+    await LocalStore.instance.clearPreviousSales();
+    await prefs.setBool(historyMarker,true);
+  }
   await EasyMandiLanguage.load();
   runApp(const EasyMandiApp());
 }
