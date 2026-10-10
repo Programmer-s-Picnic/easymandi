@@ -103,7 +103,7 @@ function openProduct(original=null, mode='insert'){
   $('productFormMessage').textContent=mode==='delete'?'Review this record. Confirm deletion to remove it from the draft.':'';
   const root=$('productFields');root.replaceChildren();
   for(const [label,key] of productSpecs){
-    const wrap=field(label,value[key],()=>{},key==='category'?{choices:data.categories.filter(x=>x!=='All')}:key==='description'?{multiline:true,wide:true}:(key==='price'||key==='compareAtPrice')?{type:'number'}:{});
+    const wrap=field(label,String(value[key]??''),()=>{},key==='category'?{choices:data.categories.filter(x=>x!=='All')}:key==='description'?{multiline:true,wide:true}:(key==='price'||key==='compareAtPrice')?{type:'number'}:{});
     const input=wrap.children[1];input.id='product_'+key;input.disabled=mode==='delete';
     input.setAttribute('aria-describedby','product_error_'+key);
     const error=document.createElement('small');error.id='product_error_'+key;error.className='field-error';wrap.append(error);
