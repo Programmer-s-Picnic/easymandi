@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'i18n.dart';
+import 'customer_dialog_title.dart';
 
 final notificationNavigator = GlobalKey<NavigatorState>();
 final notificationFeed = ValueNotifier<List<Map<String,dynamic>>>([]);
@@ -14,7 +15,7 @@ Future<void> showNotificationModal() async {
   final context=notificationNavigator.currentContext;
   if(context==null)return;
   await showDialog<void>(context:context,builder:(dialogContext)=>AlertDialog(
-    title:Text(tr('Notifications','सूचनाएँ')),
+    title:customerDialogTitle(dialogContext,tr('Notifications','सूचनाएँ')),
     content:SizedBox(width:520,height:350,child:ValueListenableBuilder<List<Map<String,dynamic>>>(
       valueListenable:notificationFeed,builder:(context,items,_)=>items.isEmpty?Center(child:Text(tr('No notifications yet.','अभी कोई सूचना नहीं।'))):
         ListView(children:[for(final n in items)ListTile(
