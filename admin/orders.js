@@ -62,6 +62,10 @@
   byId('ordersControls').append(resetFilters);
   const search=document.createElement('input');search.type='search';search.id='ordersSearch';search.placeholder='Daily # (10-10-26-001), ID, customer, phone or locality';search.setAttribute('aria-label','Search customer orders');
   search.addEventListener('input',()=>{
+    if(search.value.trim()){
+      byId('ordersFilter').value='All';
+      deliveryFilter.value='All';
+    }
     applyFilters();
     clearTimeout(searchTimer);
     searchTimer=setTimeout(refresh,350);
