@@ -93,7 +93,7 @@ jobs:
             sha="$(sed -n 's/.*certificate SHA-1 digest: *//p' /tmp/signer.txt | head -1 | tr '[:upper:]' '[:lower:]' | tr -d ':')"
             echo "Actual $abi release APK signing SHA-1: $sha"
             test "$sha" = '98a4cc9b7c440b548b41e588ac4f88041f703b7f'
-            "$aapt" dump badging "$apk" | grep -E "^package: name='in.easymandi.easy_mandi' versionCode='[0-9]+' versionName='1.3.11'"
+            "$aapt" dump badging "$apk" | grep -E "^package: name='in.easymandi.easy_mandi' versionCode='[0-9]+' versionName='1.3.12'"
           done
       - uses: actions/upload-artifact@v4
         with:
