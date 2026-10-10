@@ -71,6 +71,7 @@ function renderStore(){
   }))
 }
 let mandiSelected=new Set();
+let mandiFilter='all';
 let productPage=1, productSort='name', productAscending=true, editingProduct=null, productMode='insert';
 const pageSize=10;
 const productSpecs=[['ID','id'],['English name','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price (₹)','price'],['Emoji','emoji'],['Photo HTTPS URL (optional)','imageUrl'],['Compare-at price ₹ (optional)','compareAtPrice'],['Description','description']];
@@ -147,7 +148,7 @@ function renderProducts(){
   for(const name of data.categories){const o=document.createElement('option');o.value=name;o.textContent=name;category.append(o);}
   category.value=data.categories.includes(selected)?selected:'All';
   const query=$('filter').value.trim().toLocaleLowerCase(), available=$('productAvailabilityFilter').value||'all';
-  const rows=data.products.filter(p=>(p.name+' '+p.hindi+' '+p.id+' '+p.category).toLocaleLowerCase().includes(query)&&(category.value==='All'||p.category===category.value)&&(available==='all'||Boolean(p.available)===(available==='yes')));
+  const rows=data.products.filter(p=>(p.name+' '+p.hindi+' '+p.id+' '+p.category).toLocaleLowerCase().includes(query)&&(category.value==='All'||p.category===category.value)&&(available==='all'||Boolean(p.available)===(available==='yes'))&&(mandiFilter==='all'||Boolean(p.mandi?.enabled)===(mandiFilter==='enabled')));
   rows.sort((a,b)=>{const result=productSort==='price'?Number(a.price)-Number(b.price):String(a[productSort]??'').localeCompare(String(b[productSort]??''));return productAscending?result:-result;});
   const pages=Math.max(1,Math.ceil(rows.length/pageSize));productPage=Math.min(productPage,pages);
   const bulk=document.createElement('div');bulk.className='row mandi-bulk-toolbar';
@@ -172,6 +173,13 @@ function renderProducts(){
      persist();mandiSelected.clear();renderProducts();notify('Mandi draft updated. Save catalog to server to publish.');
   };
   bulk.append(selectAll,clear,document.createTextNode('Qty ≥'),qty,document.createTextNode('Discount %'),percent,apply);
+  const mandiSelect=document.createElement('select');mandiSelect.setAttribute('aria-label','Filter Mandi enabled products');
+  for(const [key,label] of [['all','All Mandi statuses'],['enabled','Mandi enabled'],['disabled','Mandi disabled']]){
+    const option=document.createElement('option');option.value=key;option.textContent=label;option.selected=key===mandiFilter;mandiSelect.append(option);
+  }
+  mandiSelect.onchange=()=>{mandiFilter=mandiSelect.value;productPage=1;renderProducts();};
+  bulk.append(mandiSelect);
+
   root.append(bulk);
   const scroll=document.createElement('div');scroll.className='grid-scroll';
   const table=document.createElement('table');table.className='product-grid';
