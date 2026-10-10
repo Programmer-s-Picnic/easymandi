@@ -6,6 +6,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'auth_service.dart';
 import 'i18n.dart';
 import 'customer_dialog_title.dart';
+import 'customer_navigation.dart';
+import 'my_orders_page.dart';
 
 class DeliveryPage extends StatefulWidget {
   const DeliveryPage({super.key});
@@ -158,6 +160,12 @@ class _DeliveryPageState extends State<DeliveryPage> {
             )
           ],
         ),
+        bottomNavigationBar: SafeArea(top:false,child:CustomerNavigation(
+          active:null,
+          onMarket:()=>Navigator.of(context).popUntil((route)=>route.isFirst),
+          onOrders:()=>Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
+            builder:(_)=>const MyOrdersPage())),
+        )),
         body: busy
             ? const Center(child: CircularProgressIndicator())
             : error != null
