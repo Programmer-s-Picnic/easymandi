@@ -57,11 +57,13 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
     setState(()=>loading=true);
     try{
       final result=await AuthService.instance.myOrders(page:page+1);
-      if(page==0)await fetchDeliveryAndUpdates();
       if(!mounted)return;
+      final firstPage=page==0;
       final list=(result['orders'] as List<dynamic>? ?? [])
           .whereType<Map<String,dynamic>>().toList();
       setState((){orders.addAll(list);page++;hasMore=result['hasMore']==true;error=null;});
+      // Show saved orders immediately; fetching the live QR never blocks history.
+      if(firstPage)unawaited(fetchDeliveryAndUpdates());
     }on AuthException catch(e){if(mounted)setState(()=>error=localizeError(e.message));}
     catch(_){if(mounted)setState(()=>error=tr('Orders could not be loaded.','ऑर्डर लोड नहीं हुए।'));}
     finally{if(mounted)setState(()=>loading=false);}
