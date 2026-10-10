@@ -149,3 +149,6 @@
   outline-offset:2px;
 }
 .notification-dock { box-sizing:border-box; max-width:calc(100vw - 16px); }
+
+/* Keep the notification box usable on short and mobile screens. */
+.notification-dock { max-height:calc(100dvh - 16px); overflow-y:auto; }
