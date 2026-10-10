@@ -13,7 +13,7 @@ class CustomerNavigation extends StatelessWidget {
     required this.onOrders,
   });
 
-  final CustomerNavPage active;
+  final CustomerNavPage? active;
   final VoidCallback onMarket;
   final VoidCallback onOrders;
 
