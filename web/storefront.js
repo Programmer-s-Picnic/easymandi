@@ -7,6 +7,9 @@ try{
 }const el=id=>document.getElementById(id),money=n=>'₹'+n,save=()=>localStorage.setItem('easy-mandi-cart',JSON.stringify(cart));
 const t=(key,vars={})=>window.EMI18n?.t(key,vars)||key;
 const productLabel=p=>window.EMI18n?.lang==='hi'?(p.hindi||p.name):p.name;
+const quote=p=>window.EasyMandiPricing.quote(p,cart[p.id]||0);
+const rupees=n=>'₹'+Number(n).toFixed(2);
+const mandiLabel=q=>window.EMI18n?.lang==='hi'?(q.active?'मंडी भाव लागू':`मंडी भाव के लिए ${q.remaining} और जोड़ें`):(q.active?'MANDI RATE ACTIVE':`Add ${q.remaining} more for Mandi rate`);
 let popularIds=[];
 const favoriteKey='easy-mandi-favorites';
 let favoriteIds=new Set();
@@ -107,7 +110,7 @@ function change(id,delta){
   if(el('basket').open)renderBasket()
 }
 function totals(){
-  let subtotal=data.products.reduce((s,p)=>s+(p.available?p.price*(cart[p.id]||0):0),0);
+  let subtotal=window.EasyMandiPricing.subtotal(data.products.filter(p=>p.available),cart);
   let fee=subtotal===0||subtotal>=data.store.freeDeliveryAbove?0:data.store.deliveryFee;
   return{
     subtotal,fee,total:subtotal+fee
@@ -146,8 +149,17 @@ function createProductCard(p,{context='catalog'}={}){
   row.className='row';
   const price=document.createElement('span');
   price.className='price';
-  price.textContent=money(p.price);
-  const strike=compareAt(p);
+  const tier=quote(p);
+  price.textContent=rupees(tier.unitPrice);
+  if(tier.enabled){
+    const badge=document.createElement('small');badge.className='mandi-tag'+(tier.active?' mandi-active':'');
+    badge.textContent=tier.active?'🏷 MANDI':'🏷 Mandi from '+tier.minimumQuantity+' '+p.unit;
+    const hint=document.createElement('small');hint.className='mandi-hint';
+    hint.textContent=tier.active?rupees(tier.retailPrice)+' → '+rupees(tier.unitPrice):
+       mandiLabel(tier)+' · '+rupees(Number(p.mandi.unitPrice))+'/'+p.unit;
+    price.append(badge,hint);
+  }
+  const strike=tier.active?tier.retailPrice:compareAt(p);
   if(strike){
     const compare=document.createElement('del');compare.className='compare-price';compare.textContent=money(strike);
     const saving=document.createElement('small');saving.className='product-savings';saving.textContent=t('saveAmount',{amount:money(strike-Number(p.price))});
@@ -265,7 +277,10 @@ function renderBasket(){
     plus.onclick=()=>change(p.id,1);
     count.append(minus,number,plus);
     const price=document.createElement('strong');
-    price.textContent=money(p.price*cart[p.id]);
+    const tier=quote(p);
+    price.textContent=rupees(tier.lineTotal);
+    if(tier.enabled){const badge=document.createElement('small');badge.className='mandi-tag'+(tier.active?' mandi-active':'');
+      badge.textContent=mandiLabel(tier)+(tier.active?' · Save '+rupees(tier.savings):'');price.append(badge);}
     const remove=document.createElement('button');
     remove.type='button';
     remove.className='btn ghost';
@@ -276,7 +291,8 @@ function renderBasket(){
     el('items').append(row)
   }if(!chosen.length)el('items').textContent=t('emptyBasket');
   const totalsValue=totals();
-  el('totals').innerHTML='<div class="total">'+t('subtotal')+' <span>'+money(totalsValue.subtotal)+'</span></div><div class="total">'+t('delivery')+' <span>'+(totalsValue.fee?money(totalsValue.fee):t('free'))+'</span></div><div class="total"><strong>'+t('estimatedTotal')+'</strong><strong>'+money(totalsValue.total)+'</strong></div>';
+  const savings=chosen.reduce((s,p)=>s+quote(p).savings,0);
+  el('totals').innerHTML=(savings?'<div class="total mandi-savings">'+(window.EMI18n?.lang==='hi'?'मंडी बचत':'Mandi savings')+' <span>'+rupees(savings)+'</span></div>':'')+'<div class="total">'+t('subtotal')+' <span>'+money(totalsValue.subtotal)+'</span></div><div class="total">'+t('delivery')+' <span>'+(totalsValue.fee?money(totalsValue.fee):t('free'))+'</span></div><div class="total"><strong>'+t('estimatedTotal')+'</strong><strong>'+money(totalsValue.total)+'</strong></div>';
   el('deliveryNote').textContent=t('deliveryNote',{free:money(data.store.freeDeliveryAbove),minimum:money(data.store.minimumOrder)});
   el('countryCode').textContent=data.checkout?.countryCode||'+91';
   el('addressExample').textContent=data.checkout?.addressExample||'House 12, Lanka, Varanasi, Uttar Pradesh 221005';
@@ -303,10 +319,11 @@ function renderItemDetail(){
   }el('detailTitle').textContent=productLabel(p);
   showArtwork(el('detailArt'),p);
   el('detailHindi').textContent=window.EMI18n?.lang==='hi'?p.name:(p.hindi||'');
-  el('detailPrice').textContent=money(p.price)+' / '+p.unit;
+  const tier=quote(p);
+  el('detailPrice').textContent=rupees(tier.unitPrice)+' / '+p.unit+(tier.enabled?' · '+mandiLabel(tier)+' · Mandi '+rupees(p.mandi.unitPrice):'');
   el('detailDescription').textContent=p.description||'';
   el('detailQuantity').textContent=quantity;
-  el('detailTotal').textContent=t('itemTotal',{amount:money(p.price*quantity)});
+  el('detailTotal').textContent=t('itemTotal',{amount:rupees(tier.lineTotal)})+(tier.active?' · Save '+rupees(tier.savings):'');
   el('detailMinus').setAttribute('aria-label',t('removeOne')+' '+productLabel(p));
   el('detailPlus').setAttribute('aria-label',t('add')+' '+productLabel(p));
   el('detailMinus').disabled=quantity<=0;
