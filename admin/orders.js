@@ -171,7 +171,7 @@
       for(const [value,style] of [[order.customer_name,'order-customer'],[money(order.total),'order-amount'],[order.daily_index||'#'+order.public_id,'order-reference'],[order.status,'order-status '+normalized(order.status)]]){const part=document.createElement('span');part.className=style;part.textContent=value;title.append(part);}
       const date = document.createElement('p');
       date.className = 'hint';
-      date.textContent = order.created_at + ' · ' + order.source + ' · Permanent ID: ' + order.public_id;
+      date.textContent = order.created_at + ' · ' + order.source;
       const progress = document.createElement('p');
       progress.textContent = 'Order status: ' + order.status + ' · Delivery status: ' + (deliveryStatuses[deliveryStatus(order)] || order.delivery_status);
       const customer = document.createElement('p');
