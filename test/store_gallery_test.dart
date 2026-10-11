@@ -9,6 +9,9 @@ void main() {
 
   test('Real comparison prices and secure photo URLs', () {
     expect(onion.savings,15);
+    expect(onion.marketSavings(1),15);
+    expect(onion.marketSavings(3),45);
+    expect(potato.marketSavings(2),0);
     expect(potato.savings,0);
     expect(Product({'id':'x','name':'X','category':'Vegetables','unit':'kg','price':100,'compareAtPrice':80}).savings,0);
     expect(Product({'id':'y','name':'Y','category':'Vegetables','unit':'kg','price':40,'imageUrl':'http://example.com/img.jpg'}).imageUrl,'');
@@ -25,8 +28,8 @@ void main() {
       onFavoriteTap:(p)=>favorites.add(p.id),
     )))));
     expect(find.text('₹40'),findsOneWidget);
-    expect(find.text('₹55'),findsOneWidget);
-    expect(find.text('Save ₹15'),findsOneWidget);
+    expect(find.text('Market ₹55'),findsOneWidget);
+    expect(find.text('Market saving ₹15'),findsOneWidget);
     expect(find.text('Sold out'),findsOneWidget);
     await tester.tap(find.text('ADD'));
     expect(changes,[1]);
