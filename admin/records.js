@@ -8,7 +8,7 @@
  const session=window.AdminSession;
  const modes={
    customers:{title:'Customers',fields:[['ID','id'],['Name','name'],['Mobile','mobile'],['Email','email'],['Google','google_linked'],['Orders','order_count'],['Order value','order_total'],['Addresses','address_count'],['Created','created_at']]},
-   orders:{title:'Orders',fields:[['Order ID','public_id'],['Customer','customer_name'],['Mobile','mobile'],['Total','total'],['Order status','status'],['Payment','payment_method'],['Payment status','payment_status'],['Delivery','delivery_status'],['Date','created_at']]},
+   orders:{title:'Orders',fields:[['Order ID','public_id'],['Customer','customer_name'],['Mobile','mobile'],['Total','total'],['Order status','status'],['Payment','payment_method'],['Payment status','payment_status'],['Delivery','delivery_status'],['Delivery partner','partner_name'],['Date','created_at']]},
    payments:{title:'Payments',fields:[['Order ID','public_id'],['Customer','customer_name'],['Mobile','mobile'],['Total','total'],['Method','method'],['Status','status'],['UPI ref','upi_reference'],['Receipt','has_receipt'],['Submitted','submitted_at'],['Verified','verified_at']]},
    partners:{title:'Delivery partners',fields:[['ID','id'],['Name','name'],['Mobile','mobile'],['Active','active'],['Assigned jobs','job_count'],['Delivered','delivered_count'],['Photo','has_photo'],['Registered','created_at']]}
  };
@@ -24,6 +24,7 @@
  const money=value=>'₹'+Number(value||0).toFixed(2);
  const format=(name,value)=>{
    if(name==='order_total'||name==='total')return money(value);
+   if(name==='partner_name')return value==null||String(value).trim()===''?'Unassigned':String(value);
    if(['google_linked','has_photo','has_receipt','active'].includes(name))return Number(value)?'Yes':'No';
    if(value===null||value==='')return '—';
    return String(value);
