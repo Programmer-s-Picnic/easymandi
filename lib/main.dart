@@ -25,6 +25,7 @@ import 'notification_settings.dart';
 import 'customer_dialog_title.dart';
 import 'customer_navigation.dart';
 import 'i18n.dart';
+import 'app_update.dart';
 
 const catalogUrl =
     'https://cserver.learnwithchampak.live/easymandi/api/catalog.php';
@@ -113,6 +114,38 @@ class _StorePageState extends State<StorePage> {
   bool notificationsPrimed=false;
   final Set<String> shownNotifications={};
   bool loading = true;
+  ApkUpdate? availableApk;
+
+  Future<void> checkApkUpdate({bool manual = false}) async {
+    try {
+      final result = await ApkUpdateChecker.check('customer');
+      if (!mounted) return;
+      setState(() => availableApk = result);
+      if (manual && result == null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(
+          'No newer compatible APK is published yet.',
+          'अभी कोई नया संगत APK उपलब्ध नहीं है।'))));
+      }
+    } catch (_) {
+      if (manual && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(
+          'Could not check for updates. Please try again.',
+          'अपडेट जाँच नहीं हो सकी। फिर प्रयास करें।'))));
+      }
+    }
+  }
+
+  Future<void> openApkUpdate() async {
+    final update = availableApk;
+    if (update == null) return;
+    try {
+      if (await launchUrl(update.url, mode: LaunchMode.externalApplication)) return;
+    } catch (_) { /* The browser may not be available. */ }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(
+        'Cannot open the APK download link.', 'APK डाउनलोड लिंक नहीं खुल सका।'))));
+    }
+  }
 
   void _languageChanged() {
     if (mounted) setState(() {});
@@ -131,6 +164,7 @@ class _StorePageState extends State<StorePage> {
     loadPopularProducts();
     loadFavorites();
     restoreAccount();
+    unawaited(checkApkUpdate());
     notificationTimer=Timer.periodic(const Duration(minutes:5),(_)=>checkNotifications());
   }
 
@@ -1097,6 +1131,7 @@ class _StorePageState extends State<StorePage> {
           PopupMenuButton<String>(
             tooltip:tr('More options','और विकल्प'),
             onSelected:(choice)async{
+              if(choice=='update'){await checkApkUpdate(manual:true);return;}
               if(choice=='refresh'){await loadCatalog();return;}
               if(choice=='about'){showCredits();return;}
               if(choice=='orders'){await openOrders();return;}
@@ -1104,10 +1139,36 @@ class _StorePageState extends State<StorePage> {
             itemBuilder:(ctx)=>[
               PopupMenuItem(value:'orders',child:Text(tr('My orders, deliveries & QR','मेरे ऑर्डर, डिलीवरी और QR'))),
               PopupMenuItem(value:'refresh',child:Text(tr('Refresh catalog','कैटलॉग रीफ़्रेश करें'))),
+              PopupMenuItem(value:'update',child:Text(tr('Check for APK update','APK अपडेट जाँचें'))),
               PopupMenuItem(value:'about',child:Text(tr('About Easy Mandi','Easy Mandi के बारे में'))),
             ],
           ),
         ],
+        bottom: availableApk == null ? null : PreferredSize(
+          preferredSize: const Size.fromHeight(58),
+          child: Container(
+            height: 58,
+            color: const Color(0xFFE0F2E9),
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(children: [
+              const Icon(Icons.system_update_alt, size: 20, color: forest),
+              const SizedBox(width: 7),
+              Expanded(child: Text(
+                tr('New APK ' + availableApk!.version + ' available',
+                   'नया APK ' + availableApk!.version + ' उपलब्ध है'),
+                maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              )),
+              TextButton(onPressed: openApkUpdate,
+                child: Text(tr('Update APK', 'APK अपडेट'))),
+              IconButton(
+                tooltip: tr('Later', 'बाद में'),
+                icon: const Icon(Icons.close, size: 18),
+                onPressed: () => setState(() => availableApk = null),
+              ),
+            ]),
+          ),
+        ),
       ),
       body:loading?const Center(child:CircularProgressIndicator())
         :message.isNotEmpty?Center(child:Column(mainAxisSize:MainAxisSize.min,children:[
