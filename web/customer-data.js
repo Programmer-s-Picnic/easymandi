@@ -97,7 +97,7 @@
     for(const address of addresses){
       const option=document.createElement('option');
       option.value=address.id;
-      option.textContent=address.house+', '+address.locality+' · '+address.pin;
+      option.textContent=address.house+', '+address.locality+(address.pin?' · '+address.pin:'');
       select.append(option);
     }
     if(selected!==null&&!addresses.some(a=>Number(a.id)===selected))selected=null;
