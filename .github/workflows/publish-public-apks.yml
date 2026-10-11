@@ -36,14 +36,26 @@ jobs:
           CUSTOMER=https://raw.githubusercontent.com/Programmer-s-Picnic/easymandidata/main/releases
           DELIVERY=https://raw.githubusercontent.com/Programmer-s-Picnic/json-images/main/delivery
           mkdir -p /tmp/easymandi-apks
-          curl -fLsS --retry 5 "$CUSTOMER/build.json" -o /tmp/easymandi-apks/customer-build.json
-          curl -fLsS --retry 5 "$DELIVERY/build.json" -o /tmp/easymandi-apks/delivery-build.json
-          jq -e --arg version "$cver" --arg sha "$csha" \
-            '.version==$version and .sourceCommit==$sha and (.workflowRun|type=="number")' \
-            /tmp/easymandi-apks/customer-build.json
-          jq -e --arg version "$dver" --arg sha "$dsha" \
-            '.version==$version and .sourceCommit==$sha and (.workflowRun|type=="number")' \
-            /tmp/easymandi-apks/delivery-build.json
+          # Do not publish a new manifest until BOTH upstream APKs have been
+          # built, checksum-verified and installed at their source URLs.
+          for attempt in $(seq 1 90); do
+            curl -fLsS --retry 3 "$CUSTOMER/build.json" -o /tmp/easymandi-apks/customer-build.json
+            curl -fLsS --retry 3 "$DELIVERY/build.json" -o /tmp/easymandi-apks/delivery-build.json
+            customer_ready=0
+            delivery_ready=0
+            jq -e --arg version "$cver" --arg sha "$csha" \
+              '.version==$version and .sourceCommit==$sha and (.workflowRun|type=="number")' \
+              /tmp/easymandi-apks/customer-build.json >/dev/null && customer_ready=1 || true
+            jq -e --arg version "$dver" --arg sha "$dsha" \
+              '.version==$version and .sourceCommit==$sha and (.workflowRun|type=="number")' \
+              /tmp/easymandi-apks/delivery-build.json >/dev/null && delivery_ready=1 || true
+            if [ "$customer_ready" = 1 ] && [ "$delivery_ready" = 1 ]; then break; fi
+            if [ "$attempt" = 90 ]; then
+              echo "::error::Verified APKs were not yet published in both source repositories"
+              exit 1
+            fi
+            sleep 10
+          done
           curl -fLsS --retry 5 "$CUSTOMER/SHA256SUMS" -o /tmp/easymandi-apks/customer-sha256sums
           curl -fLsS --retry 5 "$DELIVERY/SHA256SUMS" -o /tmp/easymandi-apks/delivery-sha256sums
           curl -fLsS --retry 5 "$CUSTOMER/EasyMandi-64.apk" -o /tmp/easymandi-apks/easymani64.apk
