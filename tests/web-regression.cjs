@@ -1,5 +1,23 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const base=path.resolve(__dirname,'..');
+// Always-visible customer Market and Orders shortcuts (including before sign-in).
+for(const filename of ['index.html','web/index.html']){
+ const html=fs.readFileSync(path.join(base,filename),'utf8');
+ const dock=html.match(/<nav class="customer-quick-nav"[^>]*>[\s\S]*?<\/nav>/)?.[0];
+ assert.ok(dock,filename+' must provide persistent quick navigation');
+ assert.match(dock,/id="marketButton"/);
+ assert.match(dock,/id="myOrdersButton"/);
+ assert.doesNotMatch(dock,/\shidden(?:\s|>|=)/);
+ for(const id of ['marketButton','myOrdersButton']){
+  assert.equal([...html.matchAll(new RegExp('id="'+id+'"','g'))].length,1,filename+' should contain one '+id);
+ }
+}
+const navCss=fs.readFileSync(path.join(base,'web/storefront.css'),'utf8');
+assert.match(navCss,/\.customer-quick-nav\s*\{[\s\S]*?position:fixed/);
+assert.match(navCss,/safe-area-inset-bottom/);
+const historySource=fs.readFileSync(path.join(base,'web/order-history.js'),'utf8');
+assert.doesNotMatch(historySource,/topButton\.hidden\s*=/);
+assert.match(historySource,/window\.CustomerAccount\?\.openSignIn\(\)/);
 // QR-only checkout: neither client may offer the deep link to open a UPI app.
 // Keep the QR code and payment screenshot submission workflow intact.
 const websitePayment=fs.readFileSync(path.join(base,'web/storefront.js'),'utf8');

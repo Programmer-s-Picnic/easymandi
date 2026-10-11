@@ -37,7 +37,6 @@
   function render(){
     const logged=!!window.CustomerAccount?.user;
     panel.hidden=!logged;
-    topButton.hidden=!logged;
     if(!logged){list.replaceChildren();notice.textContent='';byId('mySavingsSummary').hidden=true;return;}
     const summary=byId('mySavingsSummary');
     summary.hidden=false;
@@ -161,7 +160,14 @@
   }
   refreshButton.onclick=()=>fetchPage(true);
   moreButton.onclick=loadMore;
-  topButton.onclick=()=>{panel.hidden=false;panel.scrollIntoView({behavior:'smooth',block:'start'});};
+  topButton.onclick=()=>{
+    if(!window.CustomerAccount?.authenticated){
+      window.CustomerAccount?.openSignIn();
+      return;
+    }
+    panel.hidden=false;
+    panel.scrollIntoView({behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  };
   window.addEventListener('customer-account-changed',()=>{
     accountId=window.CustomerAccount?.user?.id??null;
     rows=[];page=0;hasMore=false;lifetimeSavings=0;lifetimeMarketSavings=0;nonce++;loading=false;render();
