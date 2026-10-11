@@ -17,7 +17,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
   final List<Map<String,dynamic>> orders=[];
   bool loading=false,hasMore=false;
   int page=0;
-  double lifetimeSavings=0;
+  double lifetimeSavings=0,lifetimeMarketSavings=0;
   String? error,deliveryError;
   final Map<String,Map<String,dynamic>> deliveries={};
   List<dynamic> orderUpdates=[],deliveryUpdates=[];
@@ -51,7 +51,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
   }
   Future<void> refresh()async{
     if(loading)return;
-    setState((){orders.clear();page=0;hasMore=false;lifetimeSavings=0;error=null;deliveryError=null;deliveries.clear();});
+    setState((){orders.clear();page=0;hasMore=false;lifetimeSavings=0;lifetimeMarketSavings=0;error=null;deliveryError=null;deliveries.clear();});
     await load();
   }
   Future<void> load()async{
@@ -64,7 +64,8 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
       final list=(result['orders'] as List<dynamic>? ?? [])
           .whereType<Map<String,dynamic>>().toList();
       setState((){orders.addAll(list);page++;hasMore=result['hasMore']==true;
-        lifetimeSavings=positiveSavings(result['lifetimeSavings']);error=null;});
+        lifetimeSavings=positiveSavings(result['lifetimeSavings']);
+        lifetimeMarketSavings=positiveSavings(result['lifetimeMarketSavings']);error=null;});
       // Show saved orders immediately; fetching the live QR never blocks history.
       if(firstPage)unawaited(fetchDeliveryAndUpdates());
     }on AuthException catch(e){if(mounted)setState(()=>error=localizeError(e.message));}
@@ -108,6 +109,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
       final existing={for(final order in orders) order['public_id']?.toString():order};
       setState((){
         lifetimeSavings=positiveSavings(result['lifetimeSavings']);
+        lifetimeMarketSavings=positiveSavings(result['lifetimeMarketSavings']);
         for(final order in latest){
           final key=order['public_id']?.toString();
           if(key!=null&&existing.containsKey(key)){
@@ -242,6 +244,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
 
   Widget orderCard(Map<String,dynamic> o){
     final items=o['items'] as List<dynamic>? ?? [];
+    final orderMarketSavings=items.fold<double>(0,(sum,line)=>sum+positiveSavings((line as Map)['market_savings_amount']));
     final ref=o['public_id']?.toString();
     final deliveryStage=(deliveries[ref]?['status']??o['delivery_status'])?.toString();
     final orderStage=o['status']?.toString()??'';
@@ -268,8 +271,9 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
             }),
             const Divider(),
             detail(tr('Subtotal','सामान कुल'),money(o['subtotal'])),
+            if(orderMarketSavings>0)detail(tr('Saved vs market price','बाज़ार भाव से बचत'),money(orderMarketSavings)),
             if(items.any((line)=>line is Map && ((line['mandi_applied']==true)||(line['mandi_applied']==1))))
-              detail(tr('Mandi savings','मंडी बचत'),money(items.fold<num>(0,(total,line)=>
+              detail(tr('Mandi discount (not additive)','मंडी छूट (अतिरिक्त नहीं)'),money(items.fold<num>(0,(total,line)=>
                 total+(num.tryParse('${(line as Map)['discount_amount']??0}')??0)))),
             detail(tr('Delivery fee','डिलीवरी शुल्क'),money(o['delivery_fee'])),
             detail(tr('Total','कुल'),money(o['total'])),
@@ -319,8 +323,13 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                Text(tr('From delivered orders only','केवल डिलीवर किए गए ऑर्डर'),
                  style:const TextStyle(fontSize:12,color:Color(0xFF426856))),
              ])),
-             Text(money(lifetimeSavings),style:const TextStyle(fontSize:19,
-               fontWeight:FontWeight.w900,color:Color(0xFF176B46))),
+             Column(crossAxisAlignment:CrossAxisAlignment.end,children:[
+               if(lifetimeMarketSavings>0)Text(
+                 tr('Market savings: ${money(lifetimeMarketSavings)}','बाज़ार से बचत: ${money(lifetimeMarketSavings)}'),
+                 style:const TextStyle(fontSize:15,fontWeight:FontWeight.w900,color:Color(0xFF176B46))),
+               Text(money(lifetimeSavings),style:const TextStyle(fontSize:19,
+                 fontWeight:FontWeight.w900,color:Color(0xFF176B46))),
+             ]),
            ]),
          )),
        if(error!=null)Padding(padding:const EdgeInsets.all(16),child:Text(error!,style:const TextStyle(color:Colors.red))),
