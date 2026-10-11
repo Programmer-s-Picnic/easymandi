@@ -33,7 +33,8 @@ class Product {
   // quantity savings and already includes the Mandi reduction where active.
   num marketSavings(int quantity) {
     if (compareAtPrice==null || quantity<=0) return 0;
-    return ((compareAtPrice!-unitPrice(quantity))*quantity*100).round()/100;
+    final paise=((compareAtPrice!-unitPrice(quantity))*quantity*100).round();
+    return paise%100==0 ? paise~/100 : paise/100;
   }
 
   static String _validImage(dynamic value) {
