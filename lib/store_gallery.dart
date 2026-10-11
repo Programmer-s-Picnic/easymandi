@@ -119,11 +119,17 @@ class StoreGallery extends StatelessWidget {
                 borderRadius:BorderRadius.circular(6)),
               child:Text('₹${p.unitPrice(amount)}',style:const TextStyle(color:_green,
                 fontSize:14,fontWeight:FontWeight.w900))),
-            if(p.mandiActive(amount)||p.compareAtPrice!=null)Text('₹${p.mandiActive(amount)?p.price:p.compareAtPrice}',
+            if(p.mandiActive(amount)||p.compareAtPrice!=null)Text(
+              tr('Market/regular ₹${p.compareAtPrice??p.price}','बाज़ार/नियमित ₹${p.compareAtPrice??p.price}'),
               style:const TextStyle(color:_muted,fontSize:11,
                 decoration:TextDecoration.lineThrough)),
           ]),
-          if(p.mandiActive(amount)||p.savings>0)Text(tr('Save ₹${p.mandiActive(amount)?p.mandiSavings(amount):p.savings}','₹${p.mandiActive(amount)?p.mandiSavings(amount):p.savings} की बचत'),
+          if(p.compareAtPrice!=null)Text(
+            tr('Market saving ₹${p.marketSavings(amount>0?amount:1)}','बाज़ार से बचत ₹${p.marketSavings(amount>0?amount:1)}'),
+            maxLines:1,overflow:TextOverflow.ellipsis,
+            style:const TextStyle(fontSize:10,fontWeight:FontWeight.bold,color:Color(0xFF18834C))),
+          if(p.mandiActive(amount)&&p.mandiSavings(amount)>0)Text(tr(
+            'Mandi discount ₹${p.mandiSavings(amount)}','मंडी छूट ₹${p.mandiSavings(amount)}'),
             maxLines:1,overflow:TextOverflow.ellipsis,
             style:const TextStyle(fontSize:10,fontWeight:FontWeight.bold,
               color:Color(0xFF18834C))),
