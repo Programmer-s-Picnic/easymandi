@@ -1,5 +1,5 @@
 name: Verify live public APK downloads
-# Mandi V1 post-release checksum audit for all permanent APK URLs.
+# Post-release audit for all APK versions, including the savings-moment release.
 on:
   push:
     branches: [main]
