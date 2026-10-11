@@ -120,7 +120,9 @@ class StoreGallery extends StatelessWidget {
               child:Text('₹${p.unitPrice(amount)}',style:const TextStyle(color:_green,
                 fontSize:14,fontWeight:FontWeight.w900))),
             if(p.mandiActive(amount)||p.compareAtPrice!=null)Text(
-              tr('Market/regular ₹${p.compareAtPrice??p.price}','बाज़ार/नियमित ₹${p.compareAtPrice??p.price}'),
+              p.compareAtPrice!=null
+              ?tr('Market ₹${p.compareAtPrice}','बाज़ार ₹${p.compareAtPrice}')
+              :tr('Regular ₹${p.price}','नियमित ₹${p.price}'),
               style:const TextStyle(color:_muted,fontSize:11,
                 decoration:TextDecoration.lineThrough)),
           ]),
