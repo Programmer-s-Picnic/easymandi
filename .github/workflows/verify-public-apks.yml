@@ -14,6 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify release manifest matches pinned current versions
+        run: |
+          set -euo pipefail
+          jq -e --slurpfile config apk/release-config.json \
+            '.domain == "easymandi.in"
+             and .customer.version == $config[0].customer.version
+             and .customer.sourceCommit == $config[0].customer.sourceCommit
+             and .delivery.version == $config[0].delivery.version
+             and .delivery.sourceCommit == $config[0].delivery.sourceCommit' apk/build.json
       - name: Check every requested download URL against the exact published APK
         run: |
           set -euo pipefail
