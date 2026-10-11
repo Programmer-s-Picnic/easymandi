@@ -7,6 +7,7 @@ import 'auth_service.dart';
 import 'i18n.dart';
 import 'customer_navigation.dart';
 import 'customer_dialog_title.dart';
+import 'savings_utils.dart';
 
 class MyOrdersPage extends StatefulWidget {
   const MyOrdersPage({super.key});
@@ -16,6 +17,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
   final List<Map<String,dynamic>> orders=[];
   bool loading=false,hasMore=false;
   int page=0;
+  double lifetimeSavings=0;
   String? error,deliveryError;
   final Map<String,Map<String,dynamic>> deliveries={};
   List<dynamic> orderUpdates=[],deliveryUpdates=[];
@@ -49,7 +51,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
   }
   Future<void> refresh()async{
     if(loading)return;
-    setState((){orders.clear();page=0;hasMore=false;error=null;deliveryError=null;deliveries.clear();});
+    setState((){orders.clear();page=0;hasMore=false;lifetimeSavings=0;error=null;deliveryError=null;deliveries.clear();});
     await load();
   }
   Future<void> load()async{
@@ -61,7 +63,8 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
       final firstPage=page==0;
       final list=(result['orders'] as List<dynamic>? ?? [])
           .whereType<Map<String,dynamic>>().toList();
-      setState((){orders.addAll(list);page++;hasMore=result['hasMore']==true;error=null;});
+      setState((){orders.addAll(list);page++;hasMore=result['hasMore']==true;
+        lifetimeSavings=positiveSavings(result['lifetimeSavings']);error=null;});
       // Show saved orders immediately; fetching the live QR never blocks history.
       if(firstPage)unawaited(fetchDeliveryAndUpdates());
     }on AuthException catch(e){if(mounted)setState(()=>error=localizeError(e.message));}
@@ -104,6 +107,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
       final latest=(result['orders'] as List<dynamic>? ?? []).whereType<Map<String,dynamic>>().toList();
       final existing={for(final order in orders) order['public_id']?.toString():order};
       setState((){
+        lifetimeSavings=positiveSavings(result['lifetimeSavings']);
         for(final order in latest){
           final key=order['public_id']?.toString();
           if(key!=null&&existing.containsKey(key)){
@@ -300,7 +304,26 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
       Padding(padding:const EdgeInsets.all(15),
         child:Text(tr('All saved orders, including those awaiting assignment. All times in IST.',
           'सभी ऑर्डर, जिनकी डिलीवरी अभी तय नहीं हुई वे भी। समय IST में।'))),
-      if(error!=null)Padding(padding:const EdgeInsets.all(16),child:Text(error!,style:const TextStyle(color:Colors.red))),
+      Padding(padding:const EdgeInsets.symmetric(horizontal:15,vertical:5),
+         child:Container(
+           padding:const EdgeInsets.all(15),
+           decoration:BoxDecoration(color:const Color(0xFFEDF7F1),
+             borderRadius:BorderRadius.circular(14),
+             border:Border.all(color:const Color(0xFFBBDCC9))),
+           child:Row(children:[
+             const Icon(Icons.savings_outlined,color:Color(0xFF176B46)),
+             const SizedBox(width:11),
+             Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+               Text(tr('Total Mandi savings','कुल मंडी बचत'),
+                 style:const TextStyle(fontWeight:FontWeight.w800,color:Color(0xFF315C42))),
+               Text(tr('From delivered orders only','केवल डिलीवर किए गए ऑर्डर'),
+                 style:const TextStyle(fontSize:12,color:Color(0xFF426856))),
+             ])),
+             Text(money(lifetimeSavings),style:const TextStyle(fontSize:19,
+               fontWeight:FontWeight.w900,color:Color(0xFF176B46))),
+           ]),
+         )),
+       if(error!=null)Padding(padding:const EdgeInsets.all(16),child:Text(error!,style:const TextStyle(color:Colors.red))),
       if(orders.isEmpty&&!loading)Padding(padding:const EdgeInsets.all(20),
         child:Text(tr('No orders yet.','अभी कोई ऑर्डर नहीं।'),textAlign:TextAlign.center)),
       for(final o in orders)orderCard(o),

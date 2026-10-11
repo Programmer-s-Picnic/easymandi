@@ -25,6 +25,7 @@ import 'notification_settings.dart';
 import 'customer_dialog_title.dart';
 import 'customer_navigation.dart';
 import 'i18n.dart';
+import 'savings_utils.dart';
 import 'app_update.dart';
 
 const catalogUrl =
@@ -587,6 +588,52 @@ class _StorePageState extends State<StorePage> {
     reference.dispose();
   }
 
+  // Only confirmed server savings are celebrated.
+  Future<void> showSavingsMoment(Object? raw) async {
+    final saved=positiveSavings(raw);
+    if(saved<=0||!mounted)return;
+    final overlay=Overlay.of(context);
+    final reduceMotion=MediaQuery.maybeOf(context)?.disableAnimations??false;
+    final entry=OverlayEntry(builder:(_)=>Positioned.fill(
+      child:Material(
+        color:const Color(0xF5F7FCF9),
+        child:Center(child:TweenAnimationBuilder<double>(
+          tween:Tween(begin:reduceMotion?1.0:0.96,end:1.0),
+          duration:Duration(milliseconds:reduceMotion?0:480),
+          curve:Curves.easeOutCubic,
+          builder:(context,scale,child)=>Transform.scale(scale:scale,child:child),
+          child:Semantics(
+            liveRegion:true,
+            label:tr('You saved ${money(saved)} on this order',
+              'इस ऑर्डर में आपने ${money(saved)} बचाए'),
+            child:Container(
+              constraints:const BoxConstraints(maxWidth:310),
+              margin:const EdgeInsets.all(20),
+              padding:const EdgeInsets.symmetric(horizontal:24,vertical:30),
+              decoration:BoxDecoration(color:Colors.white,
+                borderRadius:BorderRadius.circular(25),
+                border:Border.all(color:const Color(0xFFCCE5D4))),
+              child:Column(mainAxisSize:MainAxisSize.min,children:[
+                const Icon(Icons.auto_awesome_outlined,color:Color(0xFF5D9C74),size:25),
+                const SizedBox(height:9),
+                Text(tr('A little extra value','आपकी मंडी बचत'),
+                  style:const TextStyle(fontSize:15,color:Color(0xFF315F45))),
+                const SizedBox(height:6),
+                Text(money(saved),style:const TextStyle(
+                  fontSize:34,fontWeight:FontWeight.w900,color:Color(0xFF176B46))),
+                Text(tr('Saved on this order','इस ऑर्डर में बचाए'),
+                  style:const TextStyle(color:Color(0xFF426856))),
+              ]),
+            ),
+          ),
+        )),
+      ),
+    ));
+    overlay.insert(entry);
+    try{await Future<void>.delayed(const Duration(milliseconds:1400));}
+    finally{entry.remove();entry.dispose();}
+  }
+
   Future<void> checkout() async {
     // Catalogue browsing is public, but no guest may submit an order.
     if (AuthService.instance.user == null) {
@@ -693,7 +740,7 @@ class _StorePageState extends State<StorePage> {
               initialValue: selectedAddress?.id,
               decoration: InputDecoration(labelText: tr('Delivery address','डिलीवरी पता')),
               items: [DropdownMenuItem<int?>(value: null, child: Text(tr('Use a new address','नया पता इस्तेमाल करें'))),
-                ...savedAddresses.map((a) => DropdownMenuItem<int?>(value: a.id, child: Text('${a.house}, ${a.locality} • ${a.pin}', overflow: TextOverflow.ellipsis)))],
+                ...savedAddresses.map((a) => DropdownMenuItem<int?>(value: a.id, child: Text('${a.house}, ${a.locality}${a.pin.isEmpty?'':' • ${a.pin}'}', overflow: TextOverflow.ellipsis)))],
               onChanged: (id) => updateDialog(() {
                 selectedAddress = id == null ? null : savedAddresses.firstWhere((a) => a.id == id);
                 final a = selectedAddress;
@@ -721,10 +768,10 @@ class _StorePageState extends State<StorePage> {
             const SizedBox(height: 10),
             TextFormField(
               controller: pin,
-              decoration: InputDecoration(labelText: tr('PIN code','पिन कोड'), hintText: checkoutRules['pinExample'] as String? ?? '221005', helperText: tr('6-digit Indian PIN code','6 अंकों का भारतीय पिन कोड')),
+              decoration: InputDecoration(labelText: tr('PIN code (optional)','पिन कोड (वैकल्पिक)'), hintText: checkoutRules['pinExample'] as String? ?? '221005', helperText: tr('If entered, use a valid 6-digit PIN','यदि भरें तो सही 6 अंकों का पिन डालें')),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
-              validator: (v) => pinPattern.hasMatch(v?.trim() ?? '') ? null : tr('Enter a valid 6-digit PIN code','मान्य 6 अंकों का पिन कोड दर्ज करें'),
+              validator: (v) => validOptionalPin(v ?? '') && ((v ?? '').trim().isEmpty || pinPattern.hasMatch(v!.trim())) ? null : tr('Enter a valid 6-digit PIN code or leave blank','मान्य 6 अंकों का पिन कोड डालें या खाली छोड़ें'),
             ),
             const SizedBox(height: 10),
             OutlinedButton.icon(onPressed: () async {
@@ -849,11 +896,14 @@ class _StorePageState extends State<StorePage> {
     if (!mounted) return;
     final orderId = savedOrder['orderId'] as String;
     final savedTotal = savedOrder['total'] as num;
+    final savedSavings=positiveSavings(savedOrder['savings']);
+    await showSavingsMoment(savedSavings);
+    if(!mounted)return;
     final lines = products.where((p) => cart.containsKey(p.id))
         .map((p) => '• ${productName(p.name,p.hindi)} (${p.unit}) × ${cart[p.id]}').join('\n');
     final address = [house.text.trim(), locality.text.trim(),
       if (landmark.text.trim().isNotEmpty) 'Near ${landmark.text.trim()}',
-      '$city, $state - ${pin.text.trim()}'].join(', ');
+      '$city, $state${pin.text.trim().isEmpty?'':' - ${pin.text.trim()}'}'].join(', ');
     final body = tr(
       'Hello Easy Mandi, my order $orderId has been placed.\n\n$lines'
       '\n\nTotal: ${money(savedTotal)}\nName: ${name.text.trim()}'
@@ -890,6 +940,7 @@ class _StorePageState extends State<StorePage> {
         title: customerDialogTitle(ctx,tr('Order received · $orderId','ऑर्डर दर्ज हुआ · $orderId')),
         content: Column(mainAxisSize: MainAxisSize.min,crossAxisAlignment: CrossAxisAlignment.start,children:[
           Text(tr('Saved total: ${money(savedTotal)}','सहेजी गई कुल राशि: ${money(savedTotal)}')),
+          if(savedSavings>0)Text(tr('🏷 Mandi savings: ${money(savedSavings)}','🏷 मंडी बचत: ${money(savedSavings)}'),style:const TextStyle(color:Color(0xFF176B46),fontWeight:FontWeight.w700)),
           const SizedBox(height: 8),
           Text(paymentMethod=='cod'
             ?tr('Cash on Delivery selected. Your order is saved; delivery time and stock confirmation are pending.',
