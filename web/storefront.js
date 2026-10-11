@@ -416,7 +416,7 @@ el('orderForm').onsubmit=async e=>{
     el('mobile').setCustomValidity(t('mobileError'));
     el('mobile').reportValidity();
     return
-  }if(!pinRule.test(pin)){
+  }if(pin!==''&&!pinRule.test(pin)){
     el('pin').setCustomValidity(t('pinError'));
     el('pin').reportValidity();
     return
@@ -460,10 +460,12 @@ el('orderForm').onsubmit=async e=>{
         return {product_id:String(line.id),name:product?.name||'',unit:product?.unit||'',quantity:line.quantity};
       })
     }}));
+    // Use the confirmed server discount, never a guess from the local catalog.
+    await window.EasyMandiSavings?.flash(Number(result.savings||0),el('basket'));
     const paymentMethod=String(form.get('paymentMethod')||'cod');
     deliveryLocation=null;
     showLocationStatus('hint');
-    const address=[house,locality,...(landmark?['Near '+landmark]:[]),(data.store.city||'Varanasi')+', '+(data.checkout?.state||'Uttar Pradesh')+' - '+pin].join(', ');
+    const address=[house,locality,...(landmark?['Near '+landmark]:[]),(data.store.city||'Varanasi')+', '+(data.checkout?.state||'Uttar Pradesh')+(pin?' - '+pin:'')].join(', ');
     const lines=data.products.filter(p=>cart[p.id]).map(p=>'• '+p.name+' ('+p.unit+') × '+cart[p.id]).join('\n');
     const message=t('welcomeWhatsapp',{id:result.orderId})+'\n\n'+lines+'\n\nName: '+form.get('name')+'\nMobile: +91 '+phone+'\nAddress: '+address+'\n\nPlease confirm availability and delivery time.';
     const box=el('orderConfirmation');
@@ -473,6 +475,14 @@ el('orderForm').onsubmit=async e=>{
     const note=document.createElement('p');
     note.textContent=t('savedTotal',{total:money(result.total),method:t(paymentMethod==='upi'?'upiSelected':'codSelected')});
     box.append(title,note);
+    const savedSavings=Number(result.savings||0);
+    const savingsNote=document.createElement('p');savingsNote.className='order-confirmation-savings';
+    if(Number.isFinite(savedSavings)&&savedSavings>0){
+      savingsNote.textContent=window.EMI18n?.lang==='hi'
+        ?'🏷 इस ऑर्डर पर आपकी बचत: '+rupees(savedSavings)
+        :'🏷 You saved '+rupees(savedSavings)+' with Mandi prices';
+      box.append(savingsNote);
+    }
     const acknowledgement=document.createElement('p');
     acknowledgement.className='note';
     acknowledgement.textContent=paymentMethod==='cod'
@@ -545,6 +555,11 @@ el('orderForm').onsubmit=async e=>{
         ?(window.EMI18n?.lang==='hi'?'आपका COD ऑर्डर दर्ज हो गया है। डिलीवरी की पुष्टि अभी बाकी है।':'Your COD order was saved. Delivery confirmation is pending.')
         :(window.EMI18n?.lang==='hi'?'रसीद सत्यापन के बाद भुगतान की पुष्टि होगी।':'Payment confirmation follows receipt verification.');
       link.textContent=t('sendWhatsapp');
+      if(savedSavings>0){
+        savingsNote.textContent=window.EMI18n?.lang==='hi'
+          ?'🏷 इस ऑर्डर पर आपकी बचत: '+rupees(savedSavings)
+          :'🏷 You saved '+rupees(savedSavings)+' with Mandi prices';
+      }
       const panel=box.querySelector('.payment-panel');
       if(panel){
         panel.querySelector('h4').textContent=t('upiPayment');

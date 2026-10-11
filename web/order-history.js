@@ -33,12 +33,15 @@
     delivered:['Delivered','पहुंचाया गया'],cancelled:['Cancelled','रद्द']
   };
   const statusName=s=>labels[s]?t(...labels[s]):String(s||'—');
-  let rows=[],page=0,hasMore=false,loading=false,nonce=0,accountId=null;
+  let rows=[],page=0,hasMore=false,loading=false,nonce=0,accountId=null,lifetimeSavings=0;
   function render(){
     const logged=!!window.CustomerAccount?.user;
     panel.hidden=!logged;
     topButton.hidden=!logged;
-    if(!logged){list.replaceChildren();notice.textContent='';return;}
+    if(!logged){list.replaceChildren();notice.textContent='';byId('mySavingsSummary').hidden=true;return;}
+    const summary=byId('mySavingsSummary');
+    summary.hidden=false;
+    summary.textContent=t('Total Mandi savings from delivered orders: ','डिलीवर किए गए ऑर्डरों से कुल मंडी बचत: ')+cash(lifetimeSavings);
     byId('myOrdersHeading').textContent=t('My orders, deliveries & QR','मेरे ऑर्डर, डिलीवरी और QR');
     refreshButton.textContent=t('Refresh orders & deliveries','ऑर्डर और डिलीवरी अपडेट करें');
     moreButton.textContent=t('Load more orders','और ऑर्डर दिखाएँ');
@@ -104,7 +107,7 @@
   }
   async function fetchPage(reset=false){
     const current=window.CustomerAccount?.user;
-    if(!current){nonce++;rows=[];page=0;hasMore=false;render();return;}
+    if(!current){nonce++;rows=[];page=0;hasMore=false;lifetimeSavings=0;render();return;}
     // An existing request for this account will update the opened section.
     // Restarting overlapping fetches repeatedly used to discard the response.
     if(loading)return;
@@ -121,6 +124,7 @@
       window.EasyMandiHandoff?.refresh().catch(()=>{});
       rows=Array.isArray(result.orders)?result.orders:[];
       page=1;
+      lifetimeSavings=Math.max(0,Number(result.lifetimeSavings)||0);
       hasMore=!!result.hasMore;
       notice.textContent=t('Orders, delivery details and active QR · Times in IST',
         'ऑर्डर, डिलीवरी विवरण और सक्रिय QR · समय IST में');
@@ -141,7 +145,8 @@
     try{
       const data=await window.CustomerAccount.request('my-orders?page='+next,{authorized:true});
       if(serial!==nonce||window.CustomerAccount?.user?.id!==owner)return;
-      rows.push(...(data.orders||[]));page=next;hasMore=!!data.hasMore;render();
+      rows.push(...(data.orders||[]));page=next;hasMore=!!data.hasMore;
+      lifetimeSavings=Math.max(0,Number(data.lifetimeSavings)||0);render();
     }catch(error){notice.textContent=error.message||t('Could not load more.','और ऑर्डर लोड नहीं हुए।');}
     finally{loading=false;moreButton.disabled=false;}
   }
@@ -150,7 +155,7 @@
   topButton.onclick=()=>{panel.hidden=false;panel.scrollIntoView({behavior:'smooth',block:'start'});};
   window.addEventListener('customer-account-changed',()=>{
     accountId=window.CustomerAccount?.user?.id??null;
-    rows=[];page=0;hasMore=false;nonce++;loading=false;render();
+    rows=[];page=0;hasMore=false;lifetimeSavings=0;nonce++;loading=false;render();
     if(accountId!==null)fetchPage(true);
   });
   window.addEventListener('customer-order-placed',()=>fetchPage(true));
