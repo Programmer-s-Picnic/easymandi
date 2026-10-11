@@ -23,6 +23,7 @@ class Element {
   querySelectorAll(sel){const all=this.children.filter(n=>n&&typeof n==='object').flatMap(n=>[n,...n.querySelectorAll(sel)]);return all.filter(n=>sel==='[data-order-status]'?'orderStatus' in n.dataset:sel==='.order'?n.className==='order':true)}
  showModal(){this.open=true} close(){this.open=false} setCustomValidity(){} reportValidity(){return true}
  set innerHTML(v){this.children=[];this._html=v} get innerHTML(){return this._html||''}
+ get childNodes(){return this.children}
 }
 function harness(html){
  const nodes={};for(const [,id]of html.matchAll(/\bid="([^"]+)"/g))nodes[id]=new Element();
