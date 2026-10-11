@@ -33,7 +33,7 @@
     delivered:['Delivered','पहुंचाया गया'],cancelled:['Cancelled','रद्द']
   };
   const statusName=s=>labels[s]?t(...labels[s]):String(s||'—');
-  let rows=[],page=0,hasMore=false,loading=false,nonce=0,accountId=null,lifetimeSavings=0;
+  let rows=[],page=0,hasMore=false,loading=false,nonce=0,accountId=null,lifetimeSavings=0,lifetimeMarketSavings=0;
   function render(){
     const logged=!!window.CustomerAccount?.user;
     panel.hidden=!logged;
@@ -41,7 +41,9 @@
     if(!logged){list.replaceChildren();notice.textContent='';byId('mySavingsSummary').hidden=true;return;}
     const summary=byId('mySavingsSummary');
     summary.hidden=false;
-    summary.textContent=t('Total Mandi savings from delivered orders: ','डिलीवर किए गए ऑर्डरों से कुल मंडी बचत: ')+cash(lifetimeSavings);
+    summary.replaceChildren();
+    if(lifetimeMarketSavings>0)summary.append(make('div',t('Total saving vs market price (delivered): ','डिलीवर हुए ऑर्डर, बाज़ार भाव से कुल बचत: ')+cash(lifetimeMarketSavings)));
+    summary.append(make('div',t('Mandi quantity discounts (included in market saving where available): ','मंडी छूट (जहाँ बाज़ार भाव उपलब्ध है, उसी बचत में शामिल): ')+cash(lifetimeSavings)));
     byId('myOrdersHeading').textContent=t('My orders, deliveries & QR','मेरे ऑर्डर, डिलीवरी और QR');
     refreshButton.textContent=t('Refresh orders & deliveries','ऑर्डर और डिलीवरी अपडेट करें');
     moreButton.textContent=t('Load more orders','और ऑर्डर दिखाएँ');
@@ -72,6 +74,9 @@
         if(Number(line.mandi_applied)===1||line.mandi_applied===true){
           name.append(make('small',t(' · 🏷 MANDI · Saved ',' · 🏷 मंडी बचत ')+cash(line.discount_amount),'mandi-hint'));
         }
+        if(Number(line.market_savings_amount)>0){
+          name.append(make('small',t(' · Saved vs market ',' · बाज़ार से बचत ')+cash(line.market_savings_amount),'market-saving-line'));
+        }
         li.append(name);
         li.append(make('strong',cash(line.line_total)));
         items.append(li);
@@ -84,7 +89,9 @@
         [t('Grand total','कुल राशि'),o.total]
       ]){totals.append(make('dt',name),make('dd',cash(val)));}
       const totalSavings=(o.items||[]).reduce((sum,line)=>sum+Number(line.discount_amount||0),0);
-      if(totalSavings>0)totals.append(make('dt',t('Mandi savings','मंडी बचत')),make('dd',cash(totalSavings)));
+      const savedVsMarket=(o.items||[]).reduce((sum,line)=>sum+Math.max(0,Number(line.market_savings_amount)||0),0);
+      if(savedVsMarket>0)totals.append(make('dt',t('Total saved vs market price','बाज़ार भाव से कुल बचत')),make('dd',cash(savedVsMarket)));
+      if(totalSavings>0)totals.append(make('dt',t('Mandi quantity discount (not additive)','मंडी छूट (अलग से जोड़ना नहीं)')),make('dd',cash(totalSavings)));
       detail.append(totals);
       const info=make('div',undefined,'order-history-info');
       info.append(make('h4',t('Delivery address','डिलीवरी का पता')));
@@ -107,7 +114,7 @@
   }
   async function fetchPage(reset=false){
     const current=window.CustomerAccount?.user;
-    if(!current){nonce++;rows=[];page=0;hasMore=false;lifetimeSavings=0;render();return;}
+    if(!current){nonce++;rows=[];page=0;hasMore=false;lifetimeSavings=0;lifetimeMarketSavings=0;render();return;}
     // An existing request for this account will update the opened section.
     // Restarting overlapping fetches repeatedly used to discard the response.
     if(loading)return;
@@ -125,6 +132,7 @@
       rows=Array.isArray(result.orders)?result.orders:[];
       page=1;
       lifetimeSavings=Math.max(0,Number(result.lifetimeSavings)||0);
+      lifetimeMarketSavings=Math.max(0,Number(result.lifetimeMarketSavings)||0);
       hasMore=!!result.hasMore;
       notice.textContent=t('Orders, delivery details and active QR · Times in IST',
         'ऑर्डर, डिलीवरी विवरण और सक्रिय QR · समय IST में');
@@ -146,7 +154,8 @@
       const data=await window.CustomerAccount.request('my-orders?page='+next,{authorized:true});
       if(serial!==nonce||window.CustomerAccount?.user?.id!==owner)return;
       rows.push(...(data.orders||[]));page=next;hasMore=!!data.hasMore;
-      lifetimeSavings=Math.max(0,Number(data.lifetimeSavings)||0);render();
+      lifetimeSavings=Math.max(0,Number(data.lifetimeSavings)||0);
+      lifetimeMarketSavings=Math.max(0,Number(data.lifetimeMarketSavings)||0);render();
     }catch(error){notice.textContent=error.message||t('Could not load more.','और ऑर्डर लोड नहीं हुए।');}
     finally{loading=false;moreButton.disabled=false;}
   }
@@ -155,7 +164,7 @@
   topButton.onclick=()=>{panel.hidden=false;panel.scrollIntoView({behavior:'smooth',block:'start'});};
   window.addEventListener('customer-account-changed',()=>{
     accountId=window.CustomerAccount?.user?.id??null;
-    rows=[];page=0;hasMore=false;lifetimeSavings=0;nonce++;loading=false;render();
+    rows=[];page=0;hasMore=false;lifetimeSavings=0;lifetimeMarketSavings=0;nonce++;loading=false;render();
     if(accountId!==null)fetchPage(true);
   });
   window.addEventListener('customer-order-placed',()=>fetchPage(true));

@@ -30,6 +30,13 @@ function compareAt(p){
   const amount=Number(p?.compareAtPrice),price=Number(p?.price);
   return Number.isFinite(amount)&&amount>price&&amount<=1000000?amount:null;
 }
+// The market comparison includes the current quantity price (including Mandi).
+// Market savings and the Mandi discount overlap: NEVER add the two figures.
+function marketSaved(p,quantity){
+  const market=compareAt(p);
+  if(market===null||quantity<=0)return 0;
+  return Math.max(0,Math.round((market-Number(window.EasyMandiPricing.quote(p,quantity).unitPrice))*quantity*100)/100);
+}
 function showArtwork(parent,p){
   parent.replaceChildren();
   const fallback=document.createElement('span');fallback.textContent=p.emoji||'🥬';fallback.className='emoji-art';
@@ -159,10 +166,15 @@ function createProductCard(p,{context='catalog'}={}){
        mandiLabel(tier)+' · '+rupees(Number(p.mandi.unitPrice))+'/'+p.unit;
     price.append(badge,hint);
   }
-  const strike=tier.active?tier.retailPrice:compareAt(p);
+  const market=compareAt(p);
+  const strike=market??(tier.active?tier.retailPrice:null);
   if(strike){
-    const compare=document.createElement('del');compare.className='compare-price';compare.textContent=money(strike);
-    const saving=document.createElement('small');saving.className='product-savings';saving.textContent=t('saveAmount',{amount:rupees(strike-Number(tier.unitPrice))});
+    const compare=document.createElement('del');compare.className='compare-price';
+    compare.textContent=(market!==null?(window.EMI18n?.lang==='hi'?'बाज़ार भाव ':'Market price '):'')+rupees(strike);
+    const saving=document.createElement('small');saving.className='product-savings';
+    saving.textContent=(market!==null
+      ?(window.EMI18n?.lang==='hi'?'बाज़ार के मुकाबले बचत ':'Save vs market ')
+      :(window.EMI18n?.lang==='hi'?'मंडी बचत ':'Mandi saving '))+rupees(strike-Number(tier.unitPrice));
     price.append(compare,saving);
   }
   const step=document.createElement('span');
@@ -292,7 +304,8 @@ function renderBasket(){
   }if(!chosen.length)el('items').textContent=t('emptyBasket');
   const totalsValue=totals();
   const savings=chosen.reduce((s,p)=>s+quote(p).savings,0);
-  el('totals').innerHTML=(savings?'<div class="total mandi-savings">'+(window.EMI18n?.lang==='hi'?'मंडी बचत':'Mandi savings')+' <span>'+rupees(savings)+'</span></div>':'')+'<div class="total">'+t('subtotal')+' <span>'+money(totalsValue.subtotal)+'</span></div><div class="total">'+t('delivery')+' <span>'+(totalsValue.fee?money(totalsValue.fee):t('free'))+'</span></div><div class="total"><strong>'+t('estimatedTotal')+'</strong><strong>'+money(totalsValue.total)+'</strong></div>';
+  const marketSavings=chosen.reduce((sum,p)=>sum+marketSaved(p,cart[p.id]),0);
+  el('totals').innerHTML=(marketSavings?'<div class="total market-savings">'+(window.EMI18n?.lang==='hi'?'बाज़ार भाव से कुल बचत':'Total saving vs market price')+' <span>'+rupees(marketSavings)+'</span></div>':'')+(savings?'<div class="total mandi-savings">'+(window.EMI18n?.lang==='hi'?'अतिरिक्त मंडी छूट (ऊपर शामिल)':'Mandi discount (included above)')+' <span>'+rupees(savings)+'</span></div>':'')+'<div class="total">'+t('subtotal')+' <span>'+money(totalsValue.subtotal)+'</span></div><div class="total">'+t('delivery')+' <span>'+(totalsValue.fee?money(totalsValue.fee):t('free'))+'</span></div><div class="total"><strong>'+t('estimatedTotal')+'</strong><strong>'+money(totalsValue.total)+'</strong></div>';
   el('deliveryNote').textContent=t('deliveryNote',{free:money(data.store.freeDeliveryAbove),minimum:money(data.store.minimumOrder)});
   el('countryCode').textContent=data.checkout?.countryCode||'+91';
   el('addressExample').textContent=data.checkout?.addressExample||'House 12, Lanka, Varanasi, Uttar Pradesh 221005';
@@ -323,7 +336,9 @@ function renderItemDetail(){
   el('detailPrice').textContent=rupees(tier.unitPrice)+' / '+p.unit+(tier.enabled?' · '+mandiLabel(tier)+' · Mandi '+rupees(p.mandi.unitPrice):'');
   el('detailDescription').textContent=p.description||'';
   el('detailQuantity').textContent=quantity;
-  el('detailTotal').textContent=t('itemTotal',{amount:rupees(tier.lineTotal)})+(tier.active?' · Save '+rupees(tier.savings):'');
+  el('detailTotal').textContent=t('itemTotal',{amount:rupees(tier.lineTotal)})
+    +(compareAt(p)!==null?(window.EMI18n?.lang==='hi'?' · बाज़ार से बचत ':' · Save vs market ')+rupees(marketSaved(p,quantity)):'')
+    +(tier.active?(window.EMI18n?.lang==='hi'?' · मंडी छूट ':' · Mandi discount ')+rupees(tier.savings):'');
   el('detailMinus').setAttribute('aria-label',t('removeOne')+' '+productLabel(p));
   el('detailPlus').setAttribute('aria-label',t('add')+' '+productLabel(p));
   el('detailMinus').disabled=quantity<=0;
@@ -461,7 +476,7 @@ el('orderForm').onsubmit=async e=>{
       })
     }}));
     // Use the confirmed server discount, never a guess from the local catalog.
-    await window.EasyMandiSavings?.flash(Number(result.savings||0),el('basket'));
+    await window.EasyMandiSavings?.flash({mandiSavings:Number(result.savings||0),marketSavings:Number(result.marketSavings||0)},el('basket'));
     const paymentMethod=String(form.get('paymentMethod')||'cod');
     deliveryLocation=null;
     showLocationStatus('hint');
@@ -476,13 +491,24 @@ el('orderForm').onsubmit=async e=>{
     note.textContent=t('savedTotal',{total:money(result.total),method:t(paymentMethod==='upi'?'upiSelected':'codSelected')});
     box.append(title,note);
     const savedSavings=Number(result.savings||0);
+    const savedMarketSavings=Number(result.marketSavings||0);
     const savingsNote=document.createElement('p');savingsNote.className='order-confirmation-savings';
-    if(Number.isFinite(savedSavings)&&savedSavings>0){
-      savingsNote.textContent=window.EMI18n?.lang==='hi'
-        ?'🏷 इस ऑर्डर पर आपकी बचत: '+rupees(savedSavings)
-        :'🏷 You saved '+rupees(savedSavings)+' with Mandi prices';
-      box.append(savingsNote);
-    }
+    const updateSavingsNote=()=>{
+      savingsNote.replaceChildren();
+      if(Number.isFinite(savedMarketSavings)&&savedMarketSavings>0){
+        const marketLine=document.createElement('strong');
+        marketLine.textContent=(window.EMI18n?.lang==='hi'?'बाज़ार भाव के मुकाबले कुल बचत: ':'Total saved vs market price: ')+rupees(savedMarketSavings);
+        savingsNote.append(marketLine);
+      }
+      if(Number.isFinite(savedSavings)&&savedSavings>0){
+        if(savingsNote.childNodes.length)savingsNote.append(document.createElement('br'));
+        const mandiLine=document.createElement('span');
+        mandiLine.textContent=(window.EMI18n?.lang==='hi'?'मंडी मात्रा छूट (कुल बचत में शामिल): ':'Mandi quantity discount (included above): ')+rupees(savedSavings);
+        savingsNote.append(mandiLine);
+      }
+    };
+    updateSavingsNote();
+    if(savingsNote.childNodes.length)box.append(savingsNote);
     const acknowledgement=document.createElement('p');
     acknowledgement.className='note';
     acknowledgement.textContent=paymentMethod==='cod'
@@ -555,11 +581,7 @@ el('orderForm').onsubmit=async e=>{
         ?(window.EMI18n?.lang==='hi'?'आपका COD ऑर्डर दर्ज हो गया है। डिलीवरी की पुष्टि अभी बाकी है।':'Your COD order was saved. Delivery confirmation is pending.')
         :(window.EMI18n?.lang==='hi'?'रसीद सत्यापन के बाद भुगतान की पुष्टि होगी।':'Payment confirmation follows receipt verification.');
       link.textContent=t('sendWhatsapp');
-      if(savedSavings>0){
-        savingsNote.textContent=window.EMI18n?.lang==='hi'
-          ?'🏷 इस ऑर्डर पर आपकी बचत: '+rupees(savedSavings)
-          :'🏷 You saved '+rupees(savedSavings)+' with Mandi prices';
-      }
+      updateSavingsNote();
       const panel=box.querySelector('.payment-panel');
       if(panel){
         panel.querySelector('h4').textContent=t('upiPayment');

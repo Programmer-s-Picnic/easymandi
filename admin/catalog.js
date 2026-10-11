@@ -74,7 +74,7 @@ let mandiSelected=new Set();
 let mandiFilter='all';
 let productPage=1, productSort='name', productAscending=true, editingProduct=null, productMode='insert';
 const pageSize=10;
-const productSpecs=[['ID','id'],['English name','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price (₹)','price'],['Emoji','emoji'],['Photo HTTPS URL (optional)','imageUrl'],['Compare-at price ₹ (optional)','compareAtPrice'],['Description','description']];
+const productSpecs=[['ID','id'],['English name','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price (₹)','price'],['Emoji','emoji'],['Photo HTTPS URL (optional)','imageUrl'],['Compare-at price = market price ₹ (optional)','compareAtPrice'],['Description','description']];
 function productErrors(p, original){
   const errors={};
   if(!/^[a-z0-9_-]{1,64}$/.test(p.id||''))errors.id='Use 1–64 lowercase letters, numbers, underscores or hyphens.';

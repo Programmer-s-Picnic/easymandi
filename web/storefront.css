@@ -586,3 +586,8 @@ padding:2px 6px;border-radius:6px;margin-top:4px;white-space:normal}
 .my-savings-summary{background:#edf7f1;color:#236346;border:1px solid #bcd9c8;border-radius:12px;
   margin:4px 0 14px;padding:12px 15px;font-weight:750;line-height:1.5}
 .order-confirmation-savings{color:#236e48;font-weight:750}
+
+/* Market comparison is an alternative baseline, not an extra rebate. */
+.market-savings{color:#135e52;font-weight:800}
+.market-saving-line{display:block;font-size:.75rem;color:#176b46}
+.order-confirmation-savings strong{color:#176b46}

@@ -29,6 +29,12 @@ class Product {
   num lineTotal(int quantity)=>(unitPrice(quantity)*quantity*100).round()/100;
   num mandiSavings(int quantity)=>((price-unitPrice(quantity))*quantity*100).round()/100;
   num get savings => compareAtPrice==null?0:compareAtPrice!-price;
+  // Compare-at is the market price. It is a separate baseline from Mandi
+  // quantity savings and already includes the Mandi reduction where active.
+  num marketSavings(int quantity) {
+    if (compareAtPrice==null || quantity<=0) return 0;
+    return ((compareAtPrice!-unitPrice(quantity))*quantity*100).round()/100;
+  }
 
   static String _validImage(dynamic value) {
     if(value is! String || value.isEmpty) return '';

@@ -504,6 +504,7 @@ class _StorePageState extends State<StorePage> {
   int get count => cart.values.fold(0, (a, b) => a + b);
   num get subtotal => products.fold<num>(0, (sum,p)=>sum + p.lineTotal(cart[p.id]??0));
   num get mandiSavings => products.fold<num>(0,(sum,p)=>sum+p.mandiSavings(cart[p.id]??0));
+  num get marketSavings => products.fold<num>(0,(sum,p)=>sum+p.marketSavings(cart[p.id]??0));
   num get fee => subtotal == 0 || subtotal >= (store['freeDeliveryAbove'] as num? ?? 499) ? 0 : (store['deliveryFee'] as num? ?? 30);
   String money(num amount) => formatMoney(amount);
 
@@ -589,8 +590,9 @@ class _StorePageState extends State<StorePage> {
   }
 
   // Only confirmed server savings are celebrated.
-  Future<void> showSavingsMoment(Object? raw) async {
-    final saved=positiveSavings(raw);
+  Future<void> showSavingsMoment(Object? raw, {Object? marketRaw}) async {
+    final mandi=positiveSavings(raw), market=positiveSavings(marketRaw);
+    final saved=market>0?market:mandi;
     if(saved<=0||!mounted)return;
     final overlay=Overlay.of(context);
     final reduceMotion=MediaQuery.maybeOf(context)?.disableAnimations??false;
@@ -616,12 +618,14 @@ class _StorePageState extends State<StorePage> {
               child:Column(mainAxisSize:MainAxisSize.min,children:[
                 const Icon(Icons.auto_awesome_outlined,color:Color(0xFF5D9C74),size:25),
                 const SizedBox(height:9),
-                Text(tr('A little extra value','आपकी मंडी बचत'),
+                Text(market>0?tr('You saved vs market price','बाज़ार भाव से आपकी बचत'):tr('A little extra value','आपकी मंडी बचत'),
                   style:const TextStyle(fontSize:15,color:Color(0xFF315F45))),
                 const SizedBox(height:6),
                 Text(money(saved),style:const TextStyle(
                   fontSize:34,fontWeight:FontWeight.w900,color:Color(0xFF176B46))),
-                Text(tr('Saved on this order','इस ऑर्डर में बचाए'),
+                Text(market>0&&mandi>0
+                  ?tr('Includes Mandi discount ${money(mandi)}','मंडी छूट ${money(mandi)} इसमें शामिल है')
+                  :tr('Saved on this order','इस ऑर्डर में बचाए'),
                   style:const TextStyle(color:Color(0xFF426856))),
               ]),
             ),
@@ -897,7 +901,8 @@ class _StorePageState extends State<StorePage> {
     final orderId = savedOrder['orderId'] as String;
     final savedTotal = savedOrder['total'] as num;
     final savedSavings=positiveSavings(savedOrder['savings']);
-    await showSavingsMoment(savedSavings);
+    final savedMarketSavings=positiveSavings(savedOrder['marketSavings']);
+    await showSavingsMoment(savedSavings,marketRaw:savedMarketSavings);
     if(!mounted)return;
     final lines = products.where((p) => cart.containsKey(p.id))
         .map((p) => '• ${productName(p.name,p.hindi)} (${p.unit}) × ${cart[p.id]}').join('\n');
@@ -940,7 +945,8 @@ class _StorePageState extends State<StorePage> {
         title: customerDialogTitle(ctx,tr('Order received · $orderId','ऑर्डर दर्ज हुआ · $orderId')),
         content: Column(mainAxisSize: MainAxisSize.min,crossAxisAlignment: CrossAxisAlignment.start,children:[
           Text(tr('Saved total: ${money(savedTotal)}','सहेजी गई कुल राशि: ${money(savedTotal)}')),
-          if(savedSavings>0)Text(tr('🏷 Mandi savings: ${money(savedSavings)}','🏷 मंडी बचत: ${money(savedSavings)}'),style:const TextStyle(color:Color(0xFF176B46),fontWeight:FontWeight.w700)),
+          if(savedMarketSavings>0)Text(tr('Saved vs market price: ${money(savedMarketSavings)}','बाज़ार भाव से बचत: ${money(savedMarketSavings)}'),style:const TextStyle(color:Color(0xFF176B46),fontWeight:FontWeight.w700)),
+          if(savedSavings>0)Text(tr('Mandi quantity discount (not additional): ${money(savedSavings)}','मंडी छूट (अतिरिक्त नहीं): ${money(savedSavings)}'),style:const TextStyle(color:Color(0xFF176B46))),
           const SizedBox(height: 8),
           Text(paymentMethod=='cod'
             ?tr('Cash on Delivery selected. Your order is saved; delivery time and stock confirmation are pending.',
@@ -1005,7 +1011,8 @@ class _StorePageState extends State<StorePage> {
               })),
               const Divider(),
               _totalRow(tr('Subtotal','उप-योग'), money(subtotal)),
-              if(mandiSavings>0)_totalRow(tr('Mandi savings','मंडी बचत'),money(mandiSavings)), 
+              if(marketSavings>0)_totalRow(tr('Total saved vs market price','बाज़ार भाव से कुल बचत'),money(marketSavings)),
+              if(mandiSavings>0)_totalRow(tr('Mandi discount (not additive)','मंडी छूट (अलग न जोड़ें)'),money(mandiSavings)), 
               _totalRow(tr('Delivery','डिलीवरी'), fee == 0 ? tr('Free','मुफ़्त') : money(fee)),
               const SizedBox(height: 6),
               _totalRow(tr('Estimated total','अनुमानित कुल'), money(subtotal + fee), bold: true),
@@ -1057,6 +1064,10 @@ class _StorePageState extends State<StorePage> {
                 if (product.hindi.isNotEmpty) Text(EasyMandiLanguage.hindi.value ? product.name : product.hindi, style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 10),
                 Text('${money(product.unitPrice(quantity))} / ${product.unit}', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: forest, fontWeight: FontWeight.bold)),
+                if(product.compareAtPrice!=null)Text(tr(
+                  'Market price: ${money(product.compareAtPrice!)} · Save ${money(product.marketSavings(quantity>0?quantity:1))}',
+                  'बाज़ार भाव: ${money(product.compareAtPrice!)} · बचत ${money(product.marketSavings(quantity>0?quantity:1))}'),
+                  style:const TextStyle(color:Color(0xFF176B46),fontWeight:FontWeight.w700)),
                 if(product.mandiEnabled)Text(product.mandiActive(quantity)
                   ?tr('🏷 MANDI RATE ACTIVE · Save ${money(product.mandiSavings(quantity))}','🏷 मंडी भाव लागू · बचत ${money(product.mandiSavings(quantity))}')
                   :tr('🏷 Add ${product.mandiQuantity-quantity} more for Mandi rate ${money(product.mandiPrice)}','🏷 मंडी भाव ${money(product.mandiPrice)} के लिए ${product.mandiQuantity-quantity} और जोड़ें'),
