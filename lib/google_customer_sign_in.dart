@@ -22,9 +22,9 @@ class CustomerGoogleSignIn {
     switch (error.code) {
       case GoogleSignInExceptionCode.clientConfigurationError:
       case GoogleSignInExceptionCode.providerConfigurationError:
-        return 'Google authentication setup error (${error.code.name}). Check Android package, SHA-1 and Web Client ID.';
+        return 'Google sign-in is temporarily unavailable. Please use password sign-in or contact Easy Mandi support.';
       case GoogleSignInExceptionCode.canceled:
-        return 'Google account selection was cancelled or interrupted. If this appeared after choosing your account, check Android OAuth registration (SHA-1 and package name).';
+        return 'Google sign-in did not complete. Please try again. If it fails after choosing an account, use password sign-in or contact Easy Mandi support.';
       default:
         return 'Google sign-in error: ${error.code.name}. Try again or report this code to support.';
     }
