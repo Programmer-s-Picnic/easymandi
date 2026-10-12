@@ -606,3 +606,25 @@ padding:2px 6px;border-radius:6px;margin-top:4px;white-space:normal}
 .market-savings{color:#135e52;font-weight:800}
 .market-saving-line{display:block;font-size:.75rem;color:#176b46}
 .order-confirmation-savings strong{color:#176b46}
+
+/* Saved address management, account view, and checkout default address. */
+.customer-account-addresses{border:1px solid #cbded7;background:#f6faff;padding:14px;border-radius:16px;margin:12px 0}
+.customer-account-addresses h3{margin:0 0 9px;color:#15577c}
+.customer-account-address-list{display:grid;gap:8px;max-height:360px;overflow:auto}
+.saved-address-card{background:white;border:1px solid #d2e4ec;border-radius:12px;padding:11px;display:grid;gap:5px}
+.saved-address-card p{margin:0;font-size:13px;overflow-wrap:anywhere}
+.primary-address-badge{display:inline-flex;align-self:start;background:#dff3e7;color:#14613f;border-radius:8px;padding:4px 8px;font-size:12px;font-weight:750}
+.address-card-actions{display:flex;gap:6px;flex-wrap:wrap}
+.address-card-actions .btn{padding:7px 10px;font-size:12px}
+.customer-account-addresses>.btn{margin-top:10px}
+.customer-address-book{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.customer-address-book>h3,.customer-address-book>select,.customer-address-book>p{flex-basis:100%;margin:2px 0}
+.customer-address-book label{flex-basis:100%;font-size:13px}
+.customer-address-book label input{margin-right:6px}
+.customer-address-book .btn{margin:0;flex:1 1 145px}
+.customer-address-editor{width:min(440px,94vw);max-height:90vh;border:1px solid #b9d4df;border-radius:18px;padding:20px}
+.customer-address-editor label{display:grid;gap:5px;font-weight:600}
+.customer-address-editor label input,.customer-address-editor label select{padding:11px;border:1px solid #b7cad7;border-radius:9px}
+.customer-address-editor label:has(input[type=checkbox]){display:flex;align-items:center;gap:7px}
+.customer-address-editor .actions{display:flex;gap:8px}
+.customer-address-editor .actions>.btn{flex:1}
