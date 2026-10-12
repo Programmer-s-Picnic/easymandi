@@ -1,5 +1,5 @@
 name: Verify live public APK downloads
-# Check live Easy Mandi 1.3.17+28 market-savings APK hashes after public release.
+# Check live Easy Mandi 1.3.18+29 primary-address APK hashes after release.
 on:
   push:
     branches: [main]
