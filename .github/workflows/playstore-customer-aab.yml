@@ -57,6 +57,11 @@ jobs:
           cat >> android/app/build.gradle.kts <<'KOTLIN'
 
           android {
+            // Play release target for Android 16 (API 36).
+            compileSdk = 36
+            defaultConfig {
+              targetSdk = 36
+            }
             signingConfigs {
               create("easyMandiPlayUpload") {
                 storeFile = file(System.getenv("RUNNER_TEMP") + "/easy-mandi-play-upload.jks")
