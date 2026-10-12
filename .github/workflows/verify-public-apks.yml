@@ -40,7 +40,11 @@ jobs:
                 curl --fail --location --silent --show-error --retry 2 --max-time 180 \
                   "https://easymandi.in/apk/$name" -o "/tmp/apk-live-verify/$name"
                 actual="$(sha256sum "/tmp/apk-live-verify/$name" | cut -d' ' -f1)"
-                test "$actual" = "$expected" || { echo "::error::Live file checksum mismatch: $name"; exit 1; }
+                if [ "$actual" != "$expected" ]; then
+                  echo "Waiting for updated GitHub Pages APK (attempt $attempt, live checksum differs): $name"
+                  sleep 15
+                  continue
+                fi
                 unzip -tq "/tmp/apk-live-verify/$name" >/dev/null
                 echo "Verified $name ($(stat -c %s "/tmp/apk-live-verify/$name") bytes)"
                 ok=1
