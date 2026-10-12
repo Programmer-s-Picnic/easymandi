@@ -158,6 +158,7 @@ class AuthService {
   Future<Map<String,dynamic>> customerData() => _request('customer-data', authenticated:true);
   Future<void> saveServerAddress(Map<String,Object?> address) async { await _request('customer-data',method:'POST',body:address,authenticated:true); }
   Future<void> deleteServerAddress(int id) async { await _request('customer-data',method:'POST',body:{'operation':'delete','id':id},authenticated:true); }
+  Future<void> setPrimaryServerAddress(int id) async { await _request('customer-data',method:'POST',body:{'operation':'set-primary','id':id},authenticated:true); }
 
   Future<Map<String, dynamic>> createOrder(Map<String, Object?> order) {
     if (user == null) throw const AuthException('Please sign in before placing an order.', 401);

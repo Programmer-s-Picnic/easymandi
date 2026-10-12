@@ -4,11 +4,13 @@ import 'package:sqflite/sqflite.dart';
 import 'dart:convert';
 
 class SavedAddress {
-  const SavedAddress({this.id, required this.name, required this.phone, required this.house, required this.locality, required this.landmark, required this.pin});
+  const SavedAddress({this.id, this.isPrimary=false, required this.name, required this.phone, required this.house, required this.locality, required this.landmark, required this.pin});
   final int? id;
+  final bool isPrimary;
   final String name, phone, house, locality, landmark, pin;
   factory SavedAddress.fromRow(Map<String, Object?> row) => SavedAddress(
-    id: row['id'] as int, name: row['name'] as String, phone: row['phone'] as String,
+    id: (row['id'] as num).toInt(), isPrimary: row['is_primary']==true || row['is_primary']==1,
+    name: row['name'] as String, phone: row['phone'] as String,
     house: row['house'] as String, locality: row['locality'] as String,
     landmark: row['landmark'] as String, pin: row['pin'] as String,
   );

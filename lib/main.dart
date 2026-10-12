@@ -16,6 +16,7 @@ import 'auth_service.dart';
 import 'google_customer_sign_in.dart';
 import 'my_orders_page.dart';
 import 'local_store.dart';
+import 'saved_addresses_page.dart';
 import 'recent_order_items.dart';
 import 'product.dart';
 import 'store_gallery.dart';
@@ -400,6 +401,11 @@ class _StorePageState extends State<StorePage> {
           if(mounted)await Navigator.push(context,MaterialPageRoute<void>(
             builder:(_)=>const MyOrdersPage()));
         },child:Text(tr('My orders','मेरे ऑर्डर'))),
+        TextButton(onPressed: () async {
+          Navigator.pop(dialogContext);
+          if(mounted)await Navigator.push(context,MaterialPageRoute<void>(
+            builder:(_)=>const SavedAddressesPage()));
+        },child:Text(tr('My addresses','मेरे पते'))),
         TextButton(onPressed: () async {Navigator.pop(dialogContext);await showNotificationModal();},
           child:Text(tr('Notifications','सूचनाएँ'))),
         TextButton(onPressed: () async {
@@ -698,7 +704,17 @@ class _StorePageState extends State<StorePage> {
       savedAddresses=[];
     }
     if (!mounted) return;
+    // Default every new checkout to the account's primary address.
     SavedAddress? selectedAddress;
+    for(final a in savedAddresses){if(a.isPrimary){selectedAddress=a;break;}}
+    selectedAddress ??= savedAddresses.isEmpty ? null : savedAddresses.first;
+    final primary=selectedAddress;
+    if(primary!=null && serviceAreas.any((a)=>a['name']==primary.locality)){
+      name.text=primary.name;house.text=primary.house;locality.text=primary.locality;
+      landmark.text=primary.landmark;pin.text=primary.pin;
+    }else{
+      selectedAddress=null; // Old out-of-service localities need a new selection.
+    }
     Position? deliveryPosition;
     bool saveNewAddress = true;
     String paymentMethod = 'cod';
@@ -744,7 +760,7 @@ class _StorePageState extends State<StorePage> {
               initialValue: selectedAddress?.id,
               decoration: InputDecoration(labelText: tr('Delivery address','डिलीवरी पता')),
               items: [DropdownMenuItem<int?>(value: null, child: Text(tr('Use a new address','नया पता इस्तेमाल करें'))),
-                ...savedAddresses.map((a) => DropdownMenuItem<int?>(value: a.id, child: Text('${a.house}, ${a.locality}${a.pin.isEmpty?'':' • ${a.pin}'}', overflow: TextOverflow.ellipsis)))],
+                ...savedAddresses.map((a) => DropdownMenuItem<int?>(value: a.id, child: Text((a.isPrimary?'★ ':'')+a.house+', '+a.locality+(a.pin.isEmpty?'':' • '+a.pin), overflow: TextOverflow.ellipsis)))],
               onChanged: (id) => updateDialog(() {
                 selectedAddress = id == null ? null : savedAddresses.firstWhere((a) => a.id == id);
                 final a = selectedAddress;
@@ -753,6 +769,12 @@ class _StorePageState extends State<StorePage> {
                 house.text = a?.house ?? ''; locality.text = a?.locality ?? '';
                 landmark.text = a?.landmark ?? ''; pin.text = a?.pin ?? '';
               }),
+            ),
+            if(selectedAddress!=null)Padding(
+              padding:const EdgeInsets.symmetric(vertical:8),
+              child:Text((selectedAddress!.isPrimary?tr('Primary address: ','मुख्य पता: '):tr('Selected address: ','चुना हुआ पता: '))+
+                selectedAddress!.house+', '+selectedAddress!.locality,
+                style:const TextStyle(fontWeight:FontWeight.w700,color:Color(0xFF176B46))),
             ),
             if (savedAddresses.isNotEmpty) const SizedBox(height: 10),
             TextFormField(controller: name, decoration: InputDecoration(labelText: tr('Your name','आपका नाम')), textCapitalization: TextCapitalization.words, validator: (v) => v == null || v.trim().length < 2 ? tr('Enter your name','अपना नाम दर्ज करें') : null),
@@ -829,7 +851,7 @@ class _StorePageState extends State<StorePage> {
                 updateDialog(() {
                   savedAddresses.removeWhere((a) => a.id == selectedAddress!.id);
                   selectedAddress = null;
-                  name.clear(); phone.clear(); house.clear(); locality.clear(); landmark.clear(); pin.clear();
+                  name.text=AuthService.instance.user!.name; phone.text=AuthService.instance.user!.mobile; house.clear(); locality.clear(); landmark.clear(); pin.clear();
                 });
               }, icon: const Icon(Icons.delete_outline), label: Text(tr('Delete saved address','सहेजा पता हटाएँ')),
             ),
