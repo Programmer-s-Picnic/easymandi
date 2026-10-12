@@ -39,6 +39,7 @@ async function load(){
   ready=areas.length>0;select.disabled=!ready;
   if(old)choose(old);else syncMap();
   if(!ready)status.textContent='No delivery localities are enabled. Please try again later.';
+  if(ready)window.dispatchEvent(new Event('easy-mandi-localities-ready'));
  }catch(_){ready=false;areas=[];select.replaceChildren();
   const option=document.createElement('option');option.value='';option.textContent='Localities unavailable — retry later';
   select.append(option);select.disabled=true;

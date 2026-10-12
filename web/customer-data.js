@@ -268,7 +268,15 @@
   }
 
   async function refresh(preferPrimary=false){
-    if(preferPrimary){selected=null;selectionManual=false;checkoutOpened=true;}
+    if(preferPrimary){
+      // Apply the last server-confirmed primary immediately, then revalidate
+      // against fresh account data before the customer checks out.
+      const cached=addresses.find(a=>a.is_primary)||addresses[0]||null;
+      selected=cached?Number(cached.id):null;
+      selectionManual=false;checkoutOpened=true;
+      if(cached)applyAddress(cached);
+      render();
+    }
     const account=window.CustomerAccount?.user;
     const request=++refreshSerial;
     if(!account){
@@ -349,6 +357,10 @@
   window.addEventListener('customer-order-placed',refresh);
   window.addEventListener('languagechange',render);
   window.addEventListener('easy-mandi-catalog-rendered',renderPreviouslyOrdered);
+  window.addEventListener('easy-mandi-localities-ready',()=>{
+    const current=addresses.find(a=>Number(a.id)===selected);
+    if(current)applyAddress(current);
+  });
   by('basketButton').addEventListener('click',()=>refresh(true));
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
   window.addEventListener('focus',()=>{if(!document.hidden)refresh();});
