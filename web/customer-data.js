@@ -110,7 +110,6 @@
     editorPrimary.disabled=!!address?.is_primary;
     editorHeading.textContent=address?lng('Edit saved address','सहेजा पता बदलें'):lng('Add a new address','नया पता जोड़ें');
     const captions={name:lng('Recipient name','नाम'),house:lng('House / flat / building','मकान / फ्लैट'),locality:lng('Service locality','डिलीवरी क्षेत्र'),landmark:lng('Landmark (optional)','नज़दीकी पहचान (वैकल्पिक)'),pin:lng('PIN (optional)','पिन (वैकल्पिक)')};
-    for(const key of Object.keys(editorFields))editorFields[key].parentElement.firstChild?.remove?.();
     for(const key of Object.keys(editorFields)){editorFields[key].setAttribute('aria-label',captions[key]);editorFields[key].placeholder=captions[key];}
     editorPrimaryText.textContent=lng(' Make primary address',' मुख्य पता बनाएँ');
     editorCancel.textContent=lng('Cancel','रद्द करें');editorSave.textContent=lng('Save address','पता सहेजें');
