@@ -3,9 +3,13 @@
   <url>
     <loc>https://easymandi.in/</loc>
     <lastmod>2026-10-14</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
   </url>
-  <url><loc>https://easymandi.in/privacy.html</loc><lastmod>2026-10-10</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://easymandi.in/delete-account.html</loc><lastmod>2026-10-10</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
+  <url>
+    <loc>https://easymandi.in/privacy.html</loc>
+    <lastmod>2026-10-10</lastmod>
+  </url>
+  <url>
+    <loc>https://easymandi.in/delete-account.html</loc>
+    <lastmod>2026-10-10</lastmod>
+  </url>
 </urlset>
