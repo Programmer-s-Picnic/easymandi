@@ -15,8 +15,8 @@
 <meta property="og:image" content="https://easymandi.in/web/og-image.svg">
 <meta name="theme-color" content="#176b46">
 <title>Easy Mandi · Customers Master</title>
-<link rel="stylesheet" href="catalog.css?v=20261009-media-v1">
-<link rel="stylesheet" href="admin-pages.css?v=20261009-localities-v1">
+<link rel="stylesheet" href="catalog.css?v=20261014-keywords-v1">
+<link rel="stylesheet" href="admin-pages.css?v=20261010-mandi-v1">
 <link rel="stylesheet" href="../shared/notifications.css?v=20261014-reopen-v2">
 <script src="../shared/api-client.js?v=20261001-icons" defer>
 </script>
@@ -50,7 +50,7 @@
  <a href="./" data-admin-link="operations">Operations</a><a href="products.html" data-admin-link="products">Products</a><a href="customers.html" data-admin-link="customers">Customers</a><a href="delivery-partners.html" data-admin-link="partners">Delivery Partners</a><a href="how-to.html" data-admin-link="help">How to Work</a>
 </nav>
 <div class="admin-page-title" data-page-title="operations"><span class="admin-eyebrow">DAILY CONTROL</span><h2>Operations Desk</h2><p>Process customer orders, payments, packing and deliveries from your live working queue.</p></div>
-<div class="admin-page-title" data-page-title="products"><span class="admin-eyebrow">CATALOG MANAGEMENT</span><h2>Products Master</h2><p>Manage store settings, product categories, prices, photos and availability. Validate and publish to the live catalog.</p></div>
+<div class="admin-page-title" data-page-title="products"><span class="admin-eyebrow">CATALOG MANAGEMENT</span><h2>Products Master</h2><p>Manage store settings, product categories, prices, photos, alternative names and availability. Validate and publish to the live catalog.</p></div>
 <div class="admin-page-title" data-page-title="localities"><span class="admin-eyebrow">SERVICE AREAS</span><h2>Varanasi Localities Master</h2><p>Serve only admin-approved localities; customers must select one before entering their address.</p></div>
 <div class="admin-page-title" data-page-title="customers"><span class="admin-eyebrow">ACCOUNT RECORDS</span><h2>Customers Master</h2><p>Search customer profiles, addresses and order history. Private data is available only after administrator sign-in.</p></div>
 <div class="admin-page-title" data-page-title="partners"><span class="admin-eyebrow">DELIVERY TEAM</span><h2>Delivery Partners Master</h2><p>Review partner profiles, active status and delivery performance. Use Delivery administration for edits and assignments.</p><a class="btn secondary admin-title-action" href="https://programmer-s-picnic.github.io/delivery-app/web/" target="_blank" rel="noopener noreferrer">Open delivery administration ↗</a></div>
@@ -80,7 +80,7 @@
  </details>
  <div class="ops-kpis" id="opsKpis" aria-label="Operation queue totals"></div>
  <div class="ops-layout">
-  <div class="ops-list-column"><div class="ops-list-top"><h3>Work queue</h3><label class="ops-search-label"><span class="sr-only">Search orders</span><input type="search" id="opsSearch" placeholder="Order ID, name, mobile or locality" autocomplete="off"></label><div class="ops-filter-line"><label for="opsQueue">Show</label><select id="opsQueue"><option value="new">New orders</option><option value="payment">UPI verification</option><option value="packing">Preparing / packing</option><option value="unassigned">Awaiting assignment</option><option value="active">Active deliveries</option><option value="exceptions">Exceptions</option><option value="completed">Completed</option><option value="all">All orders</option></select></div><p id="opsCount" class="ops-muted" role="status"></p></div><div id="opsList" class="ops-queue-list" role="list" aria-label="Orders awaiting work"></div><div class="ops-paging"><button id="opsPrev" type="button" class="btn secondary" disabled>Previous</button><span id="opsPage">Page 1</span><button id="opsNext" type="button" class="btn secondary" disabled>Next</button></div></div>
+  <div class="ops-list-column"><div class="ops-list-top"><h3>Work queue</h3><label class="ops-search-label"><span class="sr-only">Search orders</span><input type="search" id="opsSearch" placeholder="Daily # (10-10-26-001), ID, name or mobile" autocomplete="off"></label><div class="ops-filter-line"><label for="opsQueue">Show</label><select id="opsQueue"><option value="new">New orders</option><option value="payment">UPI verification</option><option value="packing">Preparing / packing</option><option value="unassigned">Awaiting assignment</option><option value="active">Active deliveries</option><option value="exceptions">Exceptions</option><option value="completed">Completed</option><option value="all">All orders</option></select></div><p id="opsCount" class="ops-muted" role="status"></p></div><div id="opsList" class="ops-queue-list" role="list" aria-label="Orders awaiting work"></div><div class="ops-paging"><button id="opsPrev" type="button" class="btn secondary" disabled>Previous</button><span id="opsPage">Page 1</span><button id="opsNext" type="button" class="btn secondary" disabled>Next</button></div></div>
   <div class="ops-detail-column"><div class="ops-detail-heading"><h3>Selected order</h3><span id="opsDetailStatus" class="ops-muted">Select an order from the queue</span></div><div id="opsDetail" class="ops-detail" role="region" aria-label="Selected order processing details"><p class="ops-muted">Sign in and select an order to review its items, payment, packing and delivery.</p></div><p id="opsMessage" role="status" aria-live="polite"></p></div>
  </div>
  <div class="ops-tools"><a href="#ordersPanel">Legacy order tools</a><a href="products.html#productsPanel">Product catalog</a><a href="customers.html#recordsPanel">Customer records</a><a href="https://programmer-s-picnic.github.io/delivery-app/web/">Advanced delivery management</a></div>
@@ -286,7 +286,7 @@
  <p class="hint">Each page uses the same server-side data and 30-minute administrator session. Do not use the Back button to repeat submissions. Refresh the relevant queue or records after a change.</p>
  <div class="admin-help-grid">
   <article><h3>1 · Operations Desk</h3><ol><li><a href="./">Open Operations Desk</a> and unlock with the administrator password.</li><li>Review the New orders queue, quantities, address, contact details and totals before confirming.</li><li>Review UPI evidence or collect cash on delivery. Mark payment paid only after actual verification or collection.</li><li>Prepare items, print a packing checklist, then import for delivery if needed.</li><li>Assign an active partner, track progress, and check exceptions before closing the day.</li></ol></article>
-  <article><h3>2 · Products Master</h3><ol><li><a href="products.html">Open Products Master</a> and review Store settings.</li><li>Add categories before products. Update product details, price, stock availability and images in the catalog grid.</li><li><strong>Media Library:</strong> choose a JPEG, PNG or WebP picture (up to 4 MB), select <em>Upload picture</em>, and wait for its permanent HTTPS URL. Click <em>Choose uploaded picture</em> inside a product or <em>Choose picture</em> next to a category to assign the URL. Review the preview and Save to server to publish; an uploaded file alone does not change the live catalogue.</li><li>Insert, Update and Delete edit a <strong>local draft</strong>, not the live catalog.</li><li>Choose Validate catalog, then Save to server to publish.</li><li>Use Download backup before important bulk changes. Reload published catalog only when it is safe to discard unsaved edits.</li></ol></article>
+  <article><h3>2 · Products Master</h3><ol><li><a href="products.html">Open Products Master</a> and review Store settings.</li><li>Add categories before products. Update product details, price, stock availability and images in the catalog grid.</li><li><strong>Media Library:</strong> choose a JPEG, PNG or WebP picture (up to 4 MB), select <em>Upload picture</em>, and wait for its permanent HTTPS URL. Click <em>Choose uploaded picture</em> inside a product or <em>Choose picture</em> next to a category to assign the URL. Review the preview and Save to server to publish; an uploaded file alone does not change the live catalogue.</li><li><strong>Alternative search words:</strong> Edit a product and enter terms such as bhindi, ladyfinger, okra, भिंडी. Use Add words to make removable chips, test customer search, then Validate catalog and Save to server. Maximum 20 unique words, 60 characters each. Customer website and upgraded Android app will match these aliases.</li><li>Insert, Update and Delete edit a <strong>local draft</strong>, not the live catalog.</li><li>Choose Validate catalog, then Save to server to publish.</li><li>Use Download backup before important bulk changes. Reload published catalog only when it is safe to discard unsaved edits.</li></ol></article>
   <article><h3>3 · Customers Master</h3><ol><li><a href="customers.html">Open Customers Master</a> and unlock private records.</li><li>Search by customer name or mobile number.</li><li>Open row details to inspect saved addresses and historical orders where available.</li><li>Use Operations Desk for any order processing or customer delivery follow-up.</li><li>Customer profiles are <strong>read-only</strong> in this initial release; do not expect edit or delete controls.</li></ol></article>
   <article><h3>4 · Delivery Partners Master</h3><ol><li><a href="delivery-partners.html">Open Delivery Partners Master</a> and check registered partners, active status and jobs.</li><li>Search or view details here; private records are read-only.</li><li>For creating/editing partners, photographs, credentials or changing assignments, open <a href="https://programmer-s-picnic.github.io/delivery-app/web/" target="_blank" rel="noopener noreferrer">Delivery administration ↗</a>.</li><li>Use the Operations Desk to track current customer-order dispatches and resend handoff details through existing delivery tools.</li></ol></article>
  </div>
@@ -302,13 +302,13 @@
 </footer>
 <script src="auth-dialog.js?v=20261001-icons" defer></script>
 <script src="media-library.js?v=20261009-media-v1" defer></script>
-<script src="catalog.js?v=20261009-media-v1" defer>
+<script src="catalog.js?v=20261014-keywords-v1" defer>
 </script>
 <script src="packing.js?v=20261008-checklist" defer></script>
-<script src="orders.js?v=20261008-client12" defer>
+<script src="orders.js?v=20261010-mandi-v1" defer>
 </script>
 <script src="records.js?v=20261011-partner-names" defer></script>
-<script src="operations-desk.js?v=20261009-ops-help" defer></script>
+<script src="operations-desk.js?v=20261010-mandi-v3" defer></script>
 <script src="../shared/password-ui.js?v=20261001-access" defer></script>
 <script src="admin-pages.js?v=20261009-localities-v1" defer></script>
 <script src="localities.js?v=20261009-localities-v1" defer></script>

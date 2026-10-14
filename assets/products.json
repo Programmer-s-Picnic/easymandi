@@ -32,7 +32,15 @@
         "enabled": true,
         "minimumQuantity": 5,
         "unitPrice": 36
-      }
+      },
+      "searchKeywords": [
+        "pyaz",
+        "pyaaz",
+        "pyaj",
+        "kanda",
+        "प्याज़",
+        "कांदा"
+      ]
     },
     {
       "id": "potato",
@@ -48,7 +56,13 @@
         "enabled": true,
         "minimumQuantity": 5,
         "unitPrice": 31.5
-      }
+      },
+      "searchKeywords": [
+        "aloo",
+        "alu",
+        "batata",
+        "आलु"
+      ]
     },
     {
       "id": "tomato",
@@ -64,7 +78,11 @@
         "enabled": true,
         "minimumQuantity": 5,
         "unitPrice": 45
-      }
+      },
+      "searchKeywords": [
+        "tamatar",
+        "tamato"
+      ]
     },
     {
       "id": "carrot",
@@ -80,7 +98,11 @@
         "enabled": true,
         "minimumQuantity": 5,
         "unitPrice": 31.5
-      }
+      },
+      "searchKeywords": [
+        "gajar",
+        "gaajar"
+      ]
     },
     {
       "id": "cauliflower",
@@ -96,7 +118,14 @@
         "enabled": true,
         "minimumQuantity": 5,
         "unitPrice": 40.5
-      }
+      },
+      "searchKeywords": [
+        "gobhi",
+        "gobi",
+        "phool gobhi",
+        "phoolgobi",
+        "फूल गोभी"
+      ]
     },
     {
       "id": "cabbage",
@@ -112,7 +141,13 @@
         "enabled": true,
         "minimumQuantity": 5,
         "unitPrice": 36
-      }
+      },
+      "searchKeywords": [
+        "patta gobhi",
+        "patta gobi",
+        "band gobhi",
+        "पत्ता गोभी"
+      ]
     },
     {
       "id": "spinach",
@@ -128,7 +163,11 @@
         "enabled": true,
         "minimumQuantity": 5,
         "unitPrice": 22.5
-      }
+      },
+      "searchKeywords": [
+        "palak",
+        "paalak"
+      ]
     },
     {
       "id": "coriander",
@@ -144,7 +183,13 @@
         "enabled": true,
         "minimumQuantity": 5,
         "unitPrice": 13.5
-      }
+      },
+      "searchKeywords": [
+        "dhaniya",
+        "dhania",
+        "cilantro",
+        "धनिया पत्ती"
+      ]
     },
     {
       "id": "green_chilli",
@@ -160,7 +205,14 @@
         "enabled": true,
         "minimumQuantity": 5,
         "unitPrice": 13.5
-      }
+      },
+      "searchKeywords": [
+        "hari mirch",
+        "hari mirchi",
+        "green chili",
+        "mirch",
+        "मिर्च"
+      ]
     },
     {
       "id": "ginger",
@@ -176,7 +228,12 @@
         "enabled": true,
         "minimumQuantity": 5,
         "unitPrice": 36
-      }
+      },
+      "searchKeywords": [
+        "adrak",
+        "adarak",
+        "अदरख"
+      ]
     },
     {
       "id": "garlic",
@@ -192,7 +249,13 @@
         "enabled": true,
         "minimumQuantity": 5,
         "unitPrice": 40.5
-      }
+      },
+      "searchKeywords": [
+        "lahsun",
+        "lehsun",
+        "lasun",
+        "लहसून"
+      ]
     }
   ],
   "checkout": {
