@@ -74,7 +74,11 @@ let mandiSelected=new Set();
 let mandiFilter='all';
 let productPage=1, productSort='name', productAscending=true, editingProduct=null, productMode='insert';
 const pageSize=10;
-const productSpecs=[['ID','id'],['English name','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price (₹)','price'],['Emoji','emoji'],['Photo HTTPS URL (optional)','imageUrl'],['Compare-at price = market price ₹ (optional)','compareAtPrice'],['Description','description']];
+const keywordKey=word=>String(word).normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase();
+const splitKeywords=raw=>String(raw||'').split(/[,;\n]/).map(w=>w.trim().replace(/\s+/g,' ')).filter(Boolean);
+function uniqueKeywords(words){const seen=new Set(),list=[];for(const word of words){const k=keywordKey(word);if(!seen.has(k)){seen.add(k);list.push(word);}}return list;}
+const productSearchText=p=>[p.id,p.name,p.hindi,p.category,...(Array.isArray(p.searchKeywords)?p.searchKeywords:[])].join(' ').toLocaleLowerCase();
+const productSpecs=[['ID','id'],['English name','name'],['Hindi name','hindi'],['Search words','searchKeywords'],['Category','category'],['Unit','unit'],['Price (₹)','price'],['Emoji','emoji'],['Photo HTTPS URL (optional)','imageUrl'],['Compare-at price = market price ₹ (optional)','compareAtPrice'],['Description','description']];
 function productErrors(p, original){
   const errors={};
   if(!/^[a-z0-9_-]{1,64}$/.test(p.id||''))errors.id='Use 1–64 lowercase letters, numbers, underscores or hyphens.';
@@ -91,6 +95,10 @@ function productErrors(p, original){
   if(p.compareAtPrice!=='' && p.compareAtPrice!=null &&
       (!Number.isFinite(Number(p.compareAtPrice))||Number(p.compareAtPrice)<=Number(p.price)||Number(p.compareAtPrice)>1000000))
     errors.compareAtPrice='Comparison price must be greater than the actual price.';
+  if(!Array.isArray(p.searchKeywords)||p.searchKeywords.length>20||
+     p.searchKeywords.some(w=>typeof w!=='string'||!w.trim()||w!==w.trim()||Array.from(w).length>60||/[\x00-\x1f\x7f]/.test(w))||
+     new Set(p.searchKeywords.map(keywordKey)).size!==p.searchKeywords.length)
+     errors.searchKeywords='Enter up to 20 unique search words, 1–60 characters each.';
   if(!original&&data.products.length>=500)errors.id='The catalog supports at most 500 products.';
   return errors;
 }
@@ -124,6 +132,48 @@ function openProduct(original=null, mode='insert'){
     }
     root.append(wrap);
   }
+  let chosenKeywords=Array.isArray(value.searchKeywords)?[...value.searchKeywords]:[];
+  const box=document.createElement('div');box.className='field wide keyword-panel';
+  const label=document.createElement('label');label.setAttribute('for','product_keywordEntry');
+  label.textContent='Search words / alternative names';
+  const help=document.createElement('small');help.textContent='Enter English, Hindi or Roman Hindi terms. Separate multiple words with commas, semicolons or new lines. Maximum 20.';
+  const chips=document.createElement('div');chips.className='keyword-chips';
+  const line=document.createElement('div');line.className='row';
+  const input=document.createElement('input');input.id='product_keywordEntry';input.placeholder='bhindi, ladyfinger, okra, भिंडी';input.disabled=mode==='delete';
+  const add=document.createElement('button');add.type='button';add.className='btn secondary';add.textContent='Add words';add.disabled=mode==='delete';
+  const error=document.createElement('small');error.id='product_error_searchKeywords';error.className='field-error';
+  const preview=document.createElement('div');preview.className='keyword-preview';
+  const test=document.createElement('input');test.type='search';test.id='product_keywordPreview';test.placeholder='Test customer search';test.setAttribute('aria-label','Test search words');
+  const result=document.createElement('small');result.setAttribute('role','status');
+  const collect=()=>uniqueKeywords([...chosenKeywords,...splitKeywords(input.value)]);
+  function showTest(){
+    const q=keywordKey(test.value), cq=q.replace(/[\s_-]+/g,'');
+    result.textContent=!q?'Try a customer search word':
+      [value.name,value.hindi,...collect()].some(w=>{
+        const n=keywordKey(w);return n.includes(q)||n.replace(/[\s_-]+/g,'').includes(cq);
+      })?'✓ Product will be found':'No match; add another search word';
+  }
+  function drawChips(){
+    chips.replaceChildren();
+    for(const word of chosenKeywords){
+      const chip=document.createElement('span');chip.className='keyword-chip';chip.append(document.createTextNode(word));
+      if(mode!=='delete'){
+        const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label','Remove search word '+word);
+        x.onclick=()=>{chosenKeywords=chosenKeywords.filter(w=>w!==word);drawChips();showTest();};chip.append(x);
+      }
+      chips.append(chip);
+    }
+  }
+  add.onclick=()=>{
+    const words=collect();
+    if(words.length>20||words.some(w=>Array.from(w).length>60)){error.textContent='Use at most 20 unique words of up to 60 characters.';return;}
+    chosenKeywords=words;input.value='';error.textContent='';drawChips();showTest();
+  };
+  input.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();add.click();}});
+  test.addEventListener('input',showTest);
+  line.append(input,add);preview.append(test,result);box.append(label,help,chips,line,error,preview);root.append(box);
+  root.getSearchKeywords=collect;
+  drawChips();showTest();
   const wrap=document.createElement('label');wrap.className='row';
   const check=document.createElement('input');check.id='product_available';check.type='checkbox';check.checked=!!value.available;check.disabled=mode==='delete';
   wrap.append(check,document.createTextNode('Available to order'));root.append(wrap);
@@ -148,7 +198,7 @@ function renderProducts(){
   for(const name of data.categories){const o=document.createElement('option');o.value=name;o.textContent=name;category.append(o);}
   category.value=data.categories.includes(selected)?selected:'All';
   const query=$('filter').value.trim().toLocaleLowerCase(), available=$('productAvailabilityFilter').value||'all';
-  const rows=data.products.filter(p=>(p.name+' '+p.hindi+' '+p.id+' '+p.category).toLocaleLowerCase().includes(query)&&(category.value==='All'||p.category===category.value)&&(available==='all'||Boolean(p.available)===(available==='yes'))&&(mandiFilter==='all'||Boolean(p.mandi?.enabled)===(mandiFilter==='enabled')));
+  const rows=data.products.filter(p=>productSearchText(p).includes(query)&&(category.value==='All'||p.category===category.value)&&(available==='all'||Boolean(p.available)===(available==='yes'))&&(mandiFilter==='all'||Boolean(p.mandi?.enabled)===(mandiFilter==='enabled')));
   rows.sort((a,b)=>{const result=productSort==='price'?Number(a.price)-Number(b.price):productSort==='mandi'?Number(a.mandi?.unitPrice??a.price)-Number(b.mandi?.unitPrice??b.price):String(a[productSort]??'').localeCompare(String(b[productSort]??''));return productAscending?result:-result;});
   const pages=Math.max(1,Math.ceil(rows.length/pageSize));productPage=Math.min(productPage,pages);
   const bulk=document.createElement('div');bulk.className='row mandi-bulk-toolbar';
@@ -199,7 +249,7 @@ function renderProducts(){
     pick.checked=mandiSelected.has(p.id);pick.setAttribute('aria-label','Select '+p.name+' for Mandi bulk pricing');
     pick.onchange=()=>{if(pick.checked)mandiSelected.add(p.id);else mandiSelected.delete(p.id);};
     selectedCell.append(pick);row.append(selectedCell);
-    for(const value of [p.id,(p.emoji||'')+' '+p.name,p.hindi,p.category,p.unit,'₹'+Number(p.price).toFixed(2),p.mandi?.enabled?'₹'+Number(p.mandi.unitPrice).toFixed(2)+' from '+p.mandi.minimumQuantity:'Not set',p.available?'Yes':'No']){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
+    for(const value of [p.id,(p.emoji||'')+' '+p.name,p.hindi,(Array.isArray(p.searchKeywords)?p.searchKeywords:[]).join(', '),p.category,p.unit,'₹'+Number(p.price).toFixed(2),p.mandi?.enabled?'₹'+Number(p.mandi.unitPrice).toFixed(2)+' from '+p.mandi.minimumQuantity:'Not set',p.available?'Yes':'No']){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
     const cell=document.createElement('td');const controls=document.createElement('div');controls.className='row';
     for(const [label,mode] of [['Update','update'],['Delete','delete']]){const button=document.createElement('button');button.type='button';button.className=mode==='delete'?'btn danger':'btn secondary';button.textContent=label;button.setAttribute('aria-label',label+' '+p.name);button.onclick=()=>openProduct(p,mode);controls.append(button);}
     cell.append(controls);row.append(cell);body.append(row);
@@ -218,9 +268,11 @@ $('productForm').onsubmit=event=>{
     const value={...(editingProduct||{})};
     for(const [,key] of productSpecs)value[key]=$('product_'+key).value.trim();
     value.available=$('product_available').checked;
+    value.searchKeywords=$('productFields').getSearchKeywords?.()||[];
     const errors=productErrors(value,editingProduct);
     for(const [,key] of productSpecs){$('product_error_'+key).textContent=errors[key]||'';$('product_'+key).setAttribute('aria-invalid',errors[key]?'true':'false');}
-    if(Object.keys(errors).length){$('productFormMessage').textContent='Please correct the highlighted fields.';$('product_'+Object.keys(errors)[0]).focus();return;}
+    $('product_error_searchKeywords').textContent=errors.searchKeywords||'';
+    if(Object.keys(errors).length){$('productFormMessage').textContent='Please correct the highlighted fields.';const first=Object.keys(errors)[0];$(first==='searchKeywords'?'product_keywordEntry':'product_'+first).focus();return;}
     const minimum=Number($('product_mandiMin').value);
     let unitPrice=Number($('product_mandiPrice').value);
     if(!editingProduct&&unitPrice===0&&Number(value.price)>0)
@@ -355,6 +407,10 @@ function validate(){
     if(!Number.isFinite(p.price)||p.price<0)errors.push(prefix+'price must be zero or greater');
     if(p.imageUrl && (!/^https:\/\/[^\s/]+\/[^\s]*$/i.test(p.imageUrl)||p.imageUrl.length>500))
       errors.push(prefix+'photo URL must be HTTPS');
+    if(!Array.isArray(p.searchKeywords??[])||(p.searchKeywords||[]).length>20||
+      (p.searchKeywords||[]).some(w=>typeof w!=='string'||!w.trim()||w!==w.trim()||Array.from(w).length>60)||
+      new Set((p.searchKeywords||[]).map(keywordKey)).size!==(p.searchKeywords||[]).length)
+      errors.push(prefix+'search words must be unique (max 20, 60 characters each)');
     if(p.compareAtPrice!=null && (!Number.isFinite(p.compareAtPrice)||p.compareAtPrice<=p.price))
       errors.push(prefix+'comparison price must exceed selling price');
   }if(errors.length){
