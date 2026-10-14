@@ -3,6 +3,9 @@ class Product {
       : id = json['id'] as String,
         name = json['name'] as String,
         hindi = json['hindi'] as String? ?? '',
+        searchKeywords = json['searchKeywords'] is List
+            ? (json['searchKeywords'] as List).whereType<String>().toList(growable:false)
+            : const <String>[],
         category = json['category'] as String,
         unit = json['unit'] as String,
         price = json['price'] as num,
@@ -17,6 +20,7 @@ class Product {
         mandiPrice = json['mandi'] is Map && (json['mandi'] as Map)['unitPrice'] is num
             ? (json['mandi'] as Map)['unitPrice'] as num : json['price'] as num;
   final String id, name, hindi, category, unit, description, emoji;
+  final List<String> searchKeywords;
   final num price;
   final bool available;
   final String imageUrl;
@@ -24,6 +28,26 @@ class Product {
   final bool mandiEnabled;
   final int mandiQuantity;
   final num mandiPrice;
+  static String _normaliseSearch(String value)=>value.toLowerCase().trim().replaceAll(RegExp(r'\s+'),' ');
+  static String _compactSearch(String value)=>value.replaceAll(RegExp(r'[\s_-]+'),'');
+  int? searchRank(String input){
+    final q=_normaliseSearch(input);
+    if(q.isEmpty)return 0;
+    final cq=_compactSearch(q);
+    final names=[name,hindi].where((s)=>s.isNotEmpty).map(_normaliseSearch).toList();
+    final aliases=searchKeywords.map(_normaliseSearch).toList();
+    bool exact(String v)=>v==q||_compactSearch(v)==cq;
+    bool prefix(String v)=>v.startsWith(q)||_compactSearch(v).startsWith(cq);
+    bool contains(String v)=>v.contains(q)||_compactSearch(v).contains(cq);
+    if(names.any(exact))return 0;
+    if(aliases.any(exact))return 1;
+    if(names.any(prefix))return 2;
+    if(aliases.any(prefix))return 3;
+    if(names.any(contains))return 4;
+    if(aliases.any(contains))return 5;
+    if(contains(_normaliseSearch(category)))return 6;
+    return null;
+  }
   bool mandiActive(int quantity)=>mandiEnabled && mandiQuantity>=2 && mandiQuantity<=99 && mandiPrice>0 && mandiPrice<price && quantity>=mandiQuantity;
   num unitPrice(int quantity)=>mandiActive(quantity)?mandiPrice:price;
   num lineTotal(int quantity)=>(unitPrice(quantity)*quantity*100).round()/100;
