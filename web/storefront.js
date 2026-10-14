@@ -216,6 +216,27 @@ window.EasyMandiCatalog=Object.freeze({
     if(data)render();
   }
 });
+function normalizedProductSearch(value){
+  return String(value??'').normalize('NFKC').trim().toLocaleLowerCase().replace(/\s+/g,' ');
+}
+function productSearchScore(p, input){
+  const q=normalizedProductSearch(input);if(!q)return 0;
+  const compact=s=>s.replace(/[\s_-]+/g,'');
+  const cq=compact(q);
+  const names=[p.name,p.hindi].filter(Boolean).map(normalizedProductSearch);
+  const aliases=(Array.isArray(p.searchKeywords)?p.searchKeywords:[]).filter(w=>typeof w==='string').map(normalizedProductSearch);
+  const exact=w=>w===q||compact(w)===cq;
+  const prefix=w=>w.startsWith(q)||compact(w).startsWith(cq);
+  const has=w=>w.includes(q)||compact(w).includes(cq);
+  if(names.some(exact))return 0;
+  if(aliases.some(exact))return 1;
+  if(names.some(prefix))return 2;
+  if(aliases.some(prefix))return 3;
+  if(names.some(has))return 4;
+  if(aliases.some(has))return 5;
+  if(has(normalizedProductSearch(p.category)))return 6;
+  return null;
+}
 function render(){
   if(!data)return;
   const valid=new Set(data.products.filter(p=>p.available).map(p=>p.id));
@@ -244,8 +265,9 @@ function render(){
     };
     el('filters').append(b)
   });
-  const q=el('search').value.toLocaleLowerCase();
-  let list=data.products.filter(p=>(category==='All'||p.category===category)&&(!favoritesOnly||favoriteIds.has(String(p.id)))&&(p.name+' '+p.hindi+' '+p.category).toLocaleLowerCase().includes(q));
+  const q=normalizedProductSearch(el('search').value);
+  let list=data.products.filter(p=>(category==='All'||p.category===category)&&(!favoritesOnly||favoriteIds.has(String(p.id)))&&productSearchScore(p,q)!==null);
+  if(q)list.sort((a,b)=>productSearchScore(a,q)-productSearchScore(b,q));
   if(category==='All'&&!q&&popularIds.length){
     const ranks=new Map(popularIds.map((id,index)=>[id,index]));
     list=[...list].sort((a,b)=>(ranks.get(String(a.id))??999)-(ranks.get(String(b.id))??999));
@@ -258,7 +280,7 @@ function render(){
   }
   el('products').innerHTML='';
   for(const p of list)el('products').append(createProductCard(p));
-  if(!list.length)el('products').textContent=t('noProducts');
+  if(!list.length)el('products').textContent=q?'No matching products / कोई मिलान नहीं मिला। Try another name or spelling.':t('noProducts');
   el('basketButton').textContent=t('basket')+' · '+Object.values(cart).reduce((a,b)=>a+b,0);
   deliveryProgress();
   window.dispatchEvent(new Event('easy-mandi-catalog-rendered'));
