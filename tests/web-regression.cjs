@@ -141,6 +141,25 @@ const tick=()=>new Promise(r=>setImmediate(r));
   vm.runInContext("openProduct(data.products.find(p=>p.id==='test_product'),'update')",g.ctx);
   el('name').value='Updated product';await g.nodes.productForm.fire('submit');
   assert.equal(JSON.parse(g.storage.getItem('easy-mandi-admin-draft-v1')).products.at(-1).name,'Updated product');
+  // The separate authenticated keyword endpoint publishes only aliases.
+  const publishedKeywords=[];
+  g.ctx.window.AdminAccess={ensure:async()=>true};
+  g.ctx.window.AdminSession={headers:()=>({'X-Admin-Session':'signed-token'})};
+  g.ctx.AppHttp={fetch:async(url,options)=>{
+    assert.ok(url.endsWith('/admin-product-keywords.php'),'Search keywords must use the partial catalog endpoint');
+    assert.equal(options.method,'POST');
+    assert.equal(options.headers['X-Admin-Session'],'signed-token');
+    const body=JSON.parse(options.body);publishedKeywords.push(body);
+    return {ok:true,json:async()=>({saved:true,changed:true,productId:body.productId,previousVersion:null,version:'test-keyword-hash'})};
+  }};
+  vm.runInContext("openProduct(data.products.find(p=>p.id==='test_product'),'update')",g.ctx);
+  g.ctx.document.getElementById('product_keywordEntry').value='lady finger, ladyfinger';
+  await g.nodes.productPublishKeywords.fire('click');
+  assert.equal(publishedKeywords.length,1);
+  assert.equal(publishedKeywords[0].productId,'test_product');
+  assert.ok(publishedKeywords[0].searchKeywords.includes('lady finger'));
+  assert.ok(g.nodes.message.textContent.includes('published'),'Admin must confirm live publication');
+
   vm.runInContext("openProduct(data.products.find(p=>p.id==='test_product'),'delete')",g.ctx);
   await g.nodes.productCancel.fire('click');assert.equal(JSON.parse(g.storage.getItem('easy-mandi-admin-draft-v1')).products.length,before.products.length+1);
   vm.runInContext("openProduct(data.products.find(p=>p.id==='test_product'),'delete')",g.ctx);
