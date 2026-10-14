@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/playstore-customer-aab.yml'
       - 'lib/**'
+      - 'test/**'
+      - 'assets/**'
       - 'pubspec.yaml'
       - 'tool/make_icon.py'
   workflow_dispatch:
