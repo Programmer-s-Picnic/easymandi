@@ -60,6 +60,37 @@ const tick=()=>new Promise(r=>setImmediate(r));
  h.run(easy?'shared/api-client.js':'web/api-client.js');h.run(easy?'shared/admin-session.js':'web/admin-session.js');h.run(easy?'shared/notification-settings.js':'web/notification-settings.js');h.run(easy?'shared/notifications.js':'web/notifications.js');
  await h.ctx.AdminSession.login('test-password');assert.equal(h.ctx.AdminSession.headers()['X-Admin-Session'],'signed-token');assert.equal(h.ctx.AdminSession.headers()['X-Admin-Password'],undefined);
  const dock=new h.ctx.NotificationInbox(new Element(),async()=>({notifications:[{id:42,order_id:7,message:'Update',read_at:null}],unreadCount:1}),async id=>{assert.equal(id,42)});dock.active=true;await dock.refresh();assert.equal(dock.title.textContent,'Notifications · 1 unread');await dock.save(42);dock.destroy();
+ // Fully minimize both admin notification windows, but keep polling for genuinely new unread IDs.
+ const adminRoot=new Element('section');adminRoot.id='adminNotifications';
+ let adminFeed=[{id:42,audience:'admin',message:'Known order',read_at:null}];
+ const readAdmin=async()=>({notifications:adminFeed,unreadCount:adminFeed.filter(n=>!n.read_at).length});
+ const adminInbox=new h.ctx.NotificationInbox(adminRoot,readAdmin,async()=>{});
+ adminInbox.active=true;await adminInbox.refresh();adminInbox.show();
+ assert.equal(adminInbox.dialog.open,true);
+ adminInbox.minimizeCompletely();
+ assert.equal(adminInbox.dock.hidden,true,'full minimization hides the floating dock');
+ assert.equal(adminInbox.dialog.open,false,'full minimization closes notification history');
+ assert.ok(h.storage.getItem('easy-mandi-notifications-minimized-v1-admin'),'minimized state survives page refresh');
+ await adminInbox.refresh();
+ assert.equal(adminInbox.dock.hidden,true,'same notifications must not unhide the dock');
+ adminFeed=[{id:42,audience:'admin',message:'Known order',read_at:'2026-10-14'}];
+ await adminInbox.refresh();
+ assert.equal(adminInbox.dock.hidden,true,'marking old messages read must not unhide the dock');
+ adminFeed.push({id:43,audience:'admin',message:'New order',read_at:null});
+ await adminInbox.refresh();
+ assert.equal(adminInbox.dock.hidden,false,'new unread notification must restore the dock');
+ assert.equal(adminInbox.dialog.open,true,'new unread notification must reopen the modal');
+ adminInbox.minimizeCompletely();
+ // Simulate a full page reload sharing sessionStorage (the old page does not call destroy).
+ const reloaded=new h.ctx.NotificationInbox(adminRoot,readAdmin,async()=>{});
+ reloaded.active=true;await reloaded.refresh();
+ assert.equal(reloaded.dock.hidden,true,'minimized state survives a page reload');
+ adminFeed.push({id:44,audience:'admin',message:'Another new order',read_at:null});
+ await reloaded.refresh();
+ assert.equal(reloaded.dialog.open,true,'new unread notification reopens after a reload');
+ assert.equal(reloaded.dock.hidden,false);
+ adminInbox.destroy();reloaded.destroy();
+
  if(easy){
   const states=[['New',null],['Preparing','out_for_delivery'],['Delivered','delivered'],['Cancelled','cancelled']];
   h.ctx.fetch=async(url,options)=>{calls.push({url,options});return {ok:true,status:200,json:async()=>url.includes('admin-orders')?{orders:states.map(([status,delivery_status],i)=>({public_id:'ORDER'+i,status,delivery_status,items:[],total:10.75,subtotal:10.75,delivery_fee:0,created_at:'2026-09-30',customer_name:'Test',mobile:'9876543210',house:'12',locality:'Lanka',city:'Varanasi',state:'UP',pin:'221005'}))}:{notifications:[],unreadCount:0}}};
