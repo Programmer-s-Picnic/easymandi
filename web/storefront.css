@@ -637,3 +637,24 @@ padding:2px 6px;border-radius:6px;margin-top:4px;white-space:normal}
 
 /* Preserve contrast for both orange and green letters over the dark hero. */
 .hero-graphic img{background:#fffdf5;border:1px solid #ffffffcf;border-radius:20px;padding:12px;box-shadow:0 12px 32px #042b223d}
+
+/* Homepage APK downloads: lightweight, accessible and mobile-friendly. */
+.app-downloads{margin:18px 0 22px;padding:22px;border:1px solid #d5e6d9;border-radius:20px;background:linear-gradient(125deg,#ffffff,#f1f8f3)}
+.app-downloads-heading{margin-bottom:14px}
+.app-downloads-eyebrow{display:block;font-size:.7rem;font-weight:850;letter-spacing:.09em;color:#176b46}
+.app-downloads h2{font-size:clamp(1.25rem,3vw,1.6rem);margin:5px 0 3px;color:#173b2a}
+.app-downloads-heading p{margin:0;line-height:1.5;color:#516858;font-size:.9rem}
+.app-downloads-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.app-download-card{min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:11px;padding:15px;border-radius:14px;border:1px solid #cfdfd5;background:#fff;color:#174b33;text-decoration:none;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+.app-download-card-primary{border-color:#95c9a8;background:#f8fffa}
+.app-download-card:hover{transform:translateY(-2px);border-color:#176b46;box-shadow:0 5px 16px #143c2912}
+.app-download-card:focus-visible{outline:3px solid #176b46;outline-offset:3px}
+.app-download-icon{flex:none;width:37px;height:37px;display:grid;place-items:center;border-radius:11px;background:#e3f2e7;color:#176b46;font-size:1.45rem;font-weight:850}
+.app-download-copy{min-width:0;flex:1 1 140px;display:grid;gap:3px;overflow-wrap:anywhere}
+.app-download-copy strong{font-size:.92rem;line-height:1.25}
+.app-download-copy small{font-size:.76rem;line-height:1.4;color:#566e5e}
+.app-download-action{display:inline-block;border-radius:9px;background:#176b46;color:white;font-size:.79rem;font-weight:750;padding:9px 11px;text-align:center}
+.app-downloads-note{margin:12px 0 0;font-size:.78rem;color:#65766b}
+@media(max-width:880px){.app-downloads-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.app-download-card:last-child{grid-column:1 / -1}}
+@media(max-width:600px){.app-downloads{padding:16px}.app-downloads-grid{grid-template-columns:1fr}.app-download-card:last-child{grid-column:auto}.app-download-card{padding:13px}.app-download-action{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){.app-download-card{transition:none}.app-download-card:hover{transform:none}}
