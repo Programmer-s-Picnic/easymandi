@@ -26,7 +26,8 @@ for(const uri of attrs){
  if(uri.startsWith('#')||uri.startsWith('https://')||uri.startsWith('http://')||uri.startsWith('mailto:')||uri.startsWith('tel:')||uri==='/web/'||uri==='/')continue;
  const local=uri.split(/[?#]/,1)[0];
  if(!local)continue;
- const destination=path.resolve(root,'web',local);
+ // Site-root URLs (/apk/...) resolve from the repository root; relative URLs resolve against /web/.
+ const destination=local.startsWith('/') ? path.resolve(root,'.'+local) : path.resolve(root,'web',local);
  verify(destination.startsWith(root+path.sep),'asset path escaped the site root: '+uri);
  verify(fs.existsSync(destination),'asset referenced by homepage is missing: '+uri);
  count++;
