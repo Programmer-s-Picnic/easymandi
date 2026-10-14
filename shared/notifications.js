@@ -73,6 +73,18 @@
       this.dockCounts.className='notification-status-icons';
       this.dock.append(head,this.dockCounts,this.preview);
       document.body.append(this.dock);
+      // A small bell remains accessible after full minimization, without restoring the large dock.
+      if(this.isAdminInbox){
+        this.reopenButton=document.createElement('button');
+        this.reopenButton.type='button';
+        this.reopenButton.className='notification-reopen-button';
+        this.reopenButton.textContent='🔔 Reopen notifications';
+        this.reopenButton.title='Reopen the notification window';
+        this.reopenButton.setAttribute('aria-label','Reopen admin notifications');
+        this.reopenButton.hidden=true;
+        this.reopenButton.onclick=()=>this.reopenNotifications();
+        document.body.append(this.reopenButton);
+      }
 
       // Keep the compact notification box movable without interfering with its buttons.
       // Each role has its own browser-local position; no server or account data changes.
@@ -182,7 +194,9 @@
       document.body.append(this.dialog);
       this.view=root.closest('.view');
       this.syncView=()=>{
-        this.dock.hidden=!!this.view?.hidden||this.minimizedCompletely;
+        const viewHidden=!!this.view?.hidden;
+        this.dock.hidden=viewHidden||this.minimizedCompletely;
+        if(this.reopenButton)this.reopenButton.hidden=!this.minimizedCompletely||!this.active||viewHidden;
         document.body.classList.toggle('notification-admin-minimized',this.isAdminInbox&&this.minimizedCompletely);
       };
       if(this.view){
@@ -241,13 +255,16 @@
       if(this.preferences.dialog?.open)this.preferences.dialog.close();
       this.syncView();
     }
-    restoreOnNewNotifications(){
-      if(!this.minimizedCompletely)return;
+    reopenNotifications(){
+      if(!this.isAdminInbox||!this.minimizedCompletely)return;
       this.minimizedCompletely=false;
       try { sessionStorage.removeItem(this.minimizedStorageKey); } catch (_) {}
       this.syncView();
-      // A new unread alert restores the modal, not merely the floating preview.
       this.show();
+    }
+    restoreOnNewNotifications(){
+      // A new unread alert opens the full history just like the manual reopen control.
+      this.reopenNotifications();
     }
     destroy(){
       this.stop();
@@ -256,6 +273,7 @@
       this.observer?.disconnect();
       window.removeEventListener('resize',this.onDockResize);
       this.dock.remove();
+      this.reopenButton?.remove();
       this.dialog.remove();
       this.preferences.destroy();
     }
@@ -324,6 +342,7 @@
         if(incoming)this.preferences.notify((data.notifications||[]).filter(n=>freshIds.has(String(n.audience||n._audience||'')+':'+String(n.id))));
       }
       this.data=data;
+      this.syncView();
       this.title.textContent='Notifications · '+data.unreadCount+' unread';
       this.counts.textContent=data.unreadCount||'';
       this.counts.hidden=!data.unreadCount;
