@@ -31,7 +31,7 @@ jobs:
           sed -i 's/<application/<application android:allowBackup="false"/' android/app/src/main/AndroidManifest.xml
       - name: Create Easy Mandi launcher icon
         run: |
-          python3 -m pip install --user pillow
+          python3 -m pip install --user pillow cairosvg
           python3 tool/make_icon.py
       - name: Remove generated template checks
         run: rm -f test/widget_test.dart analysis_options.yaml

@@ -149,3 +149,6 @@ html[data-admin-page="localities"] #adminHelp{display:none!important}
 .ops-mandi-track{height:14px;border-radius:8px;overflow:hidden;background:#e3eae6}
 .ops-mandi-fill{height:100%;background:linear-gradient(90deg,#a4d7ba,#237648);border-radius:8px}
 @media(max-width:620px){.ops-mandi-row{grid-template-columns:1fr 1fr}.ops-mandi-track{grid-column:1/-1;grid-row:2}}
+
+/* Official ईज़ीमंडी brand on all Operations Desk pages. */
+.admin-rail-logo{background:transparent url('../web/favicon.svg?v=20261014-hindi-logo') center/contain no-repeat;color:transparent;font-size:0;border-radius:0}
