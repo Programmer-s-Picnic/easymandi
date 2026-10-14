@@ -277,8 +277,8 @@
 <h2 id="productTitle">Product record</h2>
 <p id="productFormMessage" role="alert"></p>
 <div id="productFields" class="grid"></div>
-<p class="hint">Changes are saved to this browser draft. Save to server publishes them.</p>
-<div class="row"><button id="productCancel" type="button" class="btn secondary">Cancel</button><button id="productSubmit" type="submit" class="btn">Update draft</button></div>
+<p class="hint">Product changes remain in your browser draft until Save to server. For existing products, search words publish directly when updated, or use Publish search words now to publish aliases without changing prices or stock.</p>
+<div class="row"><button id="productCancel" type="button" class="btn secondary">Cancel</button><button id="productPublishKeywords" type="button" class="btn secondary" hidden>Publish search words now</button><button id="productSubmit" type="submit" class="btn">Update draft</button></div>
 </form></dialog>
 <section class="admin-help" id="adminHelp" aria-labelledby="adminHelpTitle">
  <h2 id="adminHelpTitle">Easy Mandi · Staff working guide</h2>
@@ -301,7 +301,7 @@
 </footer>
 <script src="auth-dialog.js?v=20261001-icons" defer></script>
 <script src="media-library.js?v=20261009-media-v1" defer></script>
-<script src="catalog.js?v=20261014-keywords-v1" defer>
+<script src="catalog.js?v=20261014-keywords-publish-v2" defer>
 </script>
 <script src="packing.js?v=20261008-checklist" defer></script>
 <script src="orders.js?v=20261010-mandi-v1" defer>
