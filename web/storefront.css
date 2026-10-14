@@ -634,3 +634,6 @@ padding:2px 6px;border-radius:6px;margin-top:4px;white-space:normal}
 .site-footer .footer-brand img{width:108px;height:46px;object-fit:contain}
 @media(max-width:700px){header .brand-mark{width:126px;height:49px;object-fit:contain}header .brand-text{display:none}}
 @media(max-width:355px){header .brand-mark{width:104px;height:41px}}
+
+/* Preserve contrast for both orange and green letters over the dark hero. */
+.hero-graphic img{background:#fffdf5;border:1px solid #ffffffcf;border-radius:20px;padding:12px;box-shadow:0 12px 32px #042b223d}
