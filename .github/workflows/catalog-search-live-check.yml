@@ -38,6 +38,18 @@ jobs:
           console.log('LIVE_HTML_REFERENCES_KEYWORD_SCRIPT='+html.includes('storefront.js?v=20261014-keywords-v1'));
           console.log('LIVE_SCRIPT_SEARCHES_ALIAS_ARRAY='+js.includes('p.searchKeywords'));
           console.log('LIVE_SCRIPT_HAS_SEARCH_SCORE='+js.includes('function productSearchScore('));
+          const vm=require('node:vm');
+          const start=js.indexOf('function normalizedProductSearch('),end=js.indexOf('function render(){',start);
+          if(start<0||end<0)throw Error('Live customer search code not found');
+          const ctx=vm.createContext({});
+          vm.runInContext(js.slice(start,end),ctx);
+          for(const [keyword,expectedId] of [['bhindi','pttred01'],['ladyfinger','pttred01'],['okra','pttred01'],['भिंडी','pttred01'],['aloo','potato'],['karela','bittergourd']]){
+            const matches=products.filter(p=>ctx.productSearchScore(p,keyword)!==null).map(p=>p.id);
+            if(!matches.includes(expectedId))throw Error('Live search failed for '+keyword+' -> '+expectedId);
+            console.log('LIVE_SEARCH_PASS='+keyword+':'+expectedId);
+          }
+          if(withAliases.length<30)throw Error('Missing live search aliases for most products');
+
           const headers=fs.readFileSync('/tmp/easy-catalog-headers','utf8');
           console.log('LIVE_API_ALLOW_ORIGIN='+((headers.match(/access-control-allow-origin:[^\r\n]*/i)||[])[0]||'MISSING'));
           console.log('LIVE_API_ETAG='+((headers.match(/etag:[^\r\n]*/i)||[])[0]||'MISSING'));
