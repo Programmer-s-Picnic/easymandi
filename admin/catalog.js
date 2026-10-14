@@ -78,7 +78,7 @@ const keywordKey=word=>String(word).normalize('NFKC').trim().replace(/\s+/g,' ')
 const splitKeywords=raw=>String(raw||'').split(/[,;\n]/).map(w=>w.trim().replace(/\s+/g,' ')).filter(Boolean);
 function uniqueKeywords(words){const seen=new Set(),list=[];for(const word of words){const k=keywordKey(word);if(!seen.has(k)){seen.add(k);list.push(word);}}return list;}
 const productSearchText=p=>[p.id,p.name,p.hindi,p.category,...(Array.isArray(p.searchKeywords)?p.searchKeywords:[])].join(' ').toLocaleLowerCase();
-const productSpecs=[['ID','id'],['English name','name'],['Hindi name','hindi'],['Search words','searchKeywords'],['Category','category'],['Unit','unit'],['Price (₹)','price'],['Emoji','emoji'],['Photo HTTPS URL (optional)','imageUrl'],['Compare-at price = market price ₹ (optional)','compareAtPrice'],['Description','description']];
+const productSpecs=[['ID','id'],['English name','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price (₹)','price'],['Emoji','emoji'],['Photo HTTPS URL (optional)','imageUrl'],['Compare-at price = market price ₹ (optional)','compareAtPrice'],['Description','description']];
 function productErrors(p, original){
   const errors={};
   if(!/^[a-z0-9_-]{1,64}$/.test(p.id||''))errors.id='Use 1–64 lowercase letters, numbers, underscores or hyphens.';
@@ -235,7 +235,7 @@ function renderProducts(){
   const table=document.createElement('table');table.className='product-grid';
   const caption=document.createElement('caption');caption.textContent='Product records';table.append(caption);
   const head=document.createElement('thead'), header=document.createElement('tr');
-  for(const [label,key] of [['ID','id'],['Product','name'],['Hindi name','hindi'],['Category','category'],['Unit','unit'],['Price','price'],['Mandi rate','mandi'],['Available','available']]){
+  for(const [label,key] of [['ID','id'],['Product','name'],['Hindi name','hindi'],['Search words','searchKeywords'],['Category','category'],['Unit','unit'],['Price','price'],['Mandi rate','mandi'],['Available','available']]){
     const th=document.createElement('th');th.setAttribute('scope','col');th.setAttribute('aria-sort',productSort===key?(productAscending?'ascending':'descending'):'none');
     const button=document.createElement('button');button.type='button';button.className='sort-button';button.textContent=label+(productSort===key?(productAscending?' ↑':' ↓'):'');
     button.onclick=()=>{productAscending=productSort===key?!productAscending:true;productSort=key;productPage=1;renderProducts();};th.append(button);header.append(th);
