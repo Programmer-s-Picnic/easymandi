@@ -31,6 +31,7 @@ jobs:
           console.log('LIVE_CATALOG_PRODUCTS='+products.length);
           console.log('LIVE_PRODUCTS_WITH_KEYWORDS='+withAliases.length);
           console.log('LIVE_KEYWORDS_SAMPLES='+JSON.stringify(withAliases.slice(0,15).map(p=>({id:p.id,words:p.searchKeywords.slice(0,12)}))));
+          console.log('LIVE_CATALOG_PRODUCT_NAMES='+JSON.stringify(products.map(p=>({id:p.id,name:p.name,hindi:p.hindi,fields:Object.keys(p).filter(k=>/search|alias|keyword|tag/i.test(k))}))));
           console.log('LIVE_HAS_BHINDI_PRODUCT='+products.some(p=>[p.id,p.name,p.hindi].join(' ').toLowerCase().includes('bhindi')||String(p.hindi||'').includes('भिंडी')));
           const html=fs.readFileSync('/tmp/easy-live-index.html','utf8');
           const js=fs.readFileSync('/tmp/easy-live-storefront.js','utf8');
