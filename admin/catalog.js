@@ -109,6 +109,8 @@ function openProduct(original=null, mode='insert'){
   $('productTitle').textContent=mode==='delete'?'Delete product':mode==='insert'?'Insert product':'Update product';
   $('productSubmit').textContent=mode==='delete'?'Delete from draft':mode==='insert'?'Insert into draft':'Update draft';
   $('productSubmit').className=mode==='delete'?'btn danger':'btn';
+  $('productPublishKeywords').hidden=mode!=='update';
+  $('productPublishKeywords').disabled=mode!=='update';
   $('productFormMessage').textContent=mode==='delete'?'Review this record. Confirm deletion to remove it from the draft.':'';
   const root=$('productFields');root.replaceChildren();
   for(const [label,key] of productSpecs){
@@ -260,8 +262,57 @@ function renderProducts(){
   for(const [label,delta,disabled] of [['Previous',-1,productPage===1],['Next',1,productPage===pages]]){const button=document.createElement('button');button.type='button';button.className='btn secondary';button.textContent=label;button.disabled=disabled;button.onclick=()=>{productPage+=delta;renderProducts();};pager.append(button);}root.append(pager);
 }
 $('productCancel').onclick=()=>$('productDialog').close();
-$('productForm').onsubmit=event=>{
+function validKeywordList(words){
+  return Array.isArray(words) && words.length<=20 &&
+    words.every(w=>typeof w==='string'&&w.trim()&&w===w.trim()&&Array.from(w).length<=60&&!/[\x00-\x1f\x7f]/.test(w)) &&
+    new Set(words.map(keywordKey)).size===words.length;
+}
+async function publishKeywords(productId, words){
+  if(!validKeywordList(words)){
+    const message='Enter up to 20 unique search words (1–60 characters).';
+    $('product_error_searchKeywords').textContent=message;notify(message,'error');return false;
+  }
+  const button=$('productPublishKeywords');
+  button.disabled=true;
+  try{
+    await window.AdminAccess.ensure();
+    const response=await AppHttp.fetch('https://cserver.learnwithchampak.live/easymandi/api/admin-product-keywords.php',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',...window.AdminSession.headers()},
+      body:JSON.stringify({productId,searchKeywords:words})
+    });
+    const result=await response.json();
+    if(!response.ok)throw Error(result.error||'Could not publish product search words.');
+    // Only advance our draft revision if it is still based on the same server version.
+    if(version===result.previousVersion){
+      version=result.version;
+      localStorage.setItem(KEY+'-version',version);
+    }
+    const item=data.products.find(p=>p.id===productId);
+    if(item)item.searchKeywords=words;
+    persist();renderProducts();
+    notify('Search words published to the customer website. Refresh the market to search them.');
+    $('productFormMessage').textContent='✓ Search words are published on the server.';
+    return true;
+  }catch(error){
+    const message='Keywords remain in your draft but are NOT published: '+(error.message||'Server error');
+    notify(message,'error');
+    $('productFormMessage').textContent=message;
+    return false;
+  }finally{
+    button.disabled=false;
+  }
+}
+$('productPublishKeywords').onclick=async()=>{
+  if(productMode!=='update'||!editingProduct)return;
+  const words=$('productFields').getSearchKeywords?.()||[];
+  await publishKeywords(editingProduct.id,words);
+};
+$('productForm').onsubmit=async event=>{
   event.preventDefault();
+  const previousId=editingProduct?.id||null;
+  const oldWords=editingProduct?.searchKeywords||[];
+  let shouldPublishKeywords=false, wordsToPublish=[];
   if(productMode==='delete'){
     data.products=data.products.filter(p=>p!==editingProduct);
   }else{
@@ -290,10 +341,18 @@ $('productForm').onsubmit=event=>{
     if(value.compareAtPrice==='')delete value.compareAtPrice;
     else value.compareAtPrice=Number(value.compareAtPrice);
     if(!value.imageUrl)delete value.imageUrl;
+    shouldPublishKeywords=!!editingProduct && previousId===value.id &&
+      JSON.stringify(oldWords)!==JSON.stringify(value.searchKeywords);
+    wordsToPublish=value.searchKeywords;
     if(editingProduct)Object.assign(editingProduct,value);else data.products.push(value);
   }
   persist();renderProducts();renderCategories();$('productDialog').close();
-  notify((productMode==='delete'?'Product deleted':productMode==='insert'?'Product inserted':'Product updated')+' in the draft. Save to server to publish.');
+  if(shouldPublishKeywords){
+    notify('Product draft updated. Publishing search words to the live market…');
+    await publishKeywords(previousId,wordsToPublish);
+  }else{
+    notify((productMode==='delete'?'Product deleted':productMode==='insert'?'Product inserted':'Product updated')+' in the draft. Save to server to publish.');
+  }
 };
 for(const id of ['filter','productCategoryFilter','productAvailabilityFilter'])$(id).addEventListener(id==='filter'?'input':'change',()=>{productPage=1;renderProducts();});
 function renderCategories(){
