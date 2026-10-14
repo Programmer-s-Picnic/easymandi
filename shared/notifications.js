@@ -22,6 +22,20 @@
       head.append(this.title,expand);
       const hintedRole=String(root.id||'').match(/^(admin|customer|partner)Notifications$/)?.[1];
       const role=hintedRole||(window.location?.pathname?.includes('/admin/')?'admin':'customer');
+      this.isAdminInbox=role==='admin';
+      this.minimizedCompletely=false;
+      this.minimizedStorageKey='easy-mandi-notifications-minimized-v1-'+role;
+      // Keep a dismissed admin panel hidden on reload until a genuinely new unread ID arrives.
+      if(this.isAdminInbox){
+        try {
+          const saved=JSON.parse(sessionStorage.getItem(this.minimizedStorageKey)||'null');
+          if(saved?.minimized&&Array.isArray(saved.knownIds)){
+            this.minimizedCompletely=true;
+            this.lastIds=new Set(saved.knownIds.map(String));
+            this.lastFingerprint='__restored_minimized_baseline__';
+          }
+        } catch (_) { /* Session storage may be unavailable. */ }
+      }
       this.preferences=new window.NotificationPreferences(role);
       const settings=document.createElement('button');
       settings.type='button';
@@ -31,6 +45,16 @@
       settings.setAttribute('aria-label','Notification sound and vibration settings');
       settings.onclick=()=>this.preferences.open();
       head.append(settings);
+      if(this.isAdminInbox){
+        const minimizeDock=document.createElement('button');
+        minimizeDock.type='button';
+        minimizeDock.className='notification-minimize-completely';
+        minimizeDock.textContent='− Hide';
+        minimizeDock.title='Minimize completely until a new unread notification arrives';
+        minimizeDock.setAttribute('aria-label','Minimize notifications completely until a new unread notification arrives');
+        minimizeDock.onclick=()=>this.minimizeCompletely();
+        head.append(minimizeDock);
+      }
 
       const moveHandle=document.createElement('button');
       moveHandle.type='button';
@@ -117,7 +141,18 @@
       this.summary.className='notification-order-summary';
       const bar=document.createElement('div');bar.className='notification-window-bar';
       const grip=document.createElement('button');grip.type='button';grip.className='notification-drag-handle';grip.textContent='Notifications · drag to move';grip.setAttribute('aria-label','Move notifications window. Use arrow keys to move.');
-      bar.append(grip,close);
+      bar.append(grip);
+      if(this.isAdminInbox){
+        const minimizeWindow=document.createElement('button');
+        minimizeWindow.type='button';
+        minimizeWindow.className='notification-minimize-completely';
+        minimizeWindow.textContent='− Minimize completely';
+        minimizeWindow.title='Hide all notification windows until a new unread notification arrives';
+        minimizeWindow.setAttribute('aria-label','Minimize notifications completely until a new unread notification arrives');
+        minimizeWindow.onclick=()=>this.minimizeCompletely();
+        bar.append(minimizeWindow);
+      }
+      bar.append(close);
       const body=document.createElement('div');body.className='notification-window-body';body.append(this.summary,this.list);
       const resize=document.createElement('button');resize.type='button';resize.className='notification-resize-handle';resize.textContent='↘';resize.setAttribute('aria-label','Resize notifications window. Use arrow keys to resize.');
       this.dialog.append(bar,body,resize);
@@ -147,7 +182,8 @@
       document.body.append(this.dialog);
       this.view=root.closest('.view');
       this.syncView=()=>{
-        this.dock.hidden=!!this.view?.hidden;
+        this.dock.hidden=!!this.view?.hidden||this.minimizedCompletely;
+        document.body.classList.toggle('notification-admin-minimized',this.isAdminInbox&&this.minimizedCompletely);
       };
       if(this.view){
         this.observer=new MutationObserver(this.syncView);
@@ -188,6 +224,31 @@
       this.summary.append(grid);
       if(note){const help=document.createElement('p');help.className='hint';help.textContent=note;this.summary.append(help);}
     }
+    noticeKey(n){
+      return String(n.audience||n._audience||'')+':'+String(n.id);
+    }
+    minimizeCompletely(){
+      if(!this.isAdminInbox)return;
+      this.minimizedCompletely=true;
+      // Snapshot the known notification IDs; changing read state must never unhide the panel.
+      const knownIds=new Set((this.data.notifications||[]).map(n=>this.noticeKey(n)));
+      this.lastIds=knownIds;
+      this.lastFingerprint??=JSON.stringify((this.data.notifications||[]).map(n=>[n.id,n.message,n.read_at]));
+      try {
+        sessionStorage.setItem(this.minimizedStorageKey,JSON.stringify({minimized:true,knownIds:[...knownIds]}));
+      } catch (_) { /* The in-memory minimized state still works. */ }
+      if(this.dialog.open)this.dialog.close();
+      if(this.preferences.dialog?.open)this.preferences.dialog.close();
+      this.syncView();
+    }
+    restoreOnNewNotifications(){
+      if(!this.minimizedCompletely)return;
+      this.minimizedCompletely=false;
+      try { sessionStorage.removeItem(this.minimizedStorageKey); } catch (_) {}
+      this.syncView();
+      // A new unread alert restores the modal, not merely the floating preview.
+      this.show();
+    }
     destroy(){
       this.stop();
       window.removeEventListener('resize',this.fitWindow);
@@ -207,6 +268,11 @@
     }
     stop(){
       this.active=false;
+      this.minimizedCompletely=false;
+      if(this.isAdminInbox){
+        try { sessionStorage.removeItem(this.minimizedStorageKey); } catch (_) {}
+      }
+      this.syncView();
       this.seen.clear();
       this.lastFingerprint=undefined;
       this.lastIds=new Set();
@@ -239,12 +305,13 @@
       const previous=this.lastFingerprint;
       const changed=previous!==undefined&&previous!==fingerprint;
       const lastIds=this.lastIds||new Set();
-      const noticeKey=n=>String(n.audience||n._audience||'')+':'+String(n.id);
+      const noticeKey=n=>this.noticeKey(n);
       const newIds=new Set((data.notifications||[]).map(noticeKey));
       const freshIds=new Set(previous===undefined?[]:(data.notifications||[]).filter(n=>!n.read_at&&!lastIds.has(noticeKey(n))).map(noticeKey));
       const incoming=freshIds.size>0;
       this.lastFingerprint=fingerprint;
       this.lastIds=newIds;
+      if(incoming&&this.minimizedCompletely)this.restoreOnNewNotifications();
       if(changed){
         this.dock.classList.remove('notification-updated');
         void this.dock.offsetWidth;
@@ -280,8 +347,8 @@
       }
       for(const n of data.notifications){
         const row=document.createElement('article');
-        if(freshIds.has(noticeKey(n)))row.classList.add('notification-entry-new');
         row.className=n.read_at?'notification-entry':'notification-entry unread';
+        if(freshIds.has(noticeKey(n)))row.classList.add('notification-entry-new');
         row.style.background=n.read_at?'white':'#e8f2fc';
         const p=document.createElement('p');
         p.textContent=(n.read_at?'':'Unread · ')+n.message;
