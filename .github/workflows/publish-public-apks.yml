@@ -61,8 +61,6 @@ jobs:
             '.version==$version and .sourceCommit==$sha and (.workflowRun|type=="number")' \
             /tmp/easymandi-apks/delivery-build.json >/dev/null
           curl -fLsS --retry 5 "$DELIVERY/SHA256SUMS" -o /tmp/easymandi-apks/delivery-sha256sums
-          curl -fLsS --retry 5 "$CUSTOMER/EasyMandi-64.apk" -o /tmp/easymandi-apks/easymani64.apk
-          curl -fLsS --retry 5 "$CUSTOMER/EasyMandi-32.apk" -o /tmp/easymandi-apks/easymani32.apk
           curl -fLsS --retry 5 "$DELIVERY/DeliveryPartner.apk" -o /tmp/easymandi-apks/easymanideliverypartner.apk
 
           verify_sha() {
