@@ -149,7 +149,7 @@ function openProduct(original=null, mode='insert'){
   function showTest(){
     const q=keywordKey(test.value), cq=q.replace(/[\s_-]+/g,'');
     result.textContent=!q?'Try a customer search word':
-      [value.name,value.hindi,...collect()].some(w=>{
+      [$('product_name').value,$('product_hindi').value,...collect()].some(w=>{
         const n=keywordKey(w);return n.includes(q)||n.replace(/[\s_-]+/g,'').includes(cq);
       })?'✓ Product will be found':'No match; add another search word';
   }
@@ -408,7 +408,7 @@ function validate(){
     if(p.imageUrl && (!/^https:\/\/[^\s/]+\/[^\s]*$/i.test(p.imageUrl)||p.imageUrl.length>500))
       errors.push(prefix+'photo URL must be HTTPS');
     if(!Array.isArray(p.searchKeywords??[])||(p.searchKeywords||[]).length>20||
-      (p.searchKeywords||[]).some(w=>typeof w!=='string'||!w.trim()||w!==w.trim()||Array.from(w).length>60)||
+      (p.searchKeywords||[]).some(w=>typeof w!=='string'||!w.trim()||w!==w.trim()||Array.from(w).length>60||/[\x00-\x1f\x7f]/.test(w))||
       new Set((p.searchKeywords||[]).map(keywordKey)).size!==(p.searchKeywords||[]).length)
       errors.push(prefix+'search words must be unique (max 20, 60 characters each)');
     if(p.compareAtPrice!=null && (!Number.isFinite(p.compareAtPrice)||p.compareAtPrice<=p.price))
