@@ -471,3 +471,18 @@ dialog::backdrop {
 .media-picker-dialog{max-width:min(960px,calc(100vw - 30px));width:900px;max-height:90vh}
 .media-picker-dialog .media-grid{max-height:62vh;overflow:auto}
 @media(max-width:600px){.media-upload-row{align-items:stretch}.media-upload-row .field{flex-basis:100%}.media-card>img{height:105px}.media-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.category-row{flex-wrap:wrap}}
+
+/* Search words in the Products Master editor */
+.keyword-panel{grid-column:1/-1;border:1px solid #dce9e2;border-radius:12px;padding:12px;background:#f8fbf9}
+.keyword-panel>label{font-weight:750;color:#174d34}
+.keyword-panel>small{font-size:13px;color:#5e7565}
+.keyword-panel .row{display:flex;flex-wrap:nowrap;align-items:stretch}
+.keyword-panel .row input{min-width:0;flex:1}
+.keyword-panel .row .btn{white-space:nowrap}
+.keyword-chips{display:flex;flex-wrap:wrap;gap:7px;min-height:12px}
+.keyword-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 9px;border-radius:999px;background:#e4efe8;color:#134b31;font-size:13px;max-width:100%;overflow-wrap:anywhere}
+.keyword-chip button{border:0;border-radius:100%;background:transparent;color:#1a5d40;font-size:19px;line-height:1;cursor:pointer}
+.keyword-preview{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.keyword-preview input{max-width:310px;min-width:190px;flex:1}
+.keyword-preview small{color:#306548}
+@media(max-width:520px){.keyword-panel .row{flex-wrap:wrap}.keyword-panel .row .btn{width:100%}}
