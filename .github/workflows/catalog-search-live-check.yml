@@ -1,0 +1,43 @@
+name: Verify live Easy Mandi catalog keyword search
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/catalog-search-live-check.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compare live catalog with customer storefront
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --connect-timeout 15 -D /tmp/easy-catalog-headers \
+            -H 'Origin: https://easymandi.in' \
+            'https://cserver.learnwithchampak.live/easymandi/api/catalog.php?t=20261014' \
+            -o /tmp/easy-live-catalog.json
+          curl -fL --retry 3 --connect-timeout 15 \
+            'https://easymandi.in/web/storefront.js?v=20261014-keywords-v1' \
+            -o /tmp/easy-live-storefront.js
+          curl -fL --retry 3 --connect-timeout 15 \
+            'https://easymandi.in/' -o /tmp/easy-live-index.html
+          node <<'NODE'
+          const fs=require('node:fs');
+          const data=JSON.parse(fs.readFileSync('/tmp/easy-live-catalog.json','utf8'));
+          const products=Array.isArray(data.products)?data.products:[];
+          const withAliases=products.filter(p=>Array.isArray(p.searchKeywords) && p.searchKeywords.length);
+          console.log('LIVE_CATALOG_PRODUCTS='+products.length);
+          console.log('LIVE_PRODUCTS_WITH_KEYWORDS='+withAliases.length);
+          console.log('LIVE_KEYWORDS_SAMPLES='+JSON.stringify(withAliases.slice(0,15).map(p=>({id:p.id,words:p.searchKeywords.slice(0,12)}))));
+          console.log('LIVE_HAS_BHINDI_PRODUCT='+products.some(p=>[p.id,p.name,p.hindi].join(' ').toLowerCase().includes('bhindi')||String(p.hindi||'').includes('भिंडी')));
+          const html=fs.readFileSync('/tmp/easy-live-index.html','utf8');
+          const js=fs.readFileSync('/tmp/easy-live-storefront.js','utf8');
+          console.log('LIVE_HTML_REFERENCES_KEYWORD_SCRIPT='+html.includes('storefront.js?v=20261014-keywords-v1'));
+          console.log('LIVE_SCRIPT_SEARCHES_ALIAS_ARRAY='+js.includes('p.searchKeywords'));
+          console.log('LIVE_SCRIPT_HAS_SEARCH_SCORE='+js.includes('function productSearchScore('));
+          const headers=fs.readFileSync('/tmp/easy-catalog-headers','utf8');
+          console.log('LIVE_API_ALLOW_ORIGIN='+((headers.match(/access-control-allow-origin:[^\r\n]*/i)||[])[0]||'MISSING'));
+          console.log('LIVE_API_ETAG='+((headers.match(/etag:[^\r\n]*/i)||[])[0]||'MISSING'));
+          NODE
