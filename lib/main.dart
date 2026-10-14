@@ -1184,9 +1184,10 @@ class _StorePageState extends State<StorePage> {
     final filtered=products.where((p)=>
       (category=='All'||p.category==category)
       &&(!favoritesOnly||favoriteIds.contains(p.id))
-      &&'${p.name} ${p.hindi} ${p.category}'.toLowerCase()
-          .contains(query.toLowerCase())).toList();
-    if(category=='All'&&query.trim().isEmpty&&popularProductIds.isNotEmpty){
+      &&p.searchRank(query)!=null).toList();
+    if(query.trim().isNotEmpty){
+      filtered.sort((a,b)=>(a.searchRank(query)??99).compareTo(b.searchRank(query)??99));
+    }else if(category=='All'&&popularProductIds.isNotEmpty){
       final rank={for(var i=0;i<popularProductIds.length;i++)popularProductIds[i]:i};
       filtered.sort((a,b)=>(rank[a.id]??999).compareTo(rank[b.id]??999));
     }
