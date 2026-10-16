@@ -669,3 +669,58 @@ padding:2px 6px;border-radius:6px;margin-top:4px;white-space:normal}
 
 .delivery-checkout-hours{margin:8px 0;color:#a13718;font-weight:750}
 .delivery-checkout-hours:empty{display:none}
+
+/* 2026-10-16: accessible, balanced Easy Mandi welcome and delivery card. */
+.hero {
+  border-radius:26px;
+  background:linear-gradient(118deg,#11513d 0%,#176b51 48%,#247c74 100%);
+  box-shadow:0 18px 40px rgba(13,71,59,.17);
+}
+.hero:after{right:-110px;top:-190px;width:460px;height:460px;background:rgba(255,255,255,.045)}
+.hero-main{position:relative;z-index:1;gap:36px}
+.hero-copy{min-width:0}
+.hero .hero-eyebrow{color:#e0ffeb;letter-spacing:.09em}
+.hero h1{max-width:720px;font-weight:850;letter-spacing:-.035em;text-wrap:balance}
+.hero-copy>p{color:#effff7;max-width:680px}
+.hero-shop-link{min-height:46px;box-shadow:0 7px 18px rgba(8,45,34,.16)}
+.hero-delivery-banner{
+ position:relative;z-index:1;display:flex;align-items:center;gap:14px;
+ padding:15px 18px;margin:0 0 16px;
+ background:#f7fbff;color:#19495e;border:1px solid #d7e9ee;
+ border-left:5px solid #88cfa5;border-radius:16px;
+ box-shadow:0 9px 20px rgba(7,53,49,.11);
+}
+.hero-delivery-icon{
+ width:46px;height:46px;flex:none;display:grid;place-items:center;
+ border-radius:13px;background:#e2f3e9;font-size:24px;
+}
+.hero-delivery-copy{min-width:0;flex:1}
+.hero .hero-delivery-label{
+ display:block;color:#176346;font-size:11px;font-weight:850;
+ letter-spacing:.1em;line-height:1.4;
+}
+.hero .delivery-time-promise{
+ color:#214b61;background:transparent;border:0;border-radius:0;
+ box-shadow:none;max-width:none;font-size:14px;font-weight:700;
+ line-height:1.55;padding:0;margin:3px 0 0;
+}
+.hero-delivery-link{
+ color:#0f6848;text-decoration:none;white-space:nowrap;
+ font-size:12px;font-weight:800;background:#e8f5eb;
+ border:1px solid #c8e4d4;border-radius:10px;padding:10px 13px;
+}
+.hero-delivery-link:hover{background:#d9f0e2;text-decoration:underline}
+.hero-delivery-link:focus-visible{outline:3px solid #4aaef5;outline-offset:3px}
+.hero-promises{padding:13px 0 15px;gap:13px 20px}
+@media(max-width:700px){
+ .hero{border-radius:19px}
+ .hero-main{gap:16px}
+ .hero-delivery-banner{gap:10px;padding:13px 12px;flex-wrap:wrap;border-radius:12px}
+ .hero-delivery-icon{width:40px;height:40px;border-radius:10px;font-size:21px}
+ .hero .delivery-time-promise{font-size:12.5px}
+ .hero-delivery-link{margin-left:50px;padding:8px 10px}
+}
+@media(max-width:380px){
+ .hero-delivery-icon{display:none}
+ .hero-delivery-link{margin-left:0}
+}
