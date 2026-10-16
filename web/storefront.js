@@ -605,6 +605,8 @@ el('orderForm').onsubmit=async e=>{
         ?(window.EMI18n?.lang==='hi'?'आपका COD ऑर्डर दर्ज हो गया है। डिलीवरी की पुष्टि अभी बाकी है।':'Your COD order was saved. Delivery confirmation is pending.')
         :(window.EMI18n?.lang==='hi'?'रसीद सत्यापन के बाद भुगतान की पुष्टि होगी।':'Payment confirmation follows receipt verification.');
       link.textContent=t('sendWhatsapp');
+      const target=box.querySelector('.delivery-time-notice');
+      if(target&&window.EasyMandiDeliveryWindow)target.textContent=window.EasyMandiDeliveryWindow.message(orderPlacedAt,window.EMI18n?.lang);
       updateSavingsNote();
       const panel=box.querySelector('.payment-panel');
       if(panel){
