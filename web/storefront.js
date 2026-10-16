@@ -505,6 +505,7 @@ el('orderForm').onsubmit=async e=>{
     const address=[house,locality,...(landmark?['Near '+landmark]:[]),(data.store.city||'Varanasi')+', '+(data.checkout?.state||'Uttar Pradesh')+(pin?' - '+pin:'')].join(', ');
     const lines=data.products.filter(p=>cart[p.id]).map(p=>'• '+p.name+' ('+p.unit+') × '+cart[p.id]).join('\n');
     const message=t('welcomeWhatsapp',{id:result.orderId})+'\n\n'+lines+'\n\nName: '+form.get('name')+'\nMobile: +91 '+phone+'\nAddress: '+address+'\n\nPlease confirm availability and delivery time.';
+    const orderPlacedAt=result.createdAt||result.created_at||new Date().toISOString();
     const box=el('orderConfirmation');
     box.replaceChildren();
     const title=document.createElement('h3');
@@ -512,6 +513,7 @@ el('orderForm').onsubmit=async e=>{
     const note=document.createElement('p');
     note.textContent=t('savedTotal',{total:money(result.total),method:t(paymentMethod==='upi'?'upiSelected':'codSelected')});
     box.append(title,note);
+    if(window.EasyMandiDeliveryWindow)box.append(window.EasyMandiDeliveryWindow.notice(orderPlacedAt,'delivery-time-notice'));
     const savedSavings=Number(result.savings||0);
     const savedMarketSavings=Number(result.marketSavings||0);
     const savingsNote=document.createElement('p');savingsNote.className='order-confirmation-savings';

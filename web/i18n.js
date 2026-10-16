@@ -6,6 +6,7 @@
     en: {
       chooseLanguage:'Choose language', signIn:'Sign in', basket:'Basket', marketNav:'Market / मंडी', eyebrow:'FRESH FROM THE MANDI',
       heroTitle:'Good food starts fresh.', heroText:'Onions, potatoes and vegetables for your everyday kitchen · Varanasi',
+      deliveryFourHours:'🚚 Your order will be delivered within 4 working hours. Keep ordering with Easy Mandi and save on MANDI rate.',
       downloadKicker:'OFFICIAL ANDROID APPS',
       downloadHeading:'Easy Mandi on your phone',
       downloadIntro:'Get the customer app for shopping, or the delivery partner app for assigned orders.',
@@ -76,6 +77,7 @@
       welcomeWhatsapp:'Hello Easy Mandi, my order {id} has been placed.'
     },
     hi: {
+      deliveryFourHours:'🚚 आपका ऑर्डर 4 कार्य घंटों के भीतर डिलीवर किया जाएगा। Easy Mandi से ऑर्डर करते रहें और MANDI रेट पर बचत करें।',
       chooseLanguage:'भाषा चुनें', signIn:'लॉग इन', basket:'टोकरी', marketNav:'मंडी / Market', eyebrow:'मंडी से सीधे आपके घर',
       heroTitle:'ताज़ी सब्ज़ियाँ, बेहतर भोजन।', heroText:'आपकी रसोई के लिए प्याज़, आलू और ताज़ी सब्ज़ियाँ · वाराणसी',
       downloadKicker:'आधिकारिक एंड्रॉइड ऐप',

@@ -658,3 +658,11 @@ padding:2px 6px;border-radius:6px;margin-top:4px;white-space:normal}
 @media(max-width:880px){.app-downloads-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.app-download-card:last-child{grid-column:1 / -1}}
 @media(max-width:600px){.app-downloads{padding:16px}.app-downloads-grid{grid-template-columns:1fr}.app-download-card:last-child{grid-column:auto}.app-download-card{padding:13px}.app-download-action{margin-left:auto}}
 @media(prefers-reduced-motion:reduce){.app-download-card{transition:none}.app-download-card:hover{transform:none}}
+
+/* Subtle four-hour delivery commitment, visible at checkout and in order history. */
+.delivery-time-promise,.delivery-time-notice{padding:11px 14px;border:1px solid #c4dded;border-radius:11px;background:#f1f8fd;color:#225575;font-size:13px;line-height:1.55;margin:12px 0;font-weight:650}
+.delivery-time-promise{max-width:100%;font-weight:700}
+.delivery-time-checkout{margin:9px 0 15px}
+#orderConfirmation .delivery-time-notice{margin:10px 0}
+.order-history-card>.delivery-time-notice{margin:8px 15px 10px}
+@media(max-width:500px){.delivery-time-promise,.delivery-time-notice{font-size:12px;padding:9px 11px}}
