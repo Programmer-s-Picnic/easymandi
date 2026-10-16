@@ -63,7 +63,7 @@ String easyMandiDeliveryWindowText(dynamic confirmedAt,{dynamic placedAt,dynamic
     '${tr(english,hindi)}';
 }
 
-Widget easyMandiDeliveryWindowBanner([dynamic confirmedAt,{dynamic placedAt,dynamic targetAt}]) => Container(
+Widget easyMandiDeliveryWindowBanner(dynamic confirmedAt,{dynamic placedAt,dynamic targetAt}) => Container(
   margin: const EdgeInsets.symmetric(vertical: 7),
   padding: const EdgeInsets.all(11),
   decoration: BoxDecoration(
