@@ -100,6 +100,8 @@ function detail(){
  const topPrint=make('button','Print Slip','btn secondary');topPrint.type='button';topPrint.onclick=()=>window.EasyMandiPacking?.printSheet(o);h.append(topPrint);
  pair(h,'Customer',o.customer_name+' · '+o.mobile);
  pair(h,'Received',date(o.created_at));
+ pair(h,'Confirmed',o.confirmed_at?date(o.confirmed_at):'Awaiting confirmation');
+ pair(h,'Delivery attempt target',o.delivery_target_at?date(o.delivery_target_at):'Starts after confirmation');
  pair(h,'Address',orderAddress(o)||'Not provided');
  if(o.customer_note)pair(h,'Customer note',o.customer_note);
  if(o.packer_note)pair(h,'Packer note',o.packer_note);
@@ -155,6 +157,12 @@ function detail(){
  workflow.append(workActions);target.append(workflow);
  const delivery=make('section',undefined,'ops-detail-block');delivery.append(make('h4','Delivery management'));
  pair(delivery,'Status',o.delivery_status||'Not imported');pair(delivery,'Partner',o.partner_name||'Unassigned');
+ pair(delivery,'60-minute target',o.delivery_target_at?date(o.delivery_target_at):'Awaiting confirmation');
+ if(o.delivery_target_at&&!['Delivered','Cancelled'].includes(o.status)){
+  const remaining=(new Date(o.delivery_target_at).getTime()-Date.now())/60000;
+  if(Number.isFinite(remaining)&&remaining<=0)delivery.append(make('p','Target passed — check delivery status / rush-hour delay','ops-error'));
+  else if(Number.isFinite(remaining)&&remaining<=15)delivery.append(make('p','Target approaching — '+Math.ceil(remaining)+' minutes remaining','ops-muted'));
+ }
  // Keep the drop-off address visible where staff choose the delivery partner.
  const address=make('div',undefined,'ops-delivery-address');
  address.append(make('span','Delivery address','ops-delivery-address-label'));
