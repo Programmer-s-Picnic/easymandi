@@ -7,6 +7,7 @@
       chooseLanguage:'Choose language', signIn:'Sign in', basket:'Basket', marketNav:'Market / मंडी', eyebrow:'FRESH FROM THE MANDI',
       heroTitle:'Good food starts fresh.', heroText:'Onions, potatoes and vegetables for your everyday kitchen · Varanasi',
       deliveryBannerTitle:'YOUR DELIVERY WINDOW', deliveryPolicyLink:'View delivery policy →',
+      deliveryBannerMessage:'Delivery attempted within 60 service minutes after confirmation · 7 AM–11 PM IST. Rush-hour or traffic delays possible.',
       deliveryPolicyShort:'🚚 Delivery attempted within 60 minutes of confirmation · 7 AM–11 PM IST. Rush-hour or traffic delays are possible.',
       downloadKicker:'OFFICIAL ANDROID APPS',
       downloadHeading:'Easy Mandi on your phone',
@@ -79,6 +80,7 @@
     },
     hi: {
       deliveryBannerTitle:'आपकी डिलीवरी का समय', deliveryPolicyLink:'डिलीवरी नीति देखें →',
+      deliveryBannerMessage:'पुष्टि के 60 कार्य मिनट के भीतर डिलीवरी का प्रयास · सुबह 7 से रात 11 बजे तक। ट्रैफिक या अधिक ऑर्डर के कारण देरी संभव है।',
       deliveryPolicyShort:'🚚 पुष्टि के 60 कार्य मिनट के भीतर डिलीवरी का प्रयास · सुबह 7 से रात 11 बजे तक। ट्रैफिक या अधिक ऑर्डर के कारण देरी संभव है।',
       chooseLanguage:'भाषा चुनें', signIn:'लॉग इन', basket:'टोकरी', marketNav:'मंडी / Market', eyebrow:'मंडी से सीधे आपके घर',
       heroTitle:'ताज़ी सब्ज़ियाँ, बेहतर भोजन।', heroText:'आपकी रसोई के लिए प्याज़, आलू और ताज़ी सब्ज़ियाँ · वाराणसी',
