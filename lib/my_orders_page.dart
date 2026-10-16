@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'auth_service.dart';
 import 'i18n.dart';
+import 'delivery_window.dart';
 import 'customer_navigation.dart';
 import 'customer_dialog_title.dart';
 import 'savings_utils.dart';
@@ -262,6 +263,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
         children:[Padding(padding:const EdgeInsets.fromLTRB(16,0,16,16),
           child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
             const Divider(),
+            if(!['Delivered','Cancelled'].contains(o['status']))easyMandiDeliveryWindowBanner(o['created_at']),
             Text(tr('Items','सामान'),style:const TextStyle(fontWeight:FontWeight.w800)),
             for(final raw in items) Builder(builder:(context){
               final line=raw as Map<String,dynamic>;

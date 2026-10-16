@@ -28,6 +28,7 @@ import 'customer_navigation.dart';
 import 'i18n.dart';
 import 'savings_utils.dart';
 import 'app_update.dart';
+import 'delivery_window.dart';
 
 const catalogUrl =
     'https://cserver.learnwithchampak.live/easymandi/api/catalog.php';
@@ -922,6 +923,7 @@ class _StorePageState extends State<StorePage> {
     if (!mounted) return;
     final orderId = savedOrder['orderId'] as String;
     final savedTotal = savedOrder['total'] as num;
+    final orderPlacedAt = savedOrder['createdAt'] ?? savedOrder['created_at'] ?? DateTime.now().toUtc();
     final savedSavings=positiveSavings(savedOrder['savings']);
     final savedMarketSavings=positiveSavings(savedOrder['marketSavings']);
     await showSavingsMoment(savedSavings,marketRaw:savedMarketSavings);
@@ -970,6 +972,7 @@ class _StorePageState extends State<StorePage> {
           if(savedMarketSavings>0)Text(tr('Saved vs market price: ${money(savedMarketSavings)}','बाज़ार भाव से बचत: ${money(savedMarketSavings)}'),style:const TextStyle(color:Color(0xFF176B46),fontWeight:FontWeight.w700)),
           if(savedSavings>0)Text(tr('Mandi quantity discount (not additional): ${money(savedSavings)}','मंडी छूट (अतिरिक्त नहीं): ${money(savedSavings)}'),style:const TextStyle(color:Color(0xFF176B46))),
           const SizedBox(height: 8),
+          easyMandiDeliveryWindowBanner(orderPlacedAt),
           Text(paymentMethod=='cod'
             ?tr('Cash on Delivery selected. Your order is saved; delivery time and stock confirmation are pending.',
                 'डिलीवरी पर नकद चुना गया। ऑर्डर दर्ज है, उपलब्धता व समय की पुष्टि बाकी है।')
@@ -1040,6 +1043,8 @@ class _StorePageState extends State<StorePage> {
               _totalRow(tr('Estimated total','अनुमानित कुल'), money(subtotal + fee), bold: true),
               const SizedBox(height: 8),
               Text(tr('Free delivery from ${money(store['freeDeliveryAbove'] as num? ?? 499)} • Minimum order ${money(store['minimumOrder'] as num? ?? 99)}','${money(store['freeDeliveryAbove'] as num? ?? 499)} से मुफ़्त डिलीवरी • न्यूनतम ऑर्डर ${money(store['minimumOrder'] as num? ?? 99)}'), style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 10),
+              easyMandiDeliveryWindowBanner(),
               const SizedBox(height: 16),
               FilledButton.icon(onPressed: () { Navigator.pop(sheetContext); checkout(); }, icon: const Icon(Icons.chat_bubble_outline), label: Text(tr('Place order','ऑर्डर करें'))),
             ],
@@ -1261,6 +1266,7 @@ class _StorePageState extends State<StorePage> {
             TextButton(onPressed:loadCatalog,child:Text(tr('Retry','फिर प्रयास करें'))),
           ]))
         :Column(children:[
+          Padding(padding:const EdgeInsets.symmetric(horizontal:14),child:easyMandiDeliveryWindowBanner()),
           Padding(padding:const EdgeInsets.fromLTRB(14,10,14,7),child:Column(children:[
             Row(children:[
               Expanded(child:Text(
