@@ -20,7 +20,7 @@
  function notice(raw,className='delivery-time-notice'){
   const el=document.createElement('p');el.className=className;
   const update=()=>{el.textContent=message(raw,window.EMI18n?.lang)};
-  update();window.addEventListener('languagechange',update,{once:false});
+  update(); // Order-history rerenders on language changes; avoid per-card global listeners.
   return el;
  }
  window.EasyMandiDeliveryWindow={parse,time,message,notice};
