@@ -17,7 +17,7 @@ const sitemap=read('sitemap.xml');
 verify(sitemap.startsWith('<?xml version="1.0" encoding="UTF-8"?>'),'sitemap XML declaration');
 verify(sitemap.includes('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'),'standard XML sitemap namespace');
 const sitemapEntries=[...sitemap.matchAll(/<url>\s*<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastmod>\s*<\/url>/g)];
-const publicPages=[['', 'index.html'],['privacy.html','privacy.html'],['delete-account.html','delete-account.html']];
+const publicPages=[['', 'index.html'],['delivery-policy.html','delivery-policy.html'],['privacy.html','privacy.html'],['delete-account.html','delete-account.html']];
 verify(sitemapEntries.length===publicPages.length,'sitemap must contain each indexable public page exactly once');
 for(let i=0;i<publicPages.length;i++){
   const [urlPath,file]=publicPages[i];
