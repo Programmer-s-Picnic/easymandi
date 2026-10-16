@@ -69,8 +69,8 @@
   ]
 }
 </script>
-<link rel="stylesheet" href="storefront.css?v=20261014-apk-seo-v1">
-<script src="i18n.js?v=20261014-apk-seo-v1" defer></script>
+<link rel="stylesheet" href="storefront.css?v=20261016-policy-v2">
+<script src="i18n.js?v=20261016-policy-v2" defer></script>
 <link rel="stylesheet" href="../shared/notifications.css?v=20261010-draggable-v1">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
 </script>
@@ -107,6 +107,7 @@
     </div>
     <div class="hero-graphic" aria-hidden="true"><img src="brand-symbol.svg?v=20261014-hindi-logo" alt=""><span>Freshness delivered<br>at mandi rates</span></div>
   </div>
+  <p class="delivery-time-promise" data-i18n="deliveryPolicyShort">🚚 Delivery attempted within 60 minutes after confirmation · 7 AM–11 PM IST. Rush-hour delays possible.</p>
   <div class="hero-promises">
     <span><span aria-hidden="true">🥬</span> <span data-i18n="freshEssentials">Fresh essentials</span></span>
     <span><span aria-hidden="true">🌐</span> हिन्दी / English</span>
@@ -187,6 +188,8 @@
 </section>
 <p class="note" id="deliveryNote">
 </p>
+<p class="delivery-time-promise delivery-time-checkout" data-i18n="deliveryPolicyShort">🚚 Delivery attempted within 60 minutes after confirmation · 7 AM–11 PM IST. Rush-hour delays possible.</p>
+<p id="checkoutHoursStatus" class="delivery-checkout-hours" role="status" aria-live="polite"></p>
 <form class="form" id="orderForm">
 <div class="service-locality-group">
 <label for="locality" data-i18n="locality">Select delivery locality · डिलीवरी क्षेत्र चुनें</label>
@@ -298,20 +301,21 @@
  <div class="footer-brand"><img src="brand-mark.svg?v=20261014-hindi-logo" alt="ईज़ीमंडी" width="108" height="46">
  <span><strong>Easy Mandi</strong> · <span data-i18n="customerFooter">Varanasi</span></span></div>
  <p>Fresh essentials, straightforward ordering. <a href="https://learnwithchampak.live" rel="noopener noreferrer">Developed &amp; maintained by Champak Roy</a></p>
- <p class="legal-links"><a href="https://easymandi.in/privacy.html">Privacy Policy</a> · <a href="https://easymandi.in/delete-account.html">Request account deletion</a> · <a href="mailto:champaksworld@gmail.com">Contact</a></p>
+ <p class="legal-links"><a href="https://easymandi.in/delivery-policy.html">Delivery Policy / डिलीवरी नीति</a> · <a href="https://easymandi.in/privacy.html">Privacy Policy</a> · <a href="https://easymandi.in/delete-account.html">Request account deletion</a> · <a href="mailto:champaksworld@gmail.com">Contact</a></p>
  <small>easymandi.in · Customer assistance is available through the order confirmation details.</small>
 </footer>
 <script src="localities.js?v=20261012-primary-addresses-v2" defer></script>
 <script src="mandi-pricing.js?v=20261010-v1" defer></script>
 <script src="savings-moment.js?v=20261011-market-savings-v1" defer></script>
-<script src="storefront.js?v=20261014-keywords-v1" defer>
+<script src="delivery-window.js?v=20261016-policy-v2" defer></script>
+<script src="storefront.js?v=20261016-policy-v2" defer>
 </script>
 <script src="auth.js?v=20261010-branding-v15" defer>
 </script>
 <script src="customer-data.js?v=20261012-primary-addresses-v2" defer></script>
 <script src="vendor/qrcode.min.js?v=20261008" defer></script>
 <script src="deliveries.js?v=20261010-merged-orders-v1" defer></script>
-<script src="order-history.js?v=20261011-persistent-nav-v1" defer></script>
+<script src="order-history.js?v=20261016-policy-v2" defer></script>
 </body>
 </html>
 

@@ -666,3 +666,6 @@ padding:2px 6px;border-radius:6px;margin-top:4px;white-space:normal}
 #orderConfirmation .delivery-time-notice{margin:10px 0}
 .order-history-card>.delivery-time-notice{margin:8px 15px 10px}
 @media(max-width:500px){.delivery-time-promise,.delivery-time-notice{font-size:12px;padding:9px 11px}}
+
+.delivery-checkout-hours{margin:8px 0;color:#a13718;font-weight:750}
+.delivery-checkout-hours:empty{display:none}

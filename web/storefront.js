@@ -337,7 +337,9 @@ function renderBasket(){
   const signedIn=!!window.CustomerAccount?.authenticated;
   el('checkoutLoginGate').hidden=!chosen.length||signedIn;
   el('orderForm').hidden=!chosen.length||!signedIn;
-  el('send').disabled=!chosen.length||!signedIn
+  const open=window.EasyMandiDeliveryWindow?.isOpen()??true;
+  const hours=el('checkoutHoursStatus');if(hours)hours.textContent=open?'':window.EasyMandiDeliveryWindow.closedText();
+  el('send').disabled=!chosen.length||!signedIn||!open
 }
 let deliveryLocation=null, detailProductId=null;
 function showItemDetail(product){
@@ -437,6 +439,9 @@ el('mobile').oninput=()=>el('mobile').setCustomValidity('');
 el('pin').oninput=()=>el('pin').setCustomValidity('');
 el('orderForm').onsubmit=async e=>{
   e.preventDefault();
+  if(window.EasyMandiDeliveryWindow&&!window.EasyMandiDeliveryWindow.isOpen()){
+    el('orderError').textContent=window.EasyMandiDeliveryWindow.closedText();renderBasket();return;
+  }
   if(!window.CustomerAccount?.authenticated){
     el('orderError').textContent=t('checkoutLoginRequired');
     renderBasket();
@@ -513,7 +518,7 @@ el('orderForm').onsubmit=async e=>{
     const note=document.createElement('p');
     note.textContent=t('savedTotal',{total:money(result.total),method:t(paymentMethod==='upi'?'upiSelected':'codSelected')});
     box.append(title,note);
-    if(window.EasyMandiDeliveryWindow)box.append(window.EasyMandiDeliveryWindow.notice(orderPlacedAt,'delivery-time-notice'));
+    if(window.EasyMandiDeliveryWindow)box.append(window.EasyMandiDeliveryWindow.notice({created_at:orderPlacedAt,confirmed_at:result.confirmed_at,delivery_target_at:result.delivery_target_at},'delivery-time-notice'));
     const savedSavings=Number(result.savings||0);
     const savedMarketSavings=Number(result.marketSavings||0);
     const savingsNote=document.createElement('p');savingsNote.className='order-confirmation-savings';
@@ -606,7 +611,7 @@ el('orderForm').onsubmit=async e=>{
         :(window.EMI18n?.lang==='hi'?'रसीद सत्यापन के बाद भुगतान की पुष्टि होगी।':'Payment confirmation follows receipt verification.');
       link.textContent=t('sendWhatsapp');
       const target=box.querySelector('.delivery-time-notice');
-      if(target&&window.EasyMandiDeliveryWindow)target.textContent=window.EasyMandiDeliveryWindow.message(orderPlacedAt,window.EMI18n?.lang);
+      if(target&&window.EasyMandiDeliveryWindow)target.textContent=window.EasyMandiDeliveryWindow.message({created_at:orderPlacedAt,confirmed_at:result.confirmed_at,delivery_target_at:result.delivery_target_at},window.EMI18n?.lang);
       updateSavingsNote();
       const panel=box.querySelector('.payment-panel');
       if(panel){
@@ -638,6 +643,6 @@ window.addEventListener('languagechange',()=>{
 });
 
 
-setInterval(()=>{if(!document.hidden)load(true);},120000);
+setInterval(()=>{if(!document.hidden){load(true);if(el('basket').open)renderBasket();}},120000);
 loadPopularity();
 load();

@@ -62,7 +62,7 @@
       badge.dataset.status=String(o.delivery_status||o.status||'');
       heading.append(group,badge);card.append(heading);
       if(!['Delivered','Cancelled'].includes(o.status)&&window.EasyMandiDeliveryWindow){
-        card.append(window.EasyMandiDeliveryWindow.notice(o.created_at));
+        card.append(window.EasyMandiDeliveryWindow.notice(o));
       }
       card.append(make('p',t('Order status: ','ऑर्डर स्थिति: ')+statusName(o.status)+
         ' · '+t('Delivery: ','डिलीवरी: ')+(o.delivery_status?statusName(o.delivery_status):t('Not yet assigned','अभी नियुक्त नहीं')),'order-status-line'));
