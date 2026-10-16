@@ -15,7 +15,7 @@
 <meta property="og:image" content="https://easymandi.in/web/og-image.svg">
 <meta name="theme-color" content="#176b46">
 <title>Easy Mandi · How to Work</title>
-<link rel="stylesheet" href="catalog.css?v=20261016-keywords-more-v1">
+<link rel="stylesheet" href="catalog.css?v=20261016-delivery-address-v1">
 <link rel="stylesheet" href="admin-pages.css?v=20261010-mandi-v1">
 <link rel="stylesheet" href="../shared/notifications.css?v=20261014-reopen-v2">
 <script src="../shared/api-client.js?v=20261001-icons" defer>
@@ -67,7 +67,7 @@
     <li><strong>Receive and review</strong><span>Open <em>New orders</em>. Select an order and check the customer's items, quantities, address, mobile, notes and total. Change the order status to <em>Confirmed</em> after reviewing it.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="new">Open New orders →</button></li>
     <li><strong>Handle payment</strong><span>For UPI, open the submitted receipt, inspect its details and verify or reject it. For COD, mark payment paid <strong>only after money has actually been collected</strong>. Never mark an unpaid order as paid.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="payment">Open UPI verification →</button></li>
     <li><strong>Prepare and pack</strong><span>Use <em>Preparing / packing</em>, check every item, and choose <em>Print packing checklist</em>. Print or save the checklist as a PDF. Add packing/delivery notes with the existing order tools if needed.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="packing">Open Packing →</button></li>
-    <li><strong>Import and assign delivery</strong><span>In <em>Awaiting assignment</em>, choose <em>Import for delivery</em> if the order has no delivery record. Select an active delivery partner and choose <em>Assign delivery partner</em>. Assignment sends a handoff code to the customer through the established notification flow.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="unassigned">Open Unassigned →</button></li>
+    <li><strong>Import and assign delivery</strong><span>In <em>Awaiting assignment</em>, choose <em>Import for delivery</em> if the order has no delivery record. Check the highlighted delivery locality and full address (or View on map when available). Select an active delivery partner and choose <em>Assign delivery partner</em>. Assignment sends a handoff code to the customer through the established notification flow.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="unassigned">Open Unassigned →</button></li>
     <li><strong>Track the delivery</strong><span>Use <em>Active deliveries</em> to see partner assignment, pickup and out-for-delivery states. The delivery partner completes the handoff with the customer's code/QR through the partner app. Use Advanced delivery management for resend-code and other specialist actions.</span><button type="button" class="ops-guide-action" data-ops-guide-queue="active">Open Active deliveries →</button></li>
     <li><strong>Resolve and close</strong><span>Review <em>Exceptions</em> for rejected receipts and long-unassigned orders. Use <em>Completed</em> to check finished or cancelled orders. Delivery completion should normally follow the partner's verified handoff, not a premature manual status change.</span><div class="ops-guide-action-row"><button type="button" class="ops-guide-action" data-ops-guide-queue="exceptions">Open Exceptions →</button><button type="button" class="ops-guide-action" data-ops-guide-queue="completed">View Completed →</button></div></li>
    </ol>
@@ -308,7 +308,7 @@
 <script src="orders.js?v=20261010-mandi-v1" defer>
 </script>
 <script src="records.js?v=20261011-partner-names" defer></script>
-<script src="operations-desk.js?v=20261010-mandi-v3" defer></script>
+<script src="operations-desk.js?v=20261016-delivery-address-v1" defer></script>
 <script src="../shared/password-ui.js?v=20261001-access" defer></script>
 <script src="admin-pages.js?v=20261009-localities-v1" defer></script>
 <script src="localities.js?v=20261009-localities-v1" defer></script>

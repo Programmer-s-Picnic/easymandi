@@ -494,3 +494,11 @@ dialog::backdrop {
 .product-search-more{display:inline-block;margin-top:5px;border:0;padding:2px 0;background:transparent;color:#0a61a7;cursor:pointer;font:inherit;font-size:12px;font-weight:750;text-decoration:underline;text-underline-offset:2px}
 .product-search-more:hover{color:#06497f}
 .product-search-more:focus-visible{outline:2px solid #0b70c5;outline-offset:3px;border-radius:3px}
+
+/* Operations Desk: address at point of delivery partner selection. */
+.ops-delivery-address{display:grid;gap:5px;margin:12px 0 14px;padding:12px 14px;border:1px solid #c9dfef;background:#f0f8ff;border-radius:11px;min-width:0}
+.ops-delivery-address-label{font-size:11px;font-weight:800;color:#47677c;letter-spacing:.05em;text-transform:uppercase}
+.ops-delivery-locality{font-size:15px;font-weight:800;color:#12547d;overflow-wrap:anywhere}
+.ops-delivery-address-text{font-size:13px;line-height:1.55;color:#28495b;margin:0;overflow-wrap:anywhere}
+.ops-delivery-map{font-size:12px;font-weight:700;color:#0864a7;justify-self:start;margin-top:3px;text-decoration:underline;text-underline-offset:2px}
+.ops-delivery-map:focus-visible{outline:2px solid #0b70c5;outline-offset:3px;border-radius:3px}

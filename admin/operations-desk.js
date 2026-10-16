@@ -11,6 +11,7 @@ const date=raw=>{if(!raw)return '—';const value=String(raw),d=new Date(value.i
 const make=(tag,text,cls)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=String(text);if(cls)el.className=cls;return el;};
 const status=(o)=>o.delivery_status?o.status+' · '+o.delivery_status:o.status+' · awaiting delivery setup';
 const show=(msg,isError=false)=>{$('opsMessage').textContent=msg;$('opsMessage').className=isError?'ops-error':'ops-success';};
+const orderAddress=o=>[o.house,o.locality,o.landmark,o.city,o.state,o.pin].map(value=>String(value??'').trim()).filter(Boolean).join(', ');
 async function call(url,data){
  const response=await AppHttp.fetch(url,{method:'POST',headers:{'Content-Type':'application/json',...window.AdminSession.headers()},body:JSON.stringify(data),cache:'no-store'});
  const payload=await response.json().catch(()=>({}));
@@ -98,7 +99,7 @@ function detail(){
  h.append(make('h4','Order '+(o.daily_index||'#'+o.public_id)));
  pair(h,'Customer',o.customer_name+' · '+o.mobile);
  pair(h,'Received',date(o.created_at));
- pair(h,'Address',[o.house,o.locality,o.landmark,o.city,o.state,o.pin].filter(Boolean).join(', '));
+ pair(h,'Address',orderAddress(o)||'Not provided');
  if(o.customer_note)pair(h,'Customer note',o.customer_note);
  if(o.packer_note)pair(h,'Packer note',o.packer_note);
  if(o.partner_note)pair(h,'Partner note',o.partner_note);
@@ -153,6 +154,20 @@ function detail(){
  workflow.append(workActions);target.append(workflow);
  const delivery=make('section',undefined,'ops-detail-block');delivery.append(make('h4','Delivery management'));
  pair(delivery,'Status',o.delivery_status||'Not imported');pair(delivery,'Partner',o.partner_name||'Unassigned');
+ // Keep the drop-off address visible where staff choose the delivery partner.
+ const address=make('div',undefined,'ops-delivery-address');
+ address.append(make('span','Delivery address','ops-delivery-address-label'));
+ const locality=String(o.locality??'').trim();
+ if(locality)address.append(make('strong','📍 '+locality,'ops-delivery-locality'));
+ address.append(make('p',orderAddress(o)||'Address not provided — check the order details before assigning.','ops-delivery-address-text'));
+ const lat=o.location_lat==null||o.location_lat===''?NaN:Number(o.location_lat);
+ const lng=o.location_lng==null||o.location_lng===''?NaN:Number(o.location_lng);
+ if(Number.isFinite(lat)&&lat>=-90&&lat<=90&&Number.isFinite(lng)&&lng>=-180&&lng<=180){
+  const map=make('a','View on map ↗','ops-delivery-map');
+  map.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(lat+','+lng);
+  map.target='_blank';map.rel='noopener noreferrer';address.append(map);
+ }
+ delivery.append(address);
  const deliveryActions=make('div',undefined,'ops-actions');
  if(!o.delivery_id&&o.status!=='Cancelled'&&o.status!=='Delivered'){
   action(deliveryActions,'Import for delivery',()=>call(deliveryApi,{operation:'import',source_app:'easymandi',external_order_id:o.public_id}));
