@@ -28,7 +28,7 @@ jobs:
           csha="$(jq -er '.customer.sourceCommit' apk/release-config.json)"
           dsha="$(jq -er '.delivery.sourceCommit' apk/release-config.json)"
           test "$(jq -er '.customer.sourceRepo' apk/release-config.json)" = 'Programmer-s-Picnic/easymandi'
-          test "$(jq -er '.delivery.sourceRepo' apk/release-config.json)" = 'Programmer-s-Picnic/json-images'
+          test "$(jq -er '.delivery.sourceRepo' apk/release-config.json)" = 'Programmer-s-Picnic/delivery-app'
           test "$(jq -er '.customer.a64' apk/release-config.json)" = 'easymani64.apk'
           test "$(jq -er '.customer.a32' apk/release-config.json)" = 'easymani32.apk'
           test "$(jq -er '.delivery.apk' apk/release-config.json)" = 'easymanideliverypartner.apk'
@@ -36,7 +36,7 @@ jobs:
           [[ "$dsha" =~ ^[a-f0-9]{40}$ ]]
 
           CUSTOMER=https://api.github.com/repos/Programmer-s-Picnic/easymandi
-          DELIVERY=https://raw.githubusercontent.com/Programmer-s-Picnic/json-images/main/delivery
+          DELIVERY=https://github.com/Programmer-s-Picnic/delivery-app/releases/download/partner-apk
           mkdir -p /tmp/easymandi-apks
           # Do not publish a new manifest until BOTH upstream APKs have been
           # built, checksum-verified and installed at their source URLs.
@@ -56,23 +56,28 @@ jobs:
             test "$(stat -c '%s' "/tmp/easymandi-apks/$f")" -gt 1000000
             unzip -tq "/tmp/easymandi-apks/$f" >/dev/null
           done
-          curl -fLsS --retry 5 "$DELIVERY/build.json" -o /tmp/easymandi-apks/delivery-build.json
-          jq -e --arg version "$dver" --arg sha "$dsha" \
-            '.version==$version and .sourceCommit==$sha and (.workflowRun|type=="number")' \
-            /tmp/easymandi-apks/delivery-build.json >/dev/null
-          curl -fLsS --retry 5 "$DELIVERY/SHA256SUMS" -o /tmp/easymandi-apks/delivery-sha256sums
-          curl -fLsS --retry 5 "$DELIVERY/DeliveryPartner.apk" -o /tmp/easymandi-apks/easymanideliverypartner.apk
-
-          verify_sha() {
-            file="$1"; manifest="$2"; source_name="$3"
-            expected=$(awk -v wanted="$source_name" '$2 == wanted {print $1}' "$manifest")
-            test -n "$expected"
-            actual=$(sha256sum "/tmp/easymandi-apks/$file" | cut -d ' ' -f1)
-            test "$expected" = "$actual" || { echo "::error::APK checksum mismatch for $file"; exit 1; }
-            test "$(stat -c '%s' "/tmp/easymandi-apks/$file")" -gt 1000000
-            unzip -tq "/tmp/easymandi-apks/$file" >/dev/null
-          }
-          verify_sha easymanideliverypartner.apk /tmp/easymandi-apks/delivery-sha256sums DeliveryPartner.apk
+          # Resolve the successful pinned delivery partner APK build and
+          # compare its released asset digest, never trust a mutable URL alone.
+          drun="$(jq -er '.delivery.workflowRun' apk/release-config.json)"
+          dsum="$(jq -er '.delivery.sha256' apk/release-config.json)"
+          [[ "$dsum" =~ ^[a-f0-9]{64}$ ]]
+          curl -fLsS --retry 5 \
+            "https://api.github.com/repos/Programmer-s-Picnic/delivery-app/actions/runs/$drun" \
+            -o /tmp/easymandi-apks/delivery-run.json
+          jq -e --arg sha "$dsha" \
+            '.conclusion=="success" and .head_sha==$sha and .name=="Build delivery partner APK"' \
+            /tmp/easymandi-apks/delivery-run.json >/dev/null
+          curl -fLsS --retry 5 \
+            "https://api.github.com/repos/Programmer-s-Picnic/delivery-app/releases/tags/partner-apk" \
+            -o /tmp/easymandi-apks/delivery-release.json
+          jq -e --arg digest "sha256:$dsum" \
+            '[.assets[] | select(.name=="app-release.apk" and .digest==$digest)] | length==1' \
+            /tmp/easymandi-apks/delivery-release.json >/dev/null
+          curl -fLsS --retry 5 "$DELIVERY/app-release.apk" \
+            -o /tmp/easymandi-apks/easymanideliverypartner.apk
+          echo "$dsum  /tmp/easymandi-apks/easymanideliverypartner.apk" | sha256sum -c -
+          test "$(stat -c '%s' /tmp/easymandi-apks/easymanideliverypartner.apk)" -gt 1000000
+          unzip -tq /tmp/easymandi-apks/easymanideliverypartner.apk >/dev/null
       - name: Publish APKs unchanged at requested domain paths
         run: |
           set -euo pipefail
