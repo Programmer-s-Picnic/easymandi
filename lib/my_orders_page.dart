@@ -263,7 +263,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
         children:[Padding(padding:const EdgeInsets.fromLTRB(16,0,16,16),
           child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
             const Divider(),
-            if(!['Delivered','Cancelled'].contains(o['status']))easyMandiDeliveryWindowBanner(o['created_at']),
+            if(!['Delivered','Cancelled'].contains(o['status']))easyMandiDeliveryWindowBanner(o['confirmed_at'],placedAt:o['created_at'],targetAt:o['delivery_target_at']),
             Text(tr('Items','सामान'),style:const TextStyle(fontWeight:FontWeight.w800)),
             for(final raw in items) Builder(builder:(context){
               final line=raw as Map<String,dynamic>;

@@ -646,6 +646,12 @@ class _StorePageState extends State<StorePage> {
   }
 
   Future<void> checkout() async {
+    if(!easyMandiCheckoutOpen()){
+      if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(tr(
+        'Checkout is closed. You can order between 7 AM and 11 PM IST.',
+        'चेकआउट बंद है। सुबह 7 बजे से रात 11 बजे तक ऑर्डर कर सकते हैं।'))));
+      return;
+    }
     // Catalogue browsing is public, but no guest may submit an order.
     if (AuthService.instance.user == null) {
       if (signedInUser != null && mounted) setState(() => signedInUser = null);
@@ -938,12 +944,12 @@ class _StorePageState extends State<StorePage> {
       '\n\nTotal: ${money(savedTotal)}\nName: ${name.text.trim()}'
       '\nMobile: $countryCode ${phone.text.trim()}\nAddress: $address'
       '\nPayment: ${paymentMethod == 'upi' ? 'UPI selected' : 'Cash on Delivery'}'
-      '\n\nPlease confirm availability and delivery time.',
+      '\n\nPlease confirm the order. Delivery attempted within 60 service minutes after confirmation, 7 AM–11 PM IST; delays possible.',
       'नमस्ते Easy Mandi, मेरा ऑर्डर $orderId कर दिया गया है।\n\n$lines'
       '\n\nकुल: ${money(savedTotal)}\nनाम: ${name.text.trim()}'
       '\nमोबाइल: $countryCode ${phone.text.trim()}\nपता: $address'
       '\nभुगतान: ${paymentMethod == 'upi' ? 'UPI चुना गया' : 'कैश ऑन डिलीवरी'}'
-      '\n\nकृपया उपलब्धता और डिलीवरी समय की पुष्टि करें।'
+      '\n\nकृपया ऑर्डर की पुष्टि करें। उसके बाद 60 कार्य मिनट में डिलीवरी का प्रयास होगा।'
     );
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -972,10 +978,10 @@ class _StorePageState extends State<StorePage> {
           if(savedMarketSavings>0)Text(tr('Saved vs market price: ${money(savedMarketSavings)}','बाज़ार भाव से बचत: ${money(savedMarketSavings)}'),style:const TextStyle(color:Color(0xFF176B46),fontWeight:FontWeight.w700)),
           if(savedSavings>0)Text(tr('Mandi quantity discount (not additional): ${money(savedSavings)}','मंडी छूट (अतिरिक्त नहीं): ${money(savedSavings)}'),style:const TextStyle(color:Color(0xFF176B46))),
           const SizedBox(height: 8),
-          easyMandiDeliveryWindowBanner(orderPlacedAt),
+          easyMandiDeliveryWindowBanner(savedOrder['confirmed_at'],placedAt:orderPlacedAt,targetAt:savedOrder['delivery_target_at']),
           Text(paymentMethod=='cod'
-            ?tr('Cash on Delivery selected. Your order is saved; delivery time and stock confirmation are pending.',
-                'डिलीवरी पर नकद चुना गया। ऑर्डर दर्ज है, उपलब्धता व समय की पुष्टि बाकी है।')
+            ?tr('Cash on Delivery selected. Awaiting confirmation. Your 60-minute delivery target starts after confirmation.',
+                'डिलीवरी पर नकद चुना गया। पुष्टि के बाद 60 मिनट का डिलीवरी लक्ष्य शुरू होगा।')
             :tr('UPI order saved. Payment requires receipt verification.','UPI ऑर्डर दर्ज है। रसीद का सत्यापन आवश्यक है।')),
         ]),
         actions:[
@@ -1046,7 +1052,7 @@ class _StorePageState extends State<StorePage> {
               const SizedBox(height: 10),
               easyMandiDeliveryWindowBanner(),
               const SizedBox(height: 16),
-              FilledButton.icon(onPressed: () { Navigator.pop(sheetContext); checkout(); }, icon: const Icon(Icons.chat_bubble_outline), label: Text(tr('Place order','ऑर्डर करें'))),
+              FilledButton.icon(onPressed: easyMandiCheckoutOpen()?() { Navigator.pop(sheetContext); checkout(); }:null, icon: const Icon(Icons.chat_bubble_outline), label: Text(tr('Place order','ऑर्डर करें'))),
             ],
           ]),
         ));
