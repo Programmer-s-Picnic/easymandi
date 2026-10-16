@@ -1050,7 +1050,7 @@ class _StorePageState extends State<StorePage> {
               const SizedBox(height: 8),
               Text(tr('Free delivery from ${money(store['freeDeliveryAbove'] as num? ?? 499)} • Minimum order ${money(store['minimumOrder'] as num? ?? 99)}','${money(store['freeDeliveryAbove'] as num? ?? 499)} से मुफ़्त डिलीवरी • न्यूनतम ऑर्डर ${money(store['minimumOrder'] as num? ?? 99)}'), style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 10),
-              easyMandiDeliveryWindowBanner(),
+              easyMandiDeliveryWindowBanner(null),
               const SizedBox(height: 16),
               FilledButton.icon(onPressed: easyMandiCheckoutOpen()?() { Navigator.pop(sheetContext); checkout(); }:null, icon: const Icon(Icons.chat_bubble_outline), label: Text(tr('Place order','ऑर्डर करें'))),
             ],
@@ -1272,7 +1272,7 @@ class _StorePageState extends State<StorePage> {
             TextButton(onPressed:loadCatalog,child:Text(tr('Retry','फिर प्रयास करें'))),
           ]))
         :Column(children:[
-          Padding(padding:const EdgeInsets.symmetric(horizontal:14),child:easyMandiDeliveryWindowBanner()),
+          Padding(padding:const EdgeInsets.symmetric(horizontal:14),child:easyMandiDeliveryWindowBanner(null)),
           Padding(padding:const EdgeInsets.fromLTRB(14,10,14,7),child:Column(children:[
             Row(children:[
               Expanded(child:Text(
