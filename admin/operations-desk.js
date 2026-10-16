@@ -97,6 +97,7 @@ function detail(){
  $('opsDetailStatus').textContent=status(o);
  const h=make('section',undefined,'ops-detail-block');
  h.append(make('h4','Order '+(o.daily_index||'#'+o.public_id)));
+ const topPrint=make('button','Print Slip','btn secondary');topPrint.type='button';topPrint.onclick=()=>window.EasyMandiPacking?.printSheet(o);h.append(topPrint);
  pair(h,'Customer',o.customer_name+' · '+o.mobile);
  pair(h,'Received',date(o.created_at));
  pair(h,'Address',orderAddress(o)||'Not provided');
@@ -114,7 +115,7 @@ function detail(){
  const saved=(o.items||[]).reduce((s,i)=>s+Number(i.discount_amount||0),0);
  if(saved)pair(items,'Mandi savings',rupees(saved));pair(items,'Delivery fee',rupees(o.delivery_fee));pair(items,'Total',rupees(o.total));
  const packing=make('div',undefined,'ops-actions');
- action(packing,'Print packing checklist',async()=>{if(!window.EasyMandiPacking?.printSheet)throw Error('Packing tool unavailable. Use legacy orders below.');window.EasyMandiPacking.printSheet(o);},true);
+ action(packing,'Print Packing Slip',async()=>{if(!window.EasyMandiPacking?.printSheet)throw Error('Packing tool unavailable. Use legacy orders below.');window.EasyMandiPacking.printSheet(o);},true);
  items.append(packing);
  if(window.EasyMandiPacking?.append){
   window.EasyMandiPacking.append(o,items,payload=>call(api+'admin-order-notes.php',payload));
@@ -186,6 +187,7 @@ function detail(){
    if(result.code)show('Assigned. Customer code: '+result.code+' · Share securely.'); 
   });
  }
+ const deliveryPrint=make('button','Print Delivery Slip','btn secondary');deliveryPrint.type='button';deliveryPrint.onclick=()=>window.EasyMandiPacking?.printSheet(o);deliveryActions.append(deliveryPrint);
  const link=make('a','Open advanced delivery admin');link.href='https://programmer-s-picnic.github.io/delivery-app/web/?order='+encodeURIComponent(o.public_id);link.target='_blank';link.rel='noopener noreferrer';deliveryActions.append(link);
  delivery.append(deliveryActions);target.append(delivery);
 }

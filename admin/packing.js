@@ -2,24 +2,72 @@
 (() => {
   'use strict';
   const h=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  function printSheet(order){
-    const pop=window.open('','_blank');
-    if(!pop){alert('Allow popups to print this order.');return;}
-    const items=(order.items||[]).map(item=>'<tr><td class="check">☐</td><td>'+h(item.product_name)+'</td><td>'+h(item.quantity)+' '+h(item.unit)+'</td><td>'+h(item.line_total)+'</td></tr>').join('');
-    const address=[order.house,order.locality,order.landmark,order.city,order.state,order.pin].filter(Boolean).join(', ');
-    const markup=`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Easy Mandi · ${h(order.public_id)} packing list</title>
-    <style>body{font:15px Arial,sans-serif;color:#162d22;max-width:760px;margin:22px auto;padding:0 16px}header{display:flex;justify-content:space-between;border-bottom:3px solid #176b46;padding-bottom:12px}h1{margin:0;color:#176b46}h2{margin:16px 0 8px;font-size:18px}table{width:100%;border-collapse:collapse}th,td{padding:10px;text-align:left;border:1px solid #ccd9cf}th{background:#e8f1ea}.check{font-size:24px;width:35px}.notes{white-space:pre-wrap;border:1px solid #cbdccc;padding:12px;min-height:30px}.signatures{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:35px}.signatures p{border-top:1px solid #333;padding-top:8px}.controls{margin:12px 0}button{padding:10px 16px;background:#176b46;color:white;border:0;border-radius:8px}@media print{.controls{display:none}body{margin:0}}</style></head><body>
-    <div class="controls"><button onclick="window.print()">Print / Save as PDF</button></div>
-    <header><div><h1>🥬 Easy Mandi</h1><strong>Packing & Delivery Checklist</strong></div><div><strong>Order ${h(order.public_id)}</strong><p>${h(order.created_at)}</p></div></header>
-    <p><strong>Customer:</strong> ${h(order.customer_name)} · ${h(order.mobile)}</p><p><strong>Delivery address:</strong> ${h(address)}</p>
-    <p><strong>Payment:</strong> ${h(order.payment_method||'cod').toUpperCase()} · ${h(order.payment_status||'pending')} · <strong>Total:</strong> ₹${h(order.total)}</p>
-    <h2>Items to pack</h2><table><thead><tr><th>✓</th><th>Item</th><th>Quantity</th><th>Line total (₹)</th></tr></thead><tbody>${items}</tbody></table>
-    <h2>Customer instructions</h2><div class="notes">${h(order.customer_note)||'None'}</div>
-    <h2>Instructions for packer</h2><div class="notes">${h(order.packer_note)||'None'}</div>
-    <h2>Instructions for delivery partner</h2><div class="notes">${h(order.partner_note)||'None'}</div>
-    <div class="signatures"><p>Packed by / Date</p><p>Checked by / Date</p><p>Delivery partner / Date</p><p>Receiver signature / Date</p></div>
-    <small>Private document for order fulfilment. The customer handoff OTP and QR are intentionally excluded.</small></body></html>`;
-    pop.document.open();pop.document.write(markup);pop.document.close();pop.focus();
+  const knownHindi={"onion":"प्याज","potato":"आलू","tomato":"टमाटर","carrot":"गाजर","cauliflower":"फूलगोभी","cabbage":"पत्तागोभी","spinach":"पालक","coriander":"धनिया","green_chilli":"हरी मिर्च","green chilli":"हरी मिर्च","ginger":"अदरक","garlic":"लहसुन"};
+  const format=n=>Number(n).toLocaleString('en-IN',{maximumFractionDigits:3});
+  function printSheet(order,popup){
+    const pop=popup||window.open('','_blank');
+    if(!pop){alert('Allow pop-ups to print this slip.');return false;}
+    const raw=order.source_created_at||order.created_at||'';
+    let when=String(raw);
+    if(/^\d{4}-\d\d-\d\d[ T]\d\d:\d\d/.test(when)&&!/(?:Z|[+-]\d\d:?\d\d)$/i.test(when))when=when.replace(' ','T')+'+05:30';
+    const date=new Date(when),dateText=raw&&Number.isFinite(date.getTime())?new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true}).format(date):String(raw||'—');
+    const address=String(order.address_text||[order.house,order.locality,order.landmark,order.city,order.state,order.pin].filter(Boolean).join(', ')||'Not provided');
+    const id=String(order.daily_index||order.public_id||order.external_order_id||order.id||'—').replace(/^#+/,'');
+    const items=Array.isArray(order.items)?order.items:[];
+    let packs=0,weight=0,unknown=false;
+    const rows=items.map((item,index)=>{
+      const qty=Number(item.quantity)||0,unit=String(item.unit||'pack'),name=String(item.product_name||item.name||'Product');
+      packs+=qty;
+      const match=unit.trim().match(/^(\d+(?:\.\d+)?)\s*(kilograms?|kgs?|kg|grams?|gms?|gm|g)(?=\s|$|\/)/i);
+      let mass='';
+      if(match){const kilos=qty*Number(match[1])*(match[2].toLowerCase().startsWith('k')?1:.001);weight+=kilos;mass='<small>('+format(kilos)+' kg)</small>';}
+      else unknown=true;
+      const hindi=String(item.hindi||item.hindi_name||knownHindi[String(item.product_id||'')]||knownHindi[name.toLowerCase()]||'');
+      const title=name+(hindi&&!/[\u0900-\u097f]/.test(name)?' ('+hindi+')':'');
+      return '<tr><td class="number">'+(index+1)+'</td><td class="product">'+h(title)+'</td><td class="quantity">'+h(unit+' × '+format(qty))+mass+'</td><td class="check"><i></i></td></tr>';
+    }).join('');
+    const notes=[order.customer_note,order.packer_note,order.partner_note].map(x=>String(x||'').trim()).filter(Boolean).map(h).join(' / ')||'None';
+    const totalWeight=weight?format(weight)+' kg'+(unknown?'*':''):'—';
+    const style=[
+      '@page{size:3in 4in;margin:0}',
+      '*{box-sizing:border-box}html,body{margin:0;padding:0}',
+      'body{background:#eef2f5;color:#000;font-family:Arial,"Noto Sans Devanagari",Mangal,sans-serif}',
+      '.controls{text-align:center;margin:12px auto}.controls button{background:#146bbb;color:#fff;border:0;border-radius:7px;padding:9px;font-weight:bold;cursor:pointer}',
+      '.slip{width:3in;min-height:4in;margin:auto;padding:9px;background:#fff}',
+      '.brand{text-align:center;font-size:18px;font-weight:900;line-height:1.1}',
+      '.strap{display:table;margin:4px auto 9px;padding:2px 8px;border-radius:2px;background:#000;color:#fff;font-size:10px;font-weight:900}',
+      '.reference{display:flex;justify-content:space-between;gap:3px;font-size:10px;font-weight:800;white-space:nowrap}',
+      '.dash{border-top:2px dashed #000;margin:8px 0}',
+      '.customer{display:flex;justify-content:space-between;gap:6px;font-size:12px;font-weight:800}',
+      '.phone{font-size:9px;white-space:nowrap}',
+      '.address{font-size:10px;line-height:1.3;margin:4px 0 7px;overflow-wrap:anywhere}',
+      'table{border-collapse:collapse;table-layout:fixed;width:100%;font-size:10px}',
+      'thead{display:table-header-group}th{text-align:left;padding:5px 2px;border-block:1px solid #000}',
+      'td{border-bottom:1px dashed #c8c8c8;padding:8px 2px;vertical-align:top}tr{break-inside:avoid}',
+      '.number{width:18px;text-align:center}.product{font-weight:800;overflow-wrap:anywhere}',
+      '.quantity{width:72px;text-align:right;font-weight:800}.quantity small{display:block;font-size:9px}',
+      '.check{width:18px;text-align:right}.check i{display:inline-block;width:12px;height:12px;border:1px solid #000}',
+      '.totals{display:flex;justify-content:space-between;gap:4px;border-top:2px solid #000;border-bottom:1px solid #000;margin-top:9px;padding:5px 0;font-size:11px;font-weight:900}',
+      '.sign{display:flex;justify-content:space-between;gap:7px;border-bottom:1px dashed #000;padding:11px 0 8px;font-size:9px;font-weight:700}',
+      '.notes,.hindi{text-align:center;font-size:9px;line-height:1.45;font-weight:bold;margin-top:5px;overflow-wrap:anywhere}',
+      '.hindi{font-size:8px}.foot{font-size:8px;text-align:center}',
+      '@media print{body{background:#fff}.controls{display:none!important}.slip{margin:0;padding:9px;width:3in;min-height:0}.strap{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
+    ].join('');
+    const markup='<!doctype html><html lang="en"><head><meta charset="utf-8"><title>EasyMandi Packing Slip - '+h(id)+'</title><style>'+style+'</style></head><body>'+
+      '<div class="controls"><button onclick="window.print()">Print / Save as PDF</button></div>'+
+      '<main class="slip"><div class="brand">EASYMANDI</div><div class="strap">PACKING &amp; DELIVERY SLIP</div>'+
+      '<div class="reference"><span>Order ID: #'+h(id)+'</span><span>Date: '+h(dateText)+'</span></div><div class="dash"></div>'+
+      '<div class="customer"><span>'+h(order.customer_name||'Customer')+'</span><span class="phone">'+(order.mobile||order.customer_mobile?'☎ '+h(order.mobile||order.customer_mobile):'')+'</span></div>'+
+      '<p class="address"><strong>Address:</strong> '+h(address)+'</p>'+
+      '<table><thead><tr><th class="number">#</th><th>Product</th><th class="quantity">Ord. Qty</th><th class="check">✓</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div class="totals"><span>Total Items: '+h(format(packs))+' packs</span><span>Weight: '+h(totalWeight)+'</span></div>'+
+      '<div class="sign"><span>Packer: ................</span><span>Checked By: ............</span></div>'+
+      '<div class="notes">Special Instructions: '+notes+'</div>'+
+      '<div class="hindi">Note: सभी उत्पादों की मात्रा और गुणवत्ता जाँचने के बाद ही ऑर्डर डिलीवरी के लिए दें।</div>'+
+      (unknown&&weight?'<p class="foot">* Weight excludes non-weight items.</p>':'')+'</main></body></html>';
+    pop.document.open();pop.document.write(markup);pop.document.close();
+    pop.addEventListener('load',()=>{pop.focus();pop.print();},{once:true});
+    return true;
   }
   function append(order,root,saveNotes){
     const section=document.createElement('section');section.className='order-note-editor';
@@ -44,7 +92,7 @@
       }catch(e){feedback.textContent=e.message||'Could not save instructions.';}
       finally{save.disabled=false;}
     };
-    const print=document.createElement('button');print.type='button';print.className='btn secondary';print.textContent='Print / Save order PDF';print.onclick=()=>printSheet(order);
+    const print=document.createElement('button');print.type='button';print.className='btn secondary';print.textContent='Print Slip';print.onclick=()=>printSheet(order);
     actions.append(save,print);section.append(actions,feedback);root.append(section);
   }
   window.EasyMandiPacking={append,printSheet};

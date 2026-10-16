@@ -247,7 +247,8 @@
       delivery.className = 'btn secondary';
       delivery.href = 'https://programmer-s-picnic.github.io/delivery-app/web/?order=' + encodeURIComponent(order.public_id);
       delivery.textContent = 'Open in delivery admin';
-      row.append(select, save, delivery);
+      const print=document.createElement('button');print.type='button';print.className='btn secondary';print.textContent='Print Slip';print.onclick=()=>window.EasyMandiPacking?.printSheet(order);
+      row.append(select, save, print, delivery);
       const content=document.createElement('div');content.className='order-card-body';
       content.append(date, progress, customer, address, map, items, totals, payment, row);
       window.EasyMandiPacking?.append(order,content,payload=>request('admin-order-notes',payload));
