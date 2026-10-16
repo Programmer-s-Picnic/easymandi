@@ -5,8 +5,8 @@
     "sourceCommit": "693536ff64b56eedacb2c2ad8274224a6ff2720b"
   },
   "delivery": {
-    "version": "1.3.6+16",
-    "sourceCommit": "a8d4d53e23ffffe50f1e00dc9ba7bb89238d42dd"
+    "version": "1.3.7+17",
+    "sourceCommit": "6eebc1780daed786cff28a78578517490d4da7be"
   },
   "paths": [
     "/apk/easymani64.apk",
