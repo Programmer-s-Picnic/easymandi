@@ -486,3 +486,11 @@ dialog::backdrop {
 .keyword-preview input{max-width:310px;min-width:190px;flex:1}
 .keyword-preview small{color:#306548}
 @media(max-width:520px){.keyword-panel .row{flex-wrap:wrap}.keyword-panel .row .btn{width:100%}}
+
+/* Compact alternative-name lists in Products Master; expand a row on demand. */
+.product-grid .product-search-words-cell{min-width:120px;width:155px;max-width:185px;overflow-wrap:anywhere}
+.product-search-words-text{display:block;line-height:1.45}
+.product-search-words-cell:not(.is-expanded) .product-search-words-text{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+.product-search-more{display:inline-block;margin-top:5px;border:0;padding:2px 0;background:transparent;color:#0a61a7;cursor:pointer;font:inherit;font-size:12px;font-weight:750;text-decoration:underline;text-underline-offset:2px}
+.product-search-more:hover{color:#06497f}
+.product-search-more:focus-visible{outline:2px solid #0b70c5;outline-offset:3px;border-radius:3px}

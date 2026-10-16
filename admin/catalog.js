@@ -192,6 +192,33 @@ function openProduct(original=null, mode='insert'){
   }
   $('productDialog').showModal();$('product_id').focus();
 }
+// Compact keyword previews keep the Products Master rows readable.
+function appendProductKeywordsCell(row, product){
+  const cell=document.createElement('td');cell.className='product-search-words-cell';
+  const words=Array.isArray(product.searchKeywords)?product.searchKeywords.filter(w=>typeof w==='string'):[];
+  if(!words.length){cell.textContent='—';row.append(cell);return;}
+  const full=words.join(', ');
+  const initial=Array.from(words.slice(0,2).join(', '));
+  const shortened=initial.length>34;
+  const preview=initial.slice(0,34).join('')+(shortened?'…':'');
+  const collapsible=words.length>2||shortened;
+  const text=document.createElement('span');text.className='product-search-words-text';text.textContent=collapsible?preview:full;
+  cell.append(text);
+  if(collapsible){
+    const button=document.createElement('button');button.type='button';button.className='product-search-more';
+    const moreLabel=words.length>2?'More (+'+(words.length-2)+')':'More';
+    const setExpanded=expanded=>{
+      cell.classList.toggle('is-expanded',expanded);
+      text.textContent=expanded?full:preview;
+      button.textContent=expanded?'Less':moreLabel;
+      button.setAttribute('aria-expanded',String(expanded));
+      button.setAttribute('aria-label',(expanded?'Show fewer':'Show all')+' search words for '+product.name);
+    };
+    button.addEventListener('click',()=>setExpanded(button.getAttribute('aria-expanded')!=='true'));
+    setExpanded(false);cell.append(button);
+  }
+  row.append(cell);
+}
 function renderProducts(){
   if(!data)return;
   const root=$('products');root.replaceChildren();
@@ -251,7 +278,9 @@ function renderProducts(){
     pick.checked=mandiSelected.has(p.id);pick.setAttribute('aria-label','Select '+p.name+' for Mandi bulk pricing');
     pick.onchange=()=>{if(pick.checked)mandiSelected.add(p.id);else mandiSelected.delete(p.id);};
     selectedCell.append(pick);row.append(selectedCell);
-    for(const value of [p.id,(p.emoji||'')+' '+p.name,p.hindi,(Array.isArray(p.searchKeywords)?p.searchKeywords:[]).join(', '),p.category,p.unit,'₹'+Number(p.price).toFixed(2),p.mandi?.enabled?'₹'+Number(p.mandi.unitPrice).toFixed(2)+' from '+p.mandi.minimumQuantity:'Not set',p.available?'Yes':'No']){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
+    for(const value of [p.id,(p.emoji||'')+' '+p.name,p.hindi]){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
+    appendProductKeywordsCell(row,p);
+    for(const value of [p.category,p.unit,'₹'+Number(p.price).toFixed(2),p.mandi?.enabled?'₹'+Number(p.mandi.unitPrice).toFixed(2)+' from '+p.mandi.minimumQuantity:'Not set',p.available?'Yes':'No']){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
     const cell=document.createElement('td');const controls=document.createElement('div');controls.className='row';
     for(const [label,mode] of [['Update','update'],['Delete','delete']]){const button=document.createElement('button');button.type='button';button.className=mode==='delete'?'btn danger':'btn secondary';button.textContent=label;button.setAttribute('aria-label',label+' '+p.name);button.onclick=()=>openProduct(p,mode);controls.append(button);}
     cell.append(controls);row.append(cell);body.append(row);
