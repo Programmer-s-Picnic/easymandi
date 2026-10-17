@@ -102,6 +102,8 @@ class _StorePageState extends State<StorePage> {
   final Set<String> shownNotifications={};
   bool loading = true;
   bool storageUnavailable = false;
+  bool basketRestoreFailed = false;
+  String storageDiagnostic = '';
   ApkUpdate? availableApk;
   CatalogDeliveryMode _deliveryMode=CatalogDeliveryMode.expanded;
 
@@ -473,18 +475,20 @@ class _StorePageState extends State<StorePage> {
       final parsed=(data['products'] as List).map((e)=>Product(e as Map<String,dynamic>)).toList();
       Map<String,int>? saved;
       List<RecentItem>? recent;
-      var localReadFailed=false;
+      var cartReadFailed=false;
+      String? cartError, recentError;
       try{
         await _cartWrite.timeout(const Duration(seconds:3));
-        saved=await LocalStore.instance.loadCart().timeout(const Duration(seconds:4));
-      }catch(_){
-        localReadFailed=true;
-        // Existing basket stays in memory; never clear persisted records.
+        saved=await LocalStore.instance.loadCart().timeout(const Duration(seconds:5));
+      }catch(error){
+        cartReadFailed=true;
+        cartError=error.runtimeType.toString();
+        // Keep the in-memory basket; never clear persisted records.
       }
       try{
-        recent=await LocalStore.instance.loadRecentItems().timeout(const Duration(seconds:4));
-      }catch(_){
-        localReadFailed=true;
+        recent=await LocalStore.instance.loadRecentItems().timeout(const Duration(seconds:5));
+      }catch(error){
+        recentError=error.runtimeType.toString();
         // Previous orders remain available from the signed-in server account.
       }
       if(!mounted)return;
@@ -503,7 +507,12 @@ class _StorePageState extends State<StorePage> {
           }
         }
         loading=false;
-        storageUnavailable=localReadFailed;
+        storageUnavailable=cartError!=null || recentError!=null;
+        basketRestoreFailed=cartReadFailed;
+        storageDiagnostic=[
+          if(cartError!=null)'BASKET: $cartError',
+          if(recentError!=null)'HISTORY: $recentError',
+        ].join(' · ');
         message='';
       });
       unawaited(syncCustomerData());
@@ -1332,10 +1341,23 @@ class _StorePageState extends State<StorePage> {
                 child:Row(children:[
                   const Icon(Icons.info_outline,color:Color(0xFF895600),size:18),
                   const SizedBox(width:6),
-                  Expanded(child:Text(tr(
-                    'Local storage is unavailable. Your catalogue works; some basket changes might not be saved on this device.',
-                    'स्थानीय स्टोरेज उपलब्ध नहीं है। कैटलॉग चलेगा, लेकिन टोकरी में बदलाव इस फोन पर नहीं सहेजे जा सकेंगे।'),
+                  Expanded(child:Text(basketRestoreFailed
+                    ?tr('Basket storage could not be read. Catalogue browsing still works.',
+                      'टोकरी का डेटा नहीं खुल सका। कैटलॉग फिर भी उपलब्ध है।')
+                    :tr('Recent-item history could not be read. Basket storage may still work.',
+                      'हाल के सामान का रिकॉर्ड नहीं खुला। टोकरी का डेटा सही हो सकता है।'),
                     style:const TextStyle(fontSize:11,color:Color(0xFF755300)))),
+                  IconButton(
+                    tooltip:tr('Show safe storage diagnostic','स्टोरेज त्रुटि विवरण'),
+                    constraints:const BoxConstraints(minWidth:32,minHeight:32),
+                    icon:const Icon(Icons.help_outline,size:18,color:Color(0xFF755300)),
+                    onPressed:()=>showDialog<void>(context:context,builder:(ctx)=>AlertDialog(
+                      title:Text(tr('Local storage diagnostic','स्थानीय स्टोरेज विवरण')),
+                      content:SelectableText(storageDiagnostic.isEmpty?'Unknown':storageDiagnostic),
+                      actions:[TextButton(onPressed:()=>Navigator.pop(ctx),
+                        child:Text(tr('Close','बंद करें')))],
+                    )),
+                  ),
                   TextButton(onPressed:loadCatalog,
                     child:Text(tr('Retry','फिर प्रयास करें'),style:const TextStyle(fontSize:11))),
                 ]))),
