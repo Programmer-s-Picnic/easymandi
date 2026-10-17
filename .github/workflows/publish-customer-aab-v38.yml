@@ -1,0 +1,66 @@
+name: Publish verified Easy Mandi customer Play Store AAB 1.3.27+38
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-customer-aab-v38.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: publish-customer-aab-v38
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: 4bb542b3c01628499cad7783f369c4e06089ed10
+      AAB_RUN: '39010285399'
+      AAB_ARTIFACT_ID: '12092393962'
+      EXPECTED_SHA256: d4e2b46431a1fa89a4f16353245146d0c383a060fa1493ac79602aaeea096ac1
+      RELEASE_TAG: customer-v1.3.27-build38-play-aab
+      AAB_NAME: EasyMandi-Customer-1.3.27-build38.aab
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify successful release-signed AAB source workflow
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$AAB_RUN" \
+            --jq '[.status, .conclusion, .head_sha, .name] | @tsv' > /tmp/aab-run.tsv
+          test "$(cut -f1 /tmp/aab-run.tsv)" = completed
+          test "$(cut -f2 /tmp/aab-run.tsv)" = success
+          test "$(cut -f3 /tmp/aab-run.tsv)" = "$SOURCE_SHA"
+          test "$(cut -f4 /tmp/aab-run.tsv)" = 'Build Play Store customer AAB (release upload key)'
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$AAB_ARTIFACT_ID" \
+            --jq '[.name, .expired, .workflow_run.id] | @tsv' > /tmp/aab-artifact.tsv
+          test "$(cut -f1 /tmp/aab-artifact.tsv)" = EasyMandi-Customer-PlayStore-AAB
+          test "$(cut -f2 /tmp/aab-artifact.tsv)" = false
+          test "$(cut -f3 /tmp/aab-artifact.tsv)" = "$AAB_RUN"
+      - name: Retrieve signed AAB and verify pinned SHA-256 and JAR signature
+        run: |
+          set -euo pipefail
+          curl -fLsS --retry 5 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$AAB_ARTIFACT_ID/zip" \
+            -o /tmp/easymandi-aab-artifact.zip
+          unzip -tq /tmp/easymandi-aab-artifact.zip
+          mkdir -p dist
+          unzip -p /tmp/easymandi-aab-artifact.zip app-release.aab > "dist/$AAB_NAME"
+          test "$(stat -c '%s' "dist/$AAB_NAME")" -gt 1000000
+          unzip -tq "dist/$AAB_NAME"
+          echo "$EXPECTED_SHA256  dist/$AAB_NAME" | sha256sum -c -
+          jarsigner -verify "dist/$AAB_NAME"
+          printf '%s  %s\n' "$EXPECTED_SHA256" "$AAB_NAME" > dist/SHA256SUMS.txt
+      - name: Publish direct downloadable AAB as a GitHub Release
+        run: |
+          set -euo pipefail
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --target "$SOURCE_SHA" \
+              --title 'Easy Mandi Customer 1.3.27 (38) — Google Play AAB' \
+              --notes 'Verified Google Play upload-key-signed AAB from successful build 39010285399. SHA-256: d4e2b46431a1fa89a4f16353245146d0c383a060fa1493ac79602aaeea096ac1. Source is the same Flutter application version as the working APK. No APKs were rebuilt.'
+          fi
+          gh release upload "$RELEASE_TAG" "dist/$AAB_NAME" dist/SHA256SUMS.txt --clobber
+          gh release view "$RELEASE_TAG" --json assets \
+            --jq '.assets[] | [.name, .size, .url] | @tsv'
