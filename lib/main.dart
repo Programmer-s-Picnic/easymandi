@@ -29,6 +29,7 @@ import 'i18n.dart';
 import 'savings_utils.dart';
 import 'app_update.dart';
 import 'delivery_window.dart';
+import 'customer_catalog_loader.dart';
 
 const catalogUrl =
     'https://cserver.learnwithchampak.live/easymandi/api/catalog.php';
@@ -37,6 +38,12 @@ const pale = Color(0xFFF4F8F3);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Draw an actual Flutter frame immediately. Slow device storage must never
+  // leave customers staring at the native splash screen with no status.
+  runApp(const EasyMandiBootstrap());
+}
+
+Future<void> _prepareEasyMandiStorage() async {
   // Deliberate one-time customer reset for the October 2026 fresh start.
   // Keep the catalog and the application's language preference intact.
   final prefs=await SharedPreferences.getInstance();
@@ -58,7 +65,81 @@ Future<void> main() async {
     await prefs.setBool(historyMarker,true);
   }
   await EasyMandiLanguage.load();
-  runApp(const EasyMandiApp());
+}
+
+/// This preparation screen does not delete or skip existing customer data.
+/// It becomes usable immediately as the first rendered Android frame.
+class EasyMandiBootstrap extends StatefulWidget {
+  const EasyMandiBootstrap({super.key});
+  @override
+  State<EasyMandiBootstrap> createState()=>_EasyMandiBootstrapState();
+}
+class _EasyMandiBootstrapState extends State<EasyMandiBootstrap> {
+  bool ready=false,delayed=false;
+  String? failure;
+  Timer? watchdog;
+  @override
+  void initState(){
+    super.initState();
+    _start();
+  }
+  void _start(){
+    watchdog?.cancel();
+    watchdog=Timer(const Duration(seconds:10),(){
+      if(mounted && !ready)setState(()=>delayed=true);
+    });
+    _prepareEasyMandiStorage().then((_){
+      if(!mounted)return;
+      watchdog?.cancel();
+      setState(()=>ready=true);
+    }).catchError((Object error){
+      if(!mounted)return;
+      watchdog?.cancel();
+      setState(()=>failure=tr('Could not prepare device storage. Please retry.',
+        'डिवाइस का डेटा तैयार नहीं हो सका। दोबारा कोशिश करें।'));
+    });
+  }
+  @override
+  void dispose(){watchdog?.cancel();super.dispose();}
+  @override
+  Widget build(BuildContext context){
+    if(ready)return const EasyMandiApp();
+    return MaterialApp(
+      debugShowCheckedModeBanner:false,
+      home:Scaffold(
+        backgroundColor:pale,
+        body:SafeArea(child:Center(child:Padding(
+          padding:const EdgeInsets.symmetric(horizontal:28),
+          child:Column(mainAxisSize:MainAxisSize.min,children:[
+            Image.asset('assets/brand-symbol.png',height:72,width:72,
+              errorBuilder:(_,__,___)=>const Icon(Icons.storefront,size:72,color:forest)),
+            const SizedBox(height:12),
+            const Text('Easy Mandi',style:TextStyle(fontWeight:FontWeight.w900,fontSize:24,color:forest)),
+            const SizedBox(height:22),
+            if(failure==null)const CircularProgressIndicator(),
+            const SizedBox(height:15),
+            Text(failure??(delayed
+              ?tr('Device storage is taking longer than usual. Your saved data is being preserved.',
+                'डिवाइस डेटा खुलने में देर हो रही है। आपका सहेजा डेटा सुरक्षित है।')
+              :tr('Preparing your catalogue…','आपका कैटलॉग तैयार हो रहा है…')),
+              textAlign:TextAlign.center),
+            if(failure!=null)
+              TextButton(onPressed:(){
+                setState((){failure=null;delayed=false;});
+                _start();
+              },child:Text(tr('Retry','फिर कोशिश करें'))),
+            if(delayed||failure!=null)
+              TextButton(
+                onPressed:()async{
+                  try{await launchUrl(Uri.parse('https://easymandi.in/'),
+                     mode:LaunchMode.externalApplication);}catch(_){}
+                },
+                child:Text(tr('Open Easy Mandi website','ईज़ी मंडी वेबसाइट खोलें'))),
+          ]),
+        ))),
+      ),
+    );
+  }
 }
 
 class EasyMandiApp extends StatelessWidget {
@@ -480,45 +561,46 @@ class _StorePageState extends State<StorePage> {
 
   Future<void> loadCatalog() async {
     if (mounted) setState(() => loading = true);
-    String? raw;
     try {
-      final client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
-      try {
-        final request = await client.getUrl(Uri.parse(catalogUrl));
-        final response = await request.close().timeout(const Duration(seconds: 8));
-        if (response.statusCode != 200) throw const HttpException('Catalog unavailable');
-        raw = await response.transform(utf8.decoder).join();
-      } finally {
-        client.close(force: true);
-      }
-    } catch (_) {
-      raw = await rootBundle.loadString('assets/products.json');
-    }
-    try {
-      final data = jsonDecode(raw) as Map<String, dynamic>;
-      final parsed = (data['products'] as List).map((e) => Product(e as Map<String, dynamic>)).toList();
-      await _cartWrite;
-      final saved = await LocalStore.instance.loadCart();
-      final recent = await LocalStore.instance.loadRecentItems();
-      if (!mounted) return;
-      setState(() {
-        products = parsed;
-        if(AuthService.instance.user==null)recentItems = recent;
-        store = data['store'] as Map<String, dynamic>;
-        checkoutRules = data['checkout'] as Map<String, dynamic>? ?? {};
-        categories = (data['categories'] as List).cast<String>();
-        cart.clear();
-        for (final e in saved.entries) {
-          if (parsed.any((p) => p.id == e.key && p.available) && e.value > 0) {
-            cart[e.key] = e.value.clamp(1, 99);
+      // A stalled stream must never keep the catalog spinner running forever.
+      // The bundled catalog remains browseable while the server is unavailable.
+      final raw=await CustomerCatalogLoader.load();
+      final data=jsonDecode(raw) as Map<String,dynamic>;
+      final parsed=(data['products'] as List).map((e)=>Product(e as Map<String,dynamic>)).toList();
+      Map<String,int>? saved;
+      List<RecentItem>? recent;
+      try{
+        await _cartWrite.timeout(const Duration(seconds:3));
+        saved=await LocalStore.instance.loadCart().timeout(const Duration(seconds:4));
+      }catch(_){/* Keep in-memory basket and never overwrite stalled storage. */}
+      try{
+        recent=await LocalStore.instance.loadRecentItems().timeout(const Duration(seconds:4));
+      }catch(_){/* Previously ordered items remain optional. */}
+      if(!mounted)return;
+      setState((){
+        products=parsed;
+        if(AuthService.instance.user==null && recent!=null)recentItems=recent;
+        store=data['store'] as Map<String,dynamic>;
+        checkoutRules=data['checkout'] as Map<String,dynamic>? ?? {};
+        categories=(data['categories'] as List).cast<String>();
+        if(saved!=null){
+          cart.clear();
+          for(final e in saved.entries){
+            if(parsed.any((p)=>p.id==e.key && p.available)&&e.value>0){
+              cart[e.key]=e.value.clamp(1,99);
+            }
           }
         }
-        loading = false;
-        message = '';
+        loading=false;
+        message='';
       });
-      await syncCustomerData();
-    } catch (_) {
-      if (mounted) setState(() { loading = false; message = tr('Could not load the catalog. Please try again.','कैटलॉग लोड नहीं हो सका। कृपया फिर प्रयास करें।'); });
+      unawaited(syncCustomerData());
+    }catch(_){
+      if(mounted)setState((){
+        loading=false;
+        message=tr('Could not load the catalog. Please try again.',
+          'कैटलॉग लोड नहीं हो सका। कृपया फिर प्रयास करें।');
+      });
     }
   }
 
