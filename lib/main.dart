@@ -118,6 +118,7 @@ class _StorePageState extends State<StorePage> {
   final Set<String> shownNotifications={};
   bool loading = true;
   ApkUpdate? availableApk;
+  CatalogDeliveryMode _deliveryMode=CatalogDeliveryMode.expanded;
 
   Future<void> checkApkUpdate({bool manual = false}) async {
     try {
@@ -148,6 +149,30 @@ class _StorePageState extends State<StorePage> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(
         'Cannot open the APK download link.', 'APK डाउनलोड लिंक नहीं खुल सका।'))));
     }
+  }
+
+
+  void _toggleDeliveryNotice(){
+    setState(()=>_deliveryMode=_deliveryMode==CatalogDeliveryMode.expanded
+      ?CatalogDeliveryMode.compact:CatalogDeliveryMode.expanded);
+  }
+  void _dismissDeliveryNotice()=>setState(()=>_deliveryMode=CatalogDeliveryMode.dismissed);
+  void _onCatalogScroll(double pixels){
+    if(pixels<=24 || _deliveryMode!=CatalogDeliveryMode.expanded)return;
+    // Scroll notifications arrive during layout: change height on the next frame.
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      if(mounted && _deliveryMode==CatalogDeliveryMode.expanded){
+        setState(()=>_deliveryMode=CatalogDeliveryMode.compact);
+      }
+    });
+  }
+  Future<void> _openDeliveryPolicy() async {
+    final uri=Uri.parse('https://easymandi.in/delivery-policy.html');
+    try {
+      if(await launchUrl(uri,mode:LaunchMode.externalApplication))return;
+    } catch (_) { /* Keep the app usable without an external browser. */ }
+    if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content:Text(tr('Could not open delivery policy.','डिलीवरी नीति नहीं खुली।'))));
   }
 
   void _languageChanged() {
@@ -847,6 +872,17 @@ class _StorePageState extends State<StorePage> {
               padding: const EdgeInsets.only(top: 8),
               child: Text(tr('After placing the order, pay the exact saved total by UPI and upload the payment screenshot for admin verification.','ऑर्डर करने के बाद सहेजी गई सही राशि UPI से भुगतान करें और एडमिन सत्यापन के लिए भुगतान स्क्रीनशॉट अपलोड करें।')),
             ),
+            Padding(padding:const EdgeInsets.only(top:9,bottom:5),
+              child:Row(children:[
+                const Icon(Icons.local_shipping_outlined,color:forest,size:19),
+                const SizedBox(width:7),
+                Expanded(child:Text(tr('Delivery attempted within 60 service minutes after confirmation · 7 AM–11 PM IST. Delays possible.',
+                  'पुष्टि के 60 कार्य मिनट में डिलीवरी प्रयास · सुबह 7–रात 11। देरी संभव है।'),
+                  style:const TextStyle(fontSize:12))),
+                IconButton(tooltip:tr('Read delivery policy','डिलीवरी नीति पढ़ें'),
+                  onPressed:(){_openDeliveryPolicy();},
+                  icon:const Icon(Icons.info_outline,size:20)),
+              ])),
             if (selectedAddress == null) CheckboxListTile(
               contentPadding: EdgeInsets.zero, title: Text(signedInUser==null?tr('Save this address on this device','यह पता इस डिवाइस पर सहेजें'):tr('Save address to my account (all devices)','यह पता मेरे खाते में सहेजें (सभी डिवाइस)')),
               value: saveNewAddress, onChanged: (value) => updateDialog(() => saveNewAddress = value ?? false),
@@ -1050,7 +1086,23 @@ class _StorePageState extends State<StorePage> {
               const SizedBox(height: 8),
               Text(tr('Free delivery from ${money(store['freeDeliveryAbove'] as num? ?? 499)} • Minimum order ${money(store['minimumOrder'] as num? ?? 99)}','${money(store['freeDeliveryAbove'] as num? ?? 499)} से मुफ़्त डिलीवरी • न्यूनतम ऑर्डर ${money(store['minimumOrder'] as num? ?? 99)}'), style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 10),
-              easyMandiDeliveryWindowBanner(null),
+              ExpansionTile(
+                tilePadding:EdgeInsets.zero,
+                initiallyExpanded:false,
+                leading:const Icon(Icons.local_shipping_outlined,size:19,color:forest),
+                title:Text(tr('Delivery attempt: 60 service minutes after confirmation',
+                  'पुष्टि के बाद 60 कार्य मिनट में डिलीवरी का प्रयास'),
+                  style:const TextStyle(fontSize:12,fontWeight:FontWeight.w700)),
+                subtitle:Text(tr('Ordering 7 AM–11 PM IST · Details',
+                  'ऑर्डर सुबह 7–रात 11 · विवरण'),
+                  style:const TextStyle(fontSize:11)),
+                children:[
+                  easyMandiDeliveryWindowBanner(null),
+                  Align(alignment:Alignment.centerLeft,child:TextButton(
+                    onPressed:(){_openDeliveryPolicy();},
+                    child:Text(tr('Read full delivery policy','पूरी डिलीवरी नीति पढ़ें')))),
+                ],
+              ),
               const SizedBox(height: 16),
               FilledButton.icon(onPressed: easyMandiCheckoutOpen()?() { Navigator.pop(sheetContext); checkout(); }:null, icon: const Icon(Icons.chat_bubble_outline), label: Text(tr('Place order','ऑर्डर करें'))),
             ],
@@ -1272,7 +1324,12 @@ class _StorePageState extends State<StorePage> {
             TextButton(onPressed:loadCatalog,child:Text(tr('Retry','फिर प्रयास करें'))),
           ]))
         :Column(children:[
-          Padding(padding:const EdgeInsets.symmetric(horizontal:14),child:easyMandiDeliveryWindowBanner(null)),
+          CatalogDeliveryNotice(
+            mode:_deliveryMode,
+            onToggle:_toggleDeliveryNotice,
+            onDismiss:_dismissDeliveryNotice,
+            onPolicyTap:(){_openDeliveryPolicy();},
+          ),
           Padding(padding:const EdgeInsets.fromLTRB(14,10,14,7),child:Column(children:[
             Row(children:[
               Expanded(child:Text(
@@ -1374,6 +1431,7 @@ class _StorePageState extends State<StorePage> {
             onProductTap:showProductDetail,
             onQuantityChanged:changeQuantity,
             onFavoriteTap:toggleFavorite,
+            onCatalogScroll:_onCatalogScroll,
           )),
         ]),
       bottomNavigationBar:SafeArea(top:false,
