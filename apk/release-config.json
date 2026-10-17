@@ -1,13 +1,13 @@
 {
   "domain": "easymandi.in",
   "customer": {
-    "version": "1.3.25+36",
-    "sourceCommit": "e1cb9020e5839871a17bf2bd293bf7f462f35fdf",
+    "version": "1.3.26+37",
+    "sourceCommit": "18cdd1acee487af3452d751611dcdfcecaa23fac",
     "sourceRepo": "Programmer-s-Picnic/easymandi",
-    "workflowRun": 39007601891,
-    "artifactId": 12091439207,
-    "sha256_64": "56771e5f8174eed846a4ad062b85dd50d3a61cc68c1ffac970b4dae2dbee0066",
-    "sha256_32": "ba3ce5e1e9bfbaef065b09a7f561b5f52c22a4b4054c3c58c1dae18894819e2a",
+    "workflowRun": 39008928601,
+    "artifactId": 12092510381,
+    "sha256_64": "4fa2ef3ddc32188d23239cb34cc0e6d87e5d6a99efe57d5c556c0260dcfe63ad",
+    "sha256_32": "8a864ffdde3ed93bb59e84e47abee91f7a623803942a6a207501cf51eb20cbcf",
     "a64": "easymani64.apk",
     "a32": "easymani32.apk"
   },
