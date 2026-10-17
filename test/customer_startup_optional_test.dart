@@ -6,10 +6,11 @@ import 'package:easy_mandi/customer_startup.dart';
 
 void main() {
   testWidgets('Customer screen mounts on first frame', (tester) async {
-    await storefront.main();
+    await tester.pumpWidget(const storefront.EasyMandiApp());
     await tester.pump();
     expect(find.byType(MaterialApp), findsWidgets);
     expect(find.text('Easy Mandi'), findsWidgets);
+    await tester.pumpWidget(const SizedBox.shrink());
   });
   test('Optional language load handles failed platform read', () async {
     await CustomerStartup.restoreLanguage(loader: () async {
