@@ -79,3 +79,60 @@ Widget easyMandiDeliveryWindowBanner(dynamic confirmedAt,{dynamic placedAt,dynam
         color: Color(0xFF204E6C)))),
   ]),
 );
+
+/* V3 compact, non-overlay policy guidance on the customer market screen.
+ * Recorded order confirmation and checkout notices keep their V2 widgets. */
+enum CatalogDeliveryMode { expanded, compact, dismissed }
+
+class CatalogDeliveryNotice extends StatelessWidget {
+  const CatalogDeliveryNotice({super.key,required this.mode,required this.onToggle,
+    required this.onDismiss,required this.onPolicyTap});
+  final CatalogDeliveryMode mode;
+  final VoidCallback onToggle, onDismiss, onPolicyTap;
+  @override
+  Widget build(BuildContext context) {
+    if (mode==CatalogDeliveryMode.dismissed) return const SizedBox.shrink();
+    final expanded=mode==CatalogDeliveryMode.expanded;
+    return Container(
+      margin:const EdgeInsets.fromLTRB(14,6,14,5),
+      padding:EdgeInsets.symmetric(horizontal:expanded?11:9,vertical:expanded?9:4),
+      decoration:BoxDecoration(
+        color:const Color(0xFFF3FAFD),
+        border:Border.all(color:const Color(0xFFCBDDE7)),
+        borderRadius:BorderRadius.circular(12),
+      ),
+      child:Row(crossAxisAlignment:CrossAxisAlignment.center,children:[
+        const Icon(Icons.local_shipping_outlined,color:Color(0xFF176B46),size:20),
+        const SizedBox(width:7),
+        Expanded(child:expanded
+          ?Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+              Text(tr('Your delivery window','आपकी डिलीवरी का समय'),
+                style:const TextStyle(color:Color(0xFF176B46),fontSize:12,fontWeight:FontWeight.w800)),
+              const SizedBox(height:3),
+              Text(tr('We aim to attempt delivery within 60 service minutes after confirmation. Ordering hours: 7 AM–11 PM IST; delays are possible.',
+                'पुष्टि के बाद 60 कार्य मिनट में डिलीवरी का प्रयास। ऑर्डर का समय: सुबह 7 से रात 11 तक; देरी संभव है।'),
+                style:const TextStyle(color:Color(0xFF204E6C),fontSize:12,height:1.3)),
+              Align(alignment:Alignment.centerLeft,
+                child:TextButton(
+                  onPressed:onPolicyTap,
+                  style:TextButton.styleFrom(padding:EdgeInsets.zero,visualDensity:VisualDensity.compact),
+                  child:Text(tr('View full policy','पूरी नीति देखें'),
+                    style:const TextStyle(fontWeight:FontWeight.w700,fontSize:12)))),
+            ])
+          :Text(tr('60-min delivery attempt · 7 AM–11 PM','60 मिनट में डिलीवरी प्रयास · सुबह 7–रात 11'),
+              maxLines:1,overflow:TextOverflow.ellipsis,
+              style:const TextStyle(fontSize:12,fontWeight:FontWeight.w800,color:Color(0xFF214C62)))),
+        IconButton(
+          tooltip:expanded?tr('Minimise delivery notice','डिलीवरी संदेश छोटा करें'):tr('Expand delivery notice','डिलीवरी संदेश खोलें'),
+          onPressed:onToggle,visualDensity:VisualDensity.compact,
+          constraints:const BoxConstraints(minWidth:36,minHeight:36),
+          icon:Icon(expanded?Icons.keyboard_arrow_up:Icons.keyboard_arrow_down,size:21)),
+        IconButton(
+          tooltip:tr('Close delivery notice','डिलीवरी संदेश बंद करें'),
+          onPressed:onDismiss,visualDensity:VisualDensity.compact,
+          constraints:const BoxConstraints(minWidth:36,minHeight:36),
+          icon:const Icon(Icons.close,size:17)),
+      ]),
+    );
+  }
+}
