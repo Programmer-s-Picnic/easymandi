@@ -10,7 +10,7 @@ class StoreGallery extends StatelessWidget {
   const StoreGallery({super.key,required this.products,required this.categories,
     required this.selectedCategory,required this.quantities,required this.favorites,
     required this.onCategorySelected,required this.onProductTap,
-    required this.onQuantityChanged,required this.onFavoriteTap});
+    required this.onQuantityChanged,required this.onFavoriteTap,this.onCatalogScroll});
   final List<Product> products;
   final List<String> categories;
   final String selectedCategory;
@@ -20,6 +20,7 @@ class StoreGallery extends StatelessWidget {
   final ValueChanged<Product> onProductTap;
   final void Function(Product,int) onQuantityChanged;
   final ValueChanged<Product> onFavoriteTap;
+  final ValueChanged<double>? onCatalogScroll;
 
   String _categoryIcon(String name){
     final value=name.toLowerCase();
@@ -172,14 +173,21 @@ class StoreGallery extends StatelessWidget {
         padding:const EdgeInsets.all(15),
         child:Text(tr('No matching products','कोई मिलता उत्पाद नहीं'),
           textAlign:TextAlign.center)))
-        :CustomScrollView(slivers:[
+        :NotificationListener<ScrollNotification>(
+          onNotification:(notification){
+            if(notification.depth==0 && notification is ScrollUpdateNotification){
+              onCatalogScroll?.call(notification.metrics.pixels);
+            }
+            return false;
+          },
+          child:CustomScrollView(slivers:[
           SliverPadding(padding:const EdgeInsets.fromLTRB(10,10,10,16),
             sliver:SliverGrid.builder(itemCount:products.length,
               gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount:cols,mainAxisExtent:height,
                 mainAxisSpacing:10,crossAxisSpacing:10),
               itemBuilder:(_,i)=>_tile(products[i]))),
-        ])),
+        ]))),
     ]);
   });
 }
