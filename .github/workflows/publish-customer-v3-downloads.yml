@@ -1,0 +1,91 @@
+name: Publish customer V3 downloads (verified release)
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-customer-v3-downloads.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: easy-mandi-customer-v3-release-build35
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: customer-v1.3.24-build35
+      SOURCE_SHA: 28ed578b448037d35dacf6583fc9281c1b628a6e
+      APK_RUN: '39003761040'
+      AAB_RUN: '39003761018'
+      APK_ARTIFACT: '12090217225'
+      AAB_ARTIFACT: '12090725174'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify source commits and successful Android builds
+        run: |
+          set -euo pipefail
+          for run in "$APK_RUN" "$AAB_RUN"; do
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run" \
+              --jq '.conclusion + " " + .head_sha' > "/tmp/run-$run.txt"
+            grep -Fx "success $SOURCE_SHA" "/tmp/run-$run.txt"
+          done
+      - name: Download and verify released APK and signed AAB artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/artifacts/abi /tmp/artifacts/bundle dist
+          for record in "apk:$APK_ARTIFACT" "aab:$AAB_ARTIFACT"; do
+            kind="${record%%:*}"
+            artifact="${record##*:}"
+            curl -fLsS --retry 5 -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact/zip" \
+              -o "/tmp/artifacts/$kind.zip"
+            unzip -tq "/tmp/artifacts/$kind.zip"
+          done
+          unzip -j /tmp/artifacts/apk.zip -d /tmp/artifacts/abi
+          unzip -j /tmp/artifacts/aab.zip -d /tmp/artifacts/bundle
+          install -m 644 /tmp/artifacts/abi/app-arm64-v8a-release.apk dist/EasyMandi-Customer-64bit-1.3.24-build35.apk
+          install -m 644 /tmp/artifacts/abi/app-armeabi-v7a-release.apk dist/EasyMandi-Customer-32bit-1.3.24-build35.apk
+          install -m 644 /tmp/artifacts/bundle/app-release.aab dist/EasyMandi-Customer-1.3.24-build35.aab
+          printf '%s\n' \
+            '4fbaecb288ef16c2f1958776eb11960bb5bc5075e498281d88e82aa21cfe3631  dist/EasyMandi-Customer-64bit-1.3.24-build35.apk' \
+            'b18cf48241e00ba202af3eff901d725a3b7d70c53967e33c1ba08554e6b8a5cb  dist/EasyMandi-Customer-32bit-1.3.24-build35.apk' \
+            '62185d7e4a4612ddf653ed361fbaef4152f9a5dfc03dfd24f7135a3e68e15158  dist/EasyMandi-Customer-1.3.24-build35.aab' \
+            | sha256sum --check
+          unzip -tq dist/EasyMandi-Customer-1.3.24-build35.aab
+          jarsigner -verify dist/EasyMandi-Customer-1.3.24-build35.aab >/dev/null
+          cat > dist/RELEASE-NOTES.txt <<'EOF'
+          Easy Mandi Customer v1.3.24 (version code 35)
+          Delivery policy V3: compact delivery message when viewing catalog.
+          Expand/minimise/close, Hindi/English and original checkout policy retained.
+
+          64-bit and 32-bit APKs are for direct installation.
+          The AAB is for upload to Google Play Console, NOT installation.
+          This release does not change Play Console tracks or publish to Google Play.
+          EOF
+          (cd dist && sha256sum ./*.apk ./*.aab > SHA256SUMS.txt)
+          (cd dist && zip -0 -q EasyMandi-Customer-V3-Android-Release.zip \
+              EasyMandi-Customer-64bit-1.3.24-build35.apk \
+              EasyMandi-Customer-32bit-1.3.24-build35.apk \
+              EasyMandi-Customer-1.3.24-build35.aab \
+              RELEASE-NOTES.txt SHA256SUMS.txt)
+          unzip -tq dist/EasyMandi-Customer-V3-Android-Release.zip
+      - name: Publish permanent GitHub Release links
+        run: |
+          set -euo pipefail
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" \
+              --target "$SOURCE_SHA" \
+              --title "Easy Mandi Customer 1.3.24 (35) — V3 Downloads" \
+              --notes-file dist/RELEASE-NOTES.txt \
+              --latest=false
+          fi
+          gh release upload "$RELEASE_TAG" \
+            dist/EasyMandi-Customer-1.3.24-build35.aab \
+            dist/EasyMandi-Customer-V3-Android-Release.zip \
+            dist/EasyMandi-Customer-64bit-1.3.24-build35.apk \
+            dist/EasyMandi-Customer-32bit-1.3.24-build35.apk \
+            dist/SHA256SUMS.txt \
+            --clobber
+          gh release view "$RELEASE_TAG" --json url,assets \
+            --jq '{url:.url,assets:[.assets[].name]}'
