@@ -2,6 +2,8 @@ import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:convert';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 class SavedAddress {
   const SavedAddress({this.id, this.isPrimary=false, required this.name, required this.phone, required this.house, required this.locality, required this.landmark, required this.pin});
@@ -49,36 +51,71 @@ class LocalStore {
   }
 
   Future<Database> _open() async {
-    final db = await openDatabase(path.join(await getDatabasesPath(), 'easy_mandi.db'), version: 2,
-      onCreate: (db, version) async {
-        await db.execute('CREATE TABLE cart_items (product_id TEXT PRIMARY KEY, quantity INTEGER NOT NULL CHECK(quantity BETWEEN 1 AND 99))');
-        await db.execute('CREATE TABLE addresses (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT NOT NULL, house TEXT NOT NULL, locality TEXT NOT NULL, landmark TEXT NOT NULL, pin TEXT NOT NULL)');
-        await _createRecentItems(db);
+    // Never delete or replace the database to recover from a plugin error.
+    final location=path.join(await getDatabasesPath(), 'easy_mandi.db');
+    final db=await openDatabase(location, version:2,
+      onCreate:(database, version) async {
+        await _ensureTables(database);
       },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) await _createRecentItems(db);
-      });
-    // Move carts saved by older app versions into SQLite once.
-    final prefs = await SharedPreferences.getInstance();
-    final legacy = prefs.getString('cart');
-    if (legacy != null) {
-      try {
-        final items = jsonDecode(legacy) as Map<String, dynamic>;
-        await db.transaction((txn) async {
-          for (final item in items.entries) {
-            if (item.value is int && item.value >= 1 && item.value <= 99) {
-              await txn.insert('cart_items', {'product_id': item.key, 'quantity': item.value}, conflictAlgorithm: ConflictAlgorithm.ignore);
-            }
-          }
-        });
-        await prefs.remove('cart');
-      } catch (_) { /* Keep legacy data for a future retry. */ }
-    }
+      onUpgrade:(database, oldVersion, newVersion) async {
+        await _ensureTables(database);
+      },
+    );
+    // A prior build may already have SQLite version 2 but be missing one of
+    // the optional tables. Idempotent CREATE leaves saved rows untouched.
+    await _ensureTables(db);
+
+    // Crucial: legacy SharedPreferences migration is optional. An Android
+    // preference-plugin failure must NOT prevent using a healthy SQLite DB.
+    await _migrateOldBasket(db).timeout(
+      const Duration(seconds:2),
+      onTimeout:(){
+        debugPrint('Easy Mandi: legacy basket migration deferred (timeout)');
+      },
+    );
     return db;
   }
 
-  static Future<void> _createRecentItems(Database db) => db.execute(
-    'CREATE TABLE recent_items (product_id TEXT PRIMARY KEY, name TEXT NOT NULL, unit TEXT NOT NULL, emoji TEXT NOT NULL, quantity INTEGER NOT NULL, requested_at INTEGER NOT NULL)');
+  static Future<void> _ensureTables(Database db) async {
+    await db.execute(
+      'CREATE TABLE IF NOT EXISTS cart_items '
+      '(product_id TEXT PRIMARY KEY, quantity INTEGER NOT NULL CHECK(quantity BETWEEN 1 AND 99))');
+    await db.execute(
+      'CREATE TABLE IF NOT EXISTS addresses '
+      '(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, '
+      'phone TEXT NOT NULL, house TEXT NOT NULL, locality TEXT NOT NULL, '
+      'landmark TEXT NOT NULL, pin TEXT NOT NULL)');
+    await db.execute(
+      'CREATE TABLE IF NOT EXISTS recent_items '
+      '(product_id TEXT PRIMARY KEY, name TEXT NOT NULL, unit TEXT NOT NULL, '
+      'emoji TEXT NOT NULL, quantity INTEGER NOT NULL, requested_at INTEGER NOT NULL)');
+  }
+
+  Future<void> _migrateOldBasket(Database db) async {
+    try {
+      final prefs=await SharedPreferences.getInstance().timeout(
+        const Duration(seconds:1));
+      final legacy=prefs.getString('cart');
+      if(legacy==null)return;
+      final items=jsonDecode(legacy);
+      if(items is! Map<String,dynamic>)return;
+      await db.transaction((txn) async {
+        for(final e in items.entries){
+          if(e.value is int && (e.value as int)>=1 && (e.value as int)<=99){
+            await txn.insert('cart_items',
+              {'product_id':e.key,'quantity':e.value},
+              conflictAlgorithm:ConflictAlgorithm.ignore);
+          }
+        }
+      });
+      // Only remove the legacy marker AFTER successful insert. Existing
+      // SQLite basket items are never overwritten by this migration.
+      await prefs.remove('cart');
+    }catch(error){
+      debugPrint('Easy Mandi: optional legacy basket migration skipped '
+        '(${error.runtimeType})');
+    }
+  }
 
   Future<void> clearPreviousSales() async {
     await (await database).delete('recent_items');
