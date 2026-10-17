@@ -1338,7 +1338,7 @@ class _StorePageState extends State<StorePage> {
                     style:const TextStyle(fontSize:11,color:Color(0xFF755300)))),
                   TextButton(onPressed:loadCatalog,
                     child:Text(tr('Retry','फिर प्रयास करें'),style:const TextStyle(fontSize:11))),
-                ])))),
+                ]))),
           ),
           Padding(padding:const EdgeInsets.fromLTRB(14,10,14,7),child:Column(children:[
             Row(children:[
