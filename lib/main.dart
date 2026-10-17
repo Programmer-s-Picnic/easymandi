@@ -30,6 +30,7 @@ import 'savings_utils.dart';
 import 'app_update.dart';
 import 'delivery_window.dart';
 import 'customer_catalog_loader.dart';
+import 'customer_startup.dart';
 
 const catalogUrl =
     'https://cserver.learnwithchampak.live/easymandi/api/catalog.php';
@@ -38,108 +39,10 @@ const pale = Color(0xFFF4F8F3);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Draw an actual Flutter frame immediately. Slow device storage must never
-  // leave customers staring at the native splash screen with no status.
-  runApp(const EasyMandiBootstrap());
-}
-
-Future<void> _prepareEasyMandiStorage() async {
-  // Deliberate one-time customer reset for the October 2026 fresh start.
-  // Keep the catalog and the application's language preference intact.
-  final prefs=await SharedPreferences.getInstance();
-  const migrationKey='easy-mandi-fresh-start-20261009';
-  if(prefs.getBool(migrationKey)!=true){
-    await AuthService.instance.clearLocalAccountForFreshStart();
-    await LocalStore.instance.clearPersonalData();
-    // Old address migration flags must not apply to new customer IDs.
-    for(final key in prefs.getKeys().where((key)=>key.startsWith('server-address-migration-')).toList()){
-      await prefs.remove(key);
-    }
-    await prefs.remove('cart');
-    await prefs.remove('easy-mandi-favorites');
-    await prefs.setBool(migrationKey,true);
-  }
-  const historyMarker='mandi-v1-history';
-  if(prefs.getBool(historyMarker)!=true){
-    await LocalStore.instance.clearPreviousSales();
-    await prefs.setBool(historyMarker,true);
-  }
-  await EasyMandiLanguage.load();
-}
-
-/// This preparation screen does not delete or skip existing customer data.
-/// It becomes usable immediately as the first rendered Android frame.
-class EasyMandiBootstrap extends StatefulWidget {
-  const EasyMandiBootstrap({super.key});
-  @override
-  State<EasyMandiBootstrap> createState()=>_EasyMandiBootstrapState();
-}
-class _EasyMandiBootstrapState extends State<EasyMandiBootstrap> {
-  bool ready=false,delayed=false;
-  String? failure;
-  Timer? watchdog;
-  @override
-  void initState(){
-    super.initState();
-    _start();
-  }
-  void _start(){
-    watchdog?.cancel();
-    watchdog=Timer(const Duration(seconds:10),(){
-      if(mounted && !ready)setState(()=>delayed=true);
-    });
-    _prepareEasyMandiStorage().then((_){
-      if(!mounted)return;
-      watchdog?.cancel();
-      setState(()=>ready=true);
-    }).catchError((Object error){
-      if(!mounted)return;
-      watchdog?.cancel();
-      setState(()=>failure=tr('Could not prepare device storage. Please retry.',
-        'डिवाइस का डेटा तैयार नहीं हो सका। दोबारा कोशिश करें।'));
-    });
-  }
-  @override
-  void dispose(){watchdog?.cancel();super.dispose();}
-  @override
-  Widget build(BuildContext context){
-    if(ready)return const EasyMandiApp();
-    return MaterialApp(
-      debugShowCheckedModeBanner:false,
-      home:Scaffold(
-        backgroundColor:pale,
-        body:SafeArea(child:Center(child:Padding(
-          padding:const EdgeInsets.symmetric(horizontal:28),
-          child:Column(mainAxisSize:MainAxisSize.min,children:[
-            Image.asset('assets/brand-symbol.png',height:72,width:72,
-              errorBuilder:(_,__,___)=>const Icon(Icons.storefront,size:72,color:forest)),
-            const SizedBox(height:12),
-            const Text('Easy Mandi',style:TextStyle(fontWeight:FontWeight.w900,fontSize:24,color:forest)),
-            const SizedBox(height:22),
-            if(failure==null)const CircularProgressIndicator(),
-            const SizedBox(height:15),
-            Text(failure??(delayed
-              ?tr('Device storage is taking longer than usual. Your saved data is being preserved.',
-                'डिवाइस डेटा खुलने में देर हो रही है। आपका सहेजा डेटा सुरक्षित है।')
-              :tr('Preparing your catalogue…','आपका कैटलॉग तैयार हो रहा है…')),
-              textAlign:TextAlign.center),
-            if(failure!=null)
-              TextButton(onPressed:(){
-                setState((){failure=null;delayed=false;});
-                _start();
-              },child:Text(tr('Retry','फिर कोशिश करें'))),
-            if(delayed||failure!=null)
-              TextButton(
-                onPressed:()async{
-                  try{await launchUrl(Uri.parse('https://easymandi.in/'),
-                     mode:LaunchMode.externalApplication);}catch(_){}
-                },
-                child:Text(tr('Open Easy Mandi website','ईज़ी मंडी वेबसाइट खोलें'))),
-          ]),
-        ))),
-      ),
-    );
-  }
+  // The first frame and the catalogue do not depend on SQLite, secure
+  // storage or SharedPreferences. Never repeat legacy reset migrations here.
+  runApp(const EasyMandiApp());
+  unawaited(CustomerStartup.restoreLanguage());
 }
 
 class EasyMandiApp extends StatelessWidget {
@@ -198,6 +101,7 @@ class _StorePageState extends State<StorePage> {
   bool notificationsPrimed=false;
   final Set<String> shownNotifications={};
   bool loading = true;
+  bool storageUnavailable = false;
   ApkUpdate? availableApk;
   CatalogDeliveryMode _deliveryMode=CatalogDeliveryMode.expanded;
 
@@ -569,13 +473,20 @@ class _StorePageState extends State<StorePage> {
       final parsed=(data['products'] as List).map((e)=>Product(e as Map<String,dynamic>)).toList();
       Map<String,int>? saved;
       List<RecentItem>? recent;
+      var localReadFailed=false;
       try{
         await _cartWrite.timeout(const Duration(seconds:3));
         saved=await LocalStore.instance.loadCart().timeout(const Duration(seconds:4));
-      }catch(_){/* Keep in-memory basket and never overwrite stalled storage. */}
+      }catch(_){
+        localReadFailed=true;
+        // Existing basket stays in memory; never clear persisted records.
+      }
       try{
         recent=await LocalStore.instance.loadRecentItems().timeout(const Duration(seconds:4));
-      }catch(_){/* Previously ordered items remain optional. */}
+      }catch(_){
+        localReadFailed=true;
+        // Previous orders remain available from the signed-in server account.
+      }
       if(!mounted)return;
       setState((){
         products=parsed;
@@ -592,6 +503,7 @@ class _StorePageState extends State<StorePage> {
           }
         }
         loading=false;
+        storageUnavailable=localReadFailed;
         message='';
       });
       unawaited(syncCustomerData());
@@ -1411,6 +1323,22 @@ class _StorePageState extends State<StorePage> {
             onToggle:_toggleDeliveryNotice,
             onDismiss:_dismissDeliveryNotice,
             onPolicyTap:(){_openDeliveryPolicy();},
+          ),
+          if(storageUnavailable)Padding(
+            padding:const EdgeInsets.fromLTRB(14,4,14,3),
+            child:Material(color:const Color(0xFFFFF4DC),
+              borderRadius:BorderRadius.circular(10),
+              child:Padding(padding:const EdgeInsets.symmetric(horizontal:10,vertical:6),
+                child:Row(children:[
+                  const Icon(Icons.info_outline,color:Color(0xFF895600),size:18),
+                  const SizedBox(width:6),
+                  Expanded(child:Text(tr(
+                    'Local storage is unavailable. Your catalogue works; some basket changes might not be saved on this device.',
+                    'स्थानीय स्टोरेज उपलब्ध नहीं है। कैटलॉग चलेगा, लेकिन टोकरी में बदलाव इस फोन पर नहीं सहेजे जा सकेंगे।'),
+                    style:const TextStyle(fontSize:11,color:Color(0xFF755300)))),
+                  TextButton(onPressed:loadCatalog,
+                    child:Text(tr('Retry','फिर प्रयास करें'),style:const TextStyle(fontSize:11))),
+                ])))),
           ),
           Padding(padding:const EdgeInsets.fromLTRB(14,10,14,7),child:Column(children:[
             Row(children:[
