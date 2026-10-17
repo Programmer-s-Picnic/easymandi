@@ -724,3 +724,39 @@ padding:2px 6px;border-radius:6px;margin-top:4px;white-space:normal}
  .hero-delivery-icon{display:none}
  .hero-delivery-link{margin-left:0}
 }
+
+
+/* V3: collapsible inline delivery guidance never floats over the catalogue. */
+.hero-delivery-banner{min-width:0;align-items:center}
+.hero-delivery-compact{display:none;color:#204e64;font-size:13px;font-weight:800;line-height:1.35}
+.hero-delivery-controls{display:flex;align-items:center;gap:5px;align-self:center;flex:none}
+.hero-delivery-control{
+  font:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  border:1px solid #cce3dc;background:#e8f4ee;color:#0c573b;
+  border-radius:10px;padding:8px 10px;min-height:36px;font-size:12px;font-weight:800;cursor:pointer;
+}
+.hero-delivery-control:hover{background:#d9eddf}
+.hero-delivery-control:focus-visible{outline:3px solid #2588c2;outline-offset:2px}
+.hero-delivery-close{min-width:35px;font-size:19px;padding:4px 8px;background:#fff;color:#315261}
+.hero-delivery-banner[data-state="compact"]{padding:8px 11px;gap:9px;margin-bottom:9px;box-shadow:none;border-left-width:3px}
+.hero-delivery-banner[data-state="compact"] .hero-delivery-icon{width:32px;height:32px;font-size:17px}
+.hero-delivery-banner[data-state="compact"] .hero-delivery-label,
+.hero-delivery-banner[data-state="compact"] .delivery-time-promise,
+.hero-delivery-banner[data-state="compact"] .hero-delivery-link{display:none}
+.hero-delivery-banner[data-state="compact"] .hero-delivery-compact{display:block}
+.hero-delivery-banner[hidden]{display:none!important}
+@media(max-width:760px){
+  .hero-delivery-banner{flex-wrap:wrap}
+  .hero-delivery-banner .hero-delivery-link{margin-left:0}
+  .hero-delivery-controls{margin-left:auto}
+  .hero-delivery-banner[data-state="compact"]{flex-wrap:nowrap}
+  .hero-delivery-banner[data-state="compact"] .hero-delivery-control{padding:5px 7px;min-height:32px}
+  .hero-delivery-banner[data-state="compact"] #deliveryPolicyToggleText{display:none}
+}
+@media(max-width:410px){
+  .hero-delivery-banner[data-state="compact"] .hero-delivery-icon{display:none}
+  .hero-delivery-banner[data-state="compact"] .hero-delivery-compact{font-size:11px}
+}
+@media(prefers-reduced-motion:no-preference){
+  .hero-delivery-banner{transition:padding .16s ease,margin .16s ease}
+}
