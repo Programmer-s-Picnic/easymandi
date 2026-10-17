@@ -1,8 +1,8 @@
 {
   "domain": "easymandi.in",
   "customer": {
-    "version": "1.3.26+37",
-    "sourceCommit": "18cdd1acee487af3452d751611dcdfcecaa23fac"
+    "version": "1.3.27+38",
+    "sourceCommit": "4bb542b3c01628499cad7783f369c4e06089ed10"
   },
   "delivery": {
     "version": "1.3.8+18",
