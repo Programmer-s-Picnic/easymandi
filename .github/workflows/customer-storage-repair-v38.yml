@@ -1,0 +1,108 @@
+name: Publish customer local-storage repair 1.3.27+38
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/customer-storage-repair-v38.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: easy-mandi-customer-storage-repair-38
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: 4bb542b3c01628499cad7783f369c4e06089ed10
+      APK_RUN: '39010285382'
+      AAB_RUN: '39010285399'
+      RELEASE_TAG: customer-v1.3.27-build38-storage-repair
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for verified APK and signed Play AAB workflows
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 90); do
+            apk=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$APK_RUN" --jq '.status + ":" + (.conclusion // "pending") + ":" + .head_sha')
+            aab=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$AAB_RUN" --jq '.status + ":" + (.conclusion // "pending") + ":" + .head_sha')
+            if [[ "$apk" == "completed:success:$SOURCE_SHA" && "$aab" == "completed:success:$SOURCE_SHA" ]]; then
+              echo "Both signed builds succeeded at the approved hotfix source commit"
+              exit 0
+            fi
+            if [[ "$apk" == completed:failure:* || "$aab" == completed:failure:* ||
+                  "$apk" == completed:cancelled:* || "$aab" == completed:cancelled:* ]]; then
+              echo "::error::The hotfix build failed or was cancelled; refusing to publish"
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "::error::Hotfix build did not finish before deadline"
+          exit 1
+      - name: Retrieve and validate binaries without rebuilding
+        run: |
+          set -euo pipefail
+          mkdir -p dist /tmp/customer-apk /tmp/customer-aab
+          apk_artifact=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$APK_RUN/artifacts" \
+             --jq '[.artifacts[]|select(.name=="easy-mandi-apk" and (.expired|not))]|first|.id // empty')
+          aab_artifact=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$AAB_RUN/artifacts" \
+             --jq '[.artifacts[]|select(.name=="EasyMandi-Customer-PlayStore-AAB" and (.expired|not))]|first|.id // empty')
+          test -n "$apk_artifact" && test -n "$aab_artifact"
+          echo "$apk_artifact" > /tmp/hotfix-apk-artifact-id
+          for pair in "apk:$apk_artifact" "aab:$aab_artifact"; do
+            name="${pair%%:*}"
+            id="${pair##*:}"
+            curl -fLsS --retry 5 -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" \
+              -o "/tmp/customer-$name.zip"
+            unzip -tq "/tmp/customer-$name.zip"
+          done
+          unzip -j /tmp/customer-apk.zip -d /tmp/customer-apk
+          unzip -j /tmp/customer-aab.zip -d /tmp/customer-aab
+          install -m 644 /tmp/customer-apk/app-arm64-v8a-release.apk dist/EasyMandi-Customer-64bit-1.3.27-build38.apk
+          install -m 644 /tmp/customer-apk/app-armeabi-v7a-release.apk dist/EasyMandi-Customer-32bit-1.3.27-build38.apk
+          install -m 644 /tmp/customer-aab/app-release.aab dist/EasyMandi-Customer-1.3.27-build38.aab
+          for path in dist/*.apk dist/*.aab; do
+            test "$(stat -c '%s' "$path")" -gt 1000000
+            unzip -tq "$path"
+          done
+          jarsigner -verify dist/EasyMandi-Customer-1.3.27-build38.aab
+          (cd dist && sha256sum ./*.apk ./*.aab > SHA256SUMS.txt)
+          cat > dist/RELEASE-NOTES.txt <<'EOF'
+          Easy Mandi Customer 1.3.27+38 — Storage Startup Fix
+          - Catalogue browsing remains available independently of local persistence.
+          - Incomplete or stalled catalog HTTP responses fall back to bundled catalog within a deadline.
+          - Optional legacy basket migration no longer blocks SQLite access.\n          - Missing SQLite tables are recreated without deleting existing customer records.\n          - Specific non-sensitive basket/history error codes aid device diagnosis.
+          - V3 compact bilingual delivery notices and V2 checkout policy are preserved.
+          The AAB is signed for Google Play upload. Uploading it does not automatically publish to Play.
+          Physical-device confirmation of the reported startup problem is still required.
+          EOF
+          (cd dist && zip -0 -q EasyMandi-Customer-Storage-Repair-1.3.27-build38.zip \
+            EasyMandi-Customer-64bit-1.3.27-build38.apk \
+            EasyMandi-Customer-32bit-1.3.27-build38.apk \
+            EasyMandi-Customer-1.3.27-build38.aab RELEASE-NOTES.txt SHA256SUMS.txt)
+          unzip -tq dist/EasyMandi-Customer-Storage-Repair-1.3.27-build38.zip
+      - name: Pin public APK manifest to verified signed build
+        run: |
+          set -euo pipefail
+          apk64=$(sha256sum dist/EasyMandi-Customer-64bit-1.3.27-build38.apk | awk '{print $1}')
+          apk32=$(sha256sum dist/EasyMandi-Customer-32bit-1.3.27-build38.apk | awk '{print $1}')
+          artifact=$(cat /tmp/hotfix-apk-artifact-id)
+          jq --arg sha "$SOURCE_SHA" --arg sum64 "$apk64" --arg sum32 "$apk32" \
+            --argjson run "$APK_RUN" --argjson artifact "$artifact" \
+            '.customer.version="1.3.27+38" |
+             .customer.sourceCommit=$sha |
+             .customer.workflowRun=$run |
+             .customer.artifactId=$artifact |
+             .customer.sha256_64=$sum64 |
+             .customer.sha256_32=$sum32' \
+            apk/release-config.json > /tmp/release-config.json
+          install -m 644 /tmp/release-config.json apk/release-config.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apk/release-config.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Pin verified customer startup hotfix v1.3.27+38 public APKs'
+            git pull --rebase origin main
+            git push origin main
+          fi
