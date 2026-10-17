@@ -14,9 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_SHA: d98018247b7c4e2e89552649206cb77d46cb3095
-      APK_RUN: '39008677726'
-      AAB_RUN: '39008677728'
+      SOURCE_SHA: 18cdd1acee487af3452d751611dcdfcecaa23fac
+      APK_RUN: '39008928601'
+      AAB_RUN: '39008928645'
       RELEASE_TAG: customer-v1.3.26-build37-storage-fix
     steps:
       - uses: actions/checkout@v4
