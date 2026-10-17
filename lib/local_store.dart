@@ -35,7 +35,18 @@ class LocalStore {
   static final instance = LocalStore._();
   Future<Database>? _opening;
 
-  Future<Database> get database => _opening ??= _open();
+  Future<Database> get database {
+    final current=_opening;
+    if(current!=null)return current;
+    final opening=_open();
+    _opening=opening;
+    // Do not cache a failed SQLite open forever. Retrying must not require
+    // clearing customer app data (which would risk losing saved addresses).
+    opening.then<void>((_) {},onError:(Object error,StackTrace stack){
+      if(identical(_opening,opening))_opening=null;
+    });
+    return opening;
+  }
 
   Future<Database> _open() async {
     final db = await openDatabase(path.join(await getDatabasesPath(), 'easy_mandi.db'), version: 2,
