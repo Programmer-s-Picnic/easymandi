@@ -69,8 +69,8 @@
   ]
 }
 </script>
-<link rel="stylesheet" href="storefront.css?v=20261016-hero-delivery-v3">
-<script src="i18n.js?v=20261016-hero-delivery-v3" defer></script>
+<link rel="stylesheet" href="storefront.css?v=20261017-policy-ui-v3">
+<script src="i18n.js?v=20261017-policy-ui-v3" defer></script>
 <link rel="stylesheet" href="../shared/notifications.css?v=20261010-draggable-v1">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
 </script>
@@ -107,13 +107,20 @@
     </div>
     <div class="hero-graphic" aria-hidden="true"><img src="brand-symbol.svg?v=20261014-hindi-logo" alt=""><span>Freshness delivered<br>at mandi rates</span></div>
   </div>
-  <div class="hero-delivery-banner" role="note" aria-label="Delivery attempt information">
+  <div class="hero-delivery-banner" id="compactDeliveryPolicy" data-state="expanded" role="region" data-i18n-aria-label="deliveryBannerTitle" aria-label="Your delivery window">
     <span class="hero-delivery-icon" aria-hidden="true">🚚</span>
     <div class="hero-delivery-copy">
       <span class="hero-delivery-label" data-i18n="deliveryBannerTitle">YOUR DELIVERY WINDOW</span>
-      <p class="delivery-time-promise" data-i18n="deliveryBannerMessage">Delivery attempted within 60 service minutes after confirmation · 7 AM–11 PM IST. Rush-hour or traffic delays possible.</p>
+      <p id="deliveryPolicyDetails" class="delivery-time-promise" data-i18n="deliveryBannerMessage">Delivery attempted within 60 service minutes after confirmation · 7 AM–11 PM IST. Rush-hour or traffic delays possible.</p>
+      <span class="hero-delivery-compact" data-i18n="deliveryPolicyCompact">60-min delivery attempt · 7 AM–11 PM</span>
     </div>
     <a class="hero-delivery-link" href="/delivery-policy.html" data-i18n="deliveryPolicyLink">View delivery policy →</a>
+    <div class="hero-delivery-controls">
+      <button id="deliveryPolicyToggle" class="hero-delivery-control" type="button" aria-expanded="true" aria-controls="deliveryPolicyDetails" data-i18n-aria-label="deliveryPolicyMinimize" aria-label="Minimise delivery notice">
+        <span id="deliveryPolicyToggleText" data-i18n="deliveryPolicyMinimize">Minimise</span><span id="deliveryPolicyChevron" aria-hidden="true">⌃</span>
+      </button>
+      <button id="deliveryPolicyDismiss" class="hero-delivery-control hero-delivery-close" type="button" data-i18n-aria-label="deliveryPolicyClose" aria-label="Close delivery notice" title="Close">×</button>
+    </div>
   </div>
   <div class="hero-promises">
     <span><span aria-hidden="true">🥬</span> <span data-i18n="freshEssentials">Fresh essentials</span></span>
@@ -314,6 +321,7 @@
 <script src="localities.js?v=20261012-primary-addresses-v2" defer></script>
 <script src="mandi-pricing.js?v=20261010-v1" defer></script>
 <script src="savings-moment.js?v=20261011-market-savings-v1" defer></script>
+<script src="compact-delivery-policy.js?v=20261017-v3" defer></script>
 <script src="delivery-window.js?v=20261016-policy-v2" defer></script>
 <script src="storefront.js?v=20261016-policy-v2" defer>
 </script>
