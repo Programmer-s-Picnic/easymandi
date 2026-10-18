@@ -13,6 +13,11 @@ const money=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',ma
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 let products=[],categories=['All'],catalogStatus='loading',currentCategory='All',catalogSource='';
 let scene=null,stallOpen=false,nativeOpen=false,language='en',nativeLoaded=false,frameError='',toastTimer=null,queuedNative=null,readyCount=0;
+const isTouchPhone=()=>window.matchMedia('(max-width:790px) and (pointer:coarse)').matches;
+const mobilePrompt=$('mobilePrompt');
+function dismissMobileHint(){mobilePrompt.hidden=true;try{sessionStorage.setItem('easy-mandi-3d-mobile-guided','1');}catch{}}
+function showMobileHint(){try{if(isTouchPhone()&&sessionStorage.getItem('easy-mandi-3d-mobile-guided')!=='1'){mobilePrompt.hidden=false;return;}}catch{}mobilePrompt.hidden=true;}
+showMobileHint();
 try{language=localStorage.getItem('easy-mandi-language')==='hi'?'hi':'en';}catch{}
 const name=p=>language==='hi'?(p.hindi||p.name):p.name;
 const readCart=()=>{try{const c=JSON.parse(localStorage.getItem('easy-mandi-cart')||'{}');return c&&typeof c==='object'?c:{};}catch{return {};}};
@@ -41,11 +46,11 @@ else if(mode==='checkout'){el('basketButton')?.click();}
 else if(mode==='search'){el('shopCatalog')?.scrollIntoView({block:'start'});el('search')?.focus();}
 return true;
 }catch(e){console.warn('Native counter action failed',e);return false;}}
-function openNative(mode='catalog'){closeStall(false);nativeOpen=true;queuedNative=mode;$('nativePanel').classList.add('open');$('nativePanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;document.body.classList.add('counter-open');$('nativeTitle').textContent=({basket:'Your real basket & checkout',orders:'My real orders & deliveries',account:'Your Easy Mandi account',previous:'Reorder previous purchases',notifications:'Your customer notifications',favorites:'Saved favorites',catalog:'The fresh product market',checkout:'Checkout'}[mode]||'Easy Mandi service counter');
+function openNative(mode='catalog'){dismissMobileHint();closeStall(false);nativeOpen=true;queuedNative=mode;$('nativePanel').classList.add('open');$('nativePanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;document.body.classList.add('counter-open');$('nativeTitle').textContent=({basket:'Your real basket & checkout',orders:'My real orders & deliveries',account:'Your Easy Mandi account',previous:'Reorder previous purchases',notifications:'Your customer notifications',favorites:'Saved favorites',catalog:'The fresh product market',checkout:'Checkout'}[mode]||'Easy Mandi service counter');
 waitReady(()=>{modifyIframe();$('nativeWait').hidden=true;if(queuedNative===mode)frameAction(mode);refreshTotals();});}
 function closeNative(){nativeOpen=false;queuedNative=null;$('nativePanel').classList.remove('open');$('nativePanel').setAttribute('aria-hidden','true');$('overlay').hidden=true;document.body.classList.remove('counter-open');refreshTotals();renderStall();}
 function closeStall(restore=true){stallOpen=false;$('stallPanel').classList.remove('open');$('stallPanel').setAttribute('aria-hidden','true');if(restore&&!nativeOpen)$('overlay').hidden=true;}
-function openStall(category='All'){closeNative();stallOpen=true;currentCategory=category||'All';$('stallPanel').classList.add('open');$('stallPanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;$('stallSearch').value='';renderStall();$('stallSearch').focus();}
+function openStall(category='All'){dismissMobileHint();closeNative();stallOpen=true;currentCategory=category||'All';$('stallPanel').classList.add('open');$('stallPanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;$('stallSearch').value='';renderStall();if(!isTouchPhone())$('stallSearch').focus();}
 function validImage(p){const raw=String(p?.imageUrl||p?.image||'');try{const u=new URL(raw);return u.protocol==='https:'&&u.hostname?raw:'';}catch{return '';}}
 function localCard(p){const q=priceInfo(p),cmp=Number(p.compareAtPrice),img=validImage(p);return '<article class="stall-item"><div class="stall-item-art">'+(img?'<img src="'+esc(img)+'" loading="lazy" alt="'+esc(p.name)+'">':'<span>'+esc(p.emoji||'🥬')+'</span>')+'</div><div><h3>'+esc(name(p))+'</h3><p>'+esc(p.unit||'unit')+' · '+esc(language==='hi'?p.name:(p.hindi||p.category||''))+'</p><strong>'+money(q.price)+'</strong>'+(cmp>q.price?'<del>'+money(cmp)+'</del>':'')+(q.enabled&&Number.isFinite(q.mandiPrice)?'<div class="mandi-price">'+(q.qty>=q.threshold?'✓ Mandi price active':'🏷 Mandi rate '+money(q.mandiPrice)+' from '+q.threshold+' units')+'</div>':'')+'</div><div>'+(p.available?(q.qty?'<div class="counter"><button data-qty="'+esc(p.id)+'" data-delta="-1" aria-label="Remove one '+esc(p.name)+'">−</button><span>'+q.qty+'</span><button data-qty="'+esc(p.id)+'" data-delta="1" aria-label="Add one '+esc(p.name)+'">+</button></div>':'<button class="stall-add" data-qty="'+esc(p.id)+'" data-delta="1" aria-label="Add '+esc(p.name)+'">＋</button>'):'<small>Sold out</small>')+'</div></article>';}
 function renderStall(){const title=currentCategory==='All'?(language==='hi'?'सारी मंडी':'Entire marketplace'):currentCategory;$('stallTitle').textContent=title;const search=$('stallSearch').value.toLocaleLowerCase().trim();const items=products.filter(p=>(currentCategory==='All'||p.category===currentCategory)&&(search.length===0||[p.name,p.hindi,p.category,p.description,Array.isArray(p.searchWords)?p.searchWords.join(' '):p.searchWords,Array.isArray(p.keywords)?p.keywords.join(' '):p.keywords].join(' ').toLocaleLowerCase().includes(search)));$('stallMeta').textContent=items.length+' products · '+(catalogSource==='live'?'Live public catalog':'Catalog snapshot')+' · '+'All additions use the official Easy Mandi basket';$('stallItems').innerHTML=items.length?items.map(localCard).join(''):'<p style="text-align:center;padding:40px 12px;color:#879c8d">No products match your search.</p>';refreshTotals();}
@@ -54,9 +59,10 @@ function changeProduct(id,delta){const api=nativeApi(),p=products.find(x=>String
 async function loadCatalog(){status('Loading fresh catalog…');let data;try{const r=await fetch(api+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);data=await r.json();if(!Array.isArray(data.products)||!data.store)throw Error('Invalid catalog');catalogSource='live';}catch(e){try{const r=await fetch(archive+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('snapshot unavailable');data=await r.json();catalogSource='snapshot';}catch{try{data=JSON.parse(localStorage.getItem('easy-mandi-catalog')||'null');if(!data?.products)throw Error('no cache');catalogSource='cached';}catch{data={products:[],categories:['All']};catalogSource='unavailable';}}}
 products=Array.isArray(data.products)?data.products.filter(p=>p&&p.id!=null&&p.name).map(p=>({...p,id:String(p.id)})):[];categories=['All',...new Set(products.map(p=>p.category||'Other'))];if(products.length){status(catalogSource==='live'?'Live prices':'Catalog snapshot',catalogSource!=='live');}else status('Catalog offline',true);if(scene?.rebuild)scene.rebuild(categories,products);refreshTotals();if(stallOpen)renderStall();}
 function translations(){document.querySelectorAll('[data-en]').forEach(el=>el.textContent=language==='hi'?el.dataset.hi:el.dataset.en);$('languageButton').textContent=language==='en'?'हिन्दी / EN':'EN / हिंदी';if(stallOpen)renderStall();if(scene?.language)scene.language(language);try{if(frame.contentWindow?.EMI18n&&frame.contentWindow.EMI18n.lang!==language){const lang=frame.contentDocument.getElementById('siteLanguage');if(lang){lang.value=language;lang.dispatchEvent(new Event('change',{bubbles:true}));}}}catch{}}
-function onSceneReady(apiScene){$('noWebGL').hidden=true;scene=apiScene;if(scene?.rebuild)scene.rebuild(categories,products);hideLoading();translations();}
+function onSceneReady(apiScene){$('noWebGL').hidden=true;scene=apiScene;if(scene?.rebuild)scene.rebuild(categories,products);hideLoading();translations();showMobileHint();}
 window.EMWalk=Object.freeze({
 sceneReady:onSceneReady,
+dismissMobileHint,
 stallSelect:category=>openStall(category),
 near:stall=>{if(stallOpen||nativeOpen)return;$('nearStall').hidden=!stall;if(stall){$('nearIcon').textContent=stall.emoji||'🥬';$('nearName').textContent=stall.category||'All';$('shopStall').dataset.category=stall.category||'All';}},
 get active(){return !stallOpen&&!nativeOpen&&!$('welcome').open;},
@@ -74,6 +80,22 @@ $('closeStall').addEventListener('click',()=>closeStall());
 $('nativeRefresh').addEventListener('click',()=>{frame.contentWindow?.location.reload();$('nativeWait').hidden=false;});
 $('overlay').addEventListener('click',()=>{if(nativeOpen)closeNative();else closeStall();});
 $('stallSearch').addEventListener('input',renderStall);
+// The header of the phone-sized product sheet is a swipe-down dismiss handle.
+// Dragging product rows still scrolls normally, without closing the sheet.
+let sheetDrag=null;
+const sheetHeader=$('stallPanel').querySelector('.panel-heading');
+sheetHeader.addEventListener('pointerdown',e=>{
+ if(!isTouchPhone()||e.target.closest('button'))return;
+ sheetDrag={id:e.pointerId,start:e.clientY};
+ try{sheetHeader.setPointerCapture(e.pointerId);}catch{}
+});
+sheetHeader.addEventListener('pointerup',e=>{
+ if(!sheetDrag||sheetDrag.id!==e.pointerId)return;
+ const delta=e.clientY-sheetDrag.start;sheetDrag=null;
+ if(delta>70)closeStall();
+});
+sheetHeader.addEventListener('pointercancel',()=>sheetDrag=null);
+$('dismissMobilePrompt').addEventListener('click',dismissMobileHint);
 $('stallItems').addEventListener('click',e=>{const btn=e.target.closest('[data-qty]');if(btn)changeProduct(btn.dataset.qty,Number(btn.dataset.delta));});
 $('shopStall').addEventListener('click',()=>openStall($('shopStall').dataset.category||'All'));
 $('languageButton').addEventListener('click',()=>{language=language==='en'?'hi':'en';try{localStorage.setItem('easy-mandi-language',language);}catch{}translations();});
