@@ -6,12 +6,18 @@
 
 /* Walk-in V4: discreet creator credit and mobile-first touch interface. */
 .maker-credit{
- position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
- z-index:5;color:#f3fbedd6;white-space:nowrap;pointer-events:none;
- font:500 10px/1.2 'DM Sans',system-ui,sans-serif;letter-spacing:.01em;
- text-shadow:0 1px 7px #123527c2;
+ position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+ z-index:5;display:inline-flex;justify-content:center;align-items:center;gap:.26em;
+ width:max-content;max-width:calc(100vw - 24px);
+ padding:7px 14px;border-radius:999px;
+ background:rgba(28,48,39,.82);border:1px solid rgba(255,255,255,.13);
+ color:#fff;white-space:nowrap;pointer-events:none;
+ font:500 11px/1.35 'DM Sans',system-ui,sans-serif;letter-spacing:.005em;
+ text-shadow:0 1px 2px rgba(0,0,0,.36);
+ box-shadow:0 3px 15px rgba(12,29,18,.28);
+ -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
 }
-.maker-credit strong{font-weight:700;color:#fffef7}
+.maker-credit strong{font-weight:800;color:#fff}
 .mobile-quick-nav,.mobile-prompt{display:none}
 .mobile-controls{pointer-events:none}
 .mobile-controls>*,.mobile-controls button{pointer-events:auto}
@@ -94,7 +100,10 @@
  .walk-footer{left:auto;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 179px)}
  .walk-actions{gap:6px}
  .walk-actions button{min-height:38px;padding:7px 10px;font-size:10px}
- .maker-credit{bottom:calc(env(safe-area-inset-bottom,0px) + 6px);font-size:9px;color:#eef9e9c4}
+ .maker-credit{
+  bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
+  font-size:10px;max-width:calc(100vw - 20px);padding:7px 11px;
+ }
  .live-toast{bottom:calc(env(safe-area-inset-bottom,0px) + 232px);font-size:11px;padding:10px 12px}
  .stall-panel{
   top:auto;left:0;right:0;bottom:0;width:100%;
