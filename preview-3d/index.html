@@ -1,46 +1,98 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
-<meta name="theme-color" content="#133c32">
-<title>Easy Mandi 3D • Unlisted approval preview</title>
-<meta name="description" content="Unlisted, non-transactional Easy Mandi 3D marketplace approval prototype.">
-<link rel="icon" type="image/svg+xml" href="../web/brand-symbol.svg">
-<link rel="stylesheet" href="./style.css?v=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#102e22">
+<title>Walk Through the Mandi | Easy Mandi 3D</title>
+<meta name="description" content="An unlisted, immersive first-person Easy Mandi shopping experience in Varanasi.">
+<link rel="icon" href="../web/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./walk.css?v=20261018-2">
 </head>
 <body>
-<div class="announcement"><span class="led"></span><strong>APPROVAL PREVIEW</strong><span data-t="banner">Independent 3D experience · real catalog, simulated checkout · no live orders or catalog edits</span></div>
-<header class="site-header">
- <div class="brand-lockup"><img src="../web/brand-symbol.svg" alt="" width="48" height="48"><div><strong>easy<span>mandi</span><sup>3D</sup></strong><small>FRESHNESS, REIMAGINED · VARANASI</small></div></div>
- <nav class="main-nav" aria-label="Market navigation"><button class="nav-link active" data-action="home" data-t="market">Explore market</button><button class="nav-link" data-action="orders" data-t="orders">My orders</button><button class="nav-link" data-action="previous">Buy again</button><button class="nav-link" data-action="favorites" data-t="favorites">♡ Favorites</button></nav>
- <div class="header-tools"><button class="language pill-btn" id="languageButton" title="Change language">हिंदी / EN</button><button class="icon-btn" data-action="account" aria-label="Demo account" title="Demo account">♙</button><button class="cart-trigger" data-action="basket" aria-label="Open basket"><span>🧺</span><span data-t="basket">Basket</span><b id="cartCount">0</b></button></div>
-</header>
-<main>
- <section class="showcase">
-  <div class="showcase-intro"><span class="eyebrow"><span class="spark">✳</span> YOUR NEIGHBOURHOOD MANDI, NOW IMMERSIVE</span><h1 data-t="hero">Step into<br><em>freshness.</em></h1><p data-t="heroText">Walk through our virtual vegetable market. Explore the stalls, discover today's mandi prices, and fill your basket with a tap.</p><div class="hero-actions"><button class="primary-btn" id="startExplore" data-action="scrollmarket" data-t="start">Explore today's market ↗</button><button class="outline-btn" data-action="help">✦ How it works</button></div><div class="hero-trust"><div><b>60<span> min</span></b><small data-t="target">Delivery attempt target*</small></div><i></i><div><b>₹<span id="freeThreshold">499</span></b><small data-t="freeFrom">Free delivery from</small></div><i></i><div><b>7–23</b><small data-t="openHours">Operating hours · IST</small></div></div></div>
-  <div class="market-shell" id="market" aria-label="Interactive three-dimensional virtual vegetable market">
-   <div class="market-topline"><div><span class="live-indicator"></span><span data-t="explore3d">EXPLORE THE 3D MANDI</span></div><button class="scene-tool" data-action="fullscreen" id="fullscreenButton" aria-label="Full screen">⛶ <span data-t="fullscreen">Full screen</span></button></div>
-   <div class="sky-sun"></div><div class="sky-hill h1"></div><div class="sky-hill h2"></div>
-   <div id="scene" class="scene" tabindex="0" aria-label="Drag to rotate marketplace; choose a stall to filter products">
-    <div class="market-world" id="world"><div class="ground"></div><div class="avenue one"></div><div class="avenue two"></div><div class="market-center"><span>ईज़ी मंडी</span><small>VARANASI'S FRESH MARKET</small></div><div id="stalls"></div><span class="scene-tree tree-a">🌳</span><span class="scene-tree tree-b">🌳</span><span class="scene-tree tree-c">🌳</span><span class="scene-tree tree-d">🌴</span><div class="scene-sign">✧ FRESH PICKS EVERY DAY ✧</div></div>
-   </div>
-   <div class="scene-controls"><span class="drag-hint" data-t="drag">↔ Drag to rotate · click a stall to shop</span><div class="camera-buttons"><button class="scene-tool" data-action="left" aria-label="Rotate left">↶</button><button class="scene-tool" data-action="right" aria-label="Rotate right">↷</button><button class="scene-tool" data-action="zoomout" aria-label="Zoom out">−</button><button class="scene-tool" data-action="zoomin" aria-label="Zoom in">＋</button><button class="scene-tool" data-action="resetcamera" aria-label="Reset camera">⌖</button></div></div>
-   <div class="market-status" id="catalogStatus" role="status">Connecting to today's live catalog…</div>
+<div id="app" class="world-app">
+  <div class="loading" id="loading">
+    <div class="loading-icon">🥬</div><div class="loading-brand">easy<span>mandi</span><em>3D</em></div>
+    <p>Setting up your fresh market… / आपकी मंडी तैयार हो रही है…</p>
+    <div class="loading-bar"><i></i></div>
   </div>
- </section>
- <section class="shop-section" id="shop"><div class="shop-top"><div><span class="eyebrow">THE DAILY HARVEST</span><h2 data-t="pick">Fresh from the stalls<span class="heading-dot">.</span></h2><p data-t="pickText">Shop by stall, or search everything the mandi has to offer.</p></div><button class="outline-btn studio-btn" data-action="studio">⚒ <span data-t="studio">Preview product studio</span></button></div>
- <div class="search-controls"><label class="search-field"><span>⌕</span><input id="search" type="search" autocomplete="off" placeholder="Search bhindi, ladyfinger, tomato..." aria-label="Search catalog"><button class="clear-btn" data-action="clearsearch" title="Clear search">×</button></label><button class="outline-btn filter-fav" id="favoriteFilter" data-action="favoritefilter">♡ <span data-t="favorites">Favorites</span></button><button class="outline-btn" data-action="refresh">↻ <span data-t="refresh">Refresh</span></button></div>
- <div id="categories" class="category-list" role="group" aria-label="Product categories"></div><div class="result-meta"><p id="resultCount">Discovering your fresh picks…</p><p><span class="status-dot"></span><span data-t="livePrices">Live prices when available</span></p></div><div id="productGrid" class="product-grid" aria-live="polite"></div>
- </section>
- <section class="perks"><div class="perk"><span>🥬</span><div><strong data-t="fresh">Fresh from the mandi</strong><p data-t="freshSub">Everyday essentials at everyday prices.</p></div></div><div class="perk"><span>🏷</span><div><strong data-t="mandiRate">Mandi rate savings</strong><p data-t="mandiSub">Quantity-based discounts where available.</p></div></div><div class="perk"><span>🛵</span><div><strong data-t="delivery">Local delivery</strong><p data-t="deliverySub">To enabled Varanasi service localities.</p></div></div></section>
-</main>
-<footer><strong>easymandi <span>3D</span></strong><span>Private approval preview · Not connected to live orders · Not indexed</span><small>Concept developed for Easy Mandi · 2026</small></footer>
-<div class="scrim" id="scrim" hidden></div>
-<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Market panel" aria-hidden="true"><div class="drawer-head"><div><small id="drawerKicker">EASY MANDI 3D</small><h2 id="drawerTitle">Your basket</h2></div><button class="icon-btn" data-action="closedrawer" aria-label="Close panel">×</button></div><div class="drawer-body" id="drawerBody"></div></aside>
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="../web/vendor/qrcode.min.js" defer></script>
-<script src="./app.js?v=2" defer></script>
+  <div class="world-frame" id="worldFrame">
+    <div class="canvas-host" id="canvasHost" aria-label="First person 3D Easy Mandi marketplace"></div>
+    <div class="ambient-haze"></div>
+    <div class="game-hud">
+      <div class="hud-top">
+        <div class="hud-brand"><img src="../web/brand-symbol.svg" alt=""><div><strong>easy<span>mandi</span> <sup>3D</sup></strong><small>WALK-IN MARKET · VARANASI</small></div></div>
+        <div class="hud-actions">
+          <span class="server-status" id="serverStatus"><span class="green-dot"></span>Connecting</span>
+          <button class="hud-button language-button" id="languageButton" title="Change language" aria-label="Change language">हिन्दी / EN</button>
+          <button class="hud-button icon-only" id="fullscreenButton" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button>
+          <button class="hud-button cart-button" id="basketButton" aria-label="Open live basket">🧺 <span id="cartCount">0</span></button>
+        </div>
+      </div>
+      <div class="hud-side">
+        <button class="hud-button side-button" data-native="catalog">🥬 <span data-en="Shop all" data-hi="सारा सामान">Shop all</span></button>
+        <button class="hud-button side-button" data-native="orders">📦 <span data-en="My orders" data-hi="मेरे ऑर्डर">My orders</span></button>
+        <button class="hud-button side-button" data-native="previous">🔁 <span data-en="Buy again" data-hi="फिर खरीदें">Buy again</span></button>
+        <button class="hud-button side-button" data-native="favorites">♡ <span data-en="Favorites" data-hi="पसंदीदा">Favorites</span></button>
+        <button class="hud-button side-button" data-native="account">♙ <span data-en="My account" data-hi="मेरा खाता">My account</span></button>
+        <button class="hud-button side-button" data-native="notifications">🔔 <span data-en="Notifications" data-hi="सूचनाएँ">Notifications</span></button>
+      </div>
+      <div class="crosshair" aria-hidden="true"><span></span><span></span></div>
+      <div class="near-stall" id="nearStall" hidden>
+        <span class="near-icon" id="nearIcon">🥕</span>
+        <div><small data-en="YOU'RE AT THE STALL" data-hi="आप इस स्टॉल पर हैं">YOU'RE AT THE STALL</small><strong id="nearName">Vegetables</strong></div>
+        <button id="shopStall" class="shop-stall-button">Shop stall ↗</button>
+      </div>
+      <div class="walk-footer">
+        <div class="walk-instructions">
+          <span>⌨ <b>W A S D</b> <small data-en="to walk" data-hi="चलने के लिए">to walk</small></span>
+          <span>↔ <small data-en="Drag to look around" data-hi="देखने के लिए घुमाएँ">Drag to look around</small></span>
+          <span>⌖ <small data-en="Tap a stall to shop" data-hi="खरीदने के लिए स्टॉल छुएँ">Tap a stall to shop</small></span>
+        </div>
+        <div class="walk-actions"><button class="hud-button" id="resetButton">⌂ <span data-en="Entrance" data-hi="प्रवेश द्वार">Entrance</span></button><button class="hud-button" id="helpButton">? <span data-en="Help" data-hi="सहायता">Help</span></button></div>
+      </div>
+      <div class="mobile-controls" aria-label="Walking controls">
+        <div class="move-pad">
+          <button class="move" data-move="forward" aria-label="Walk forward">▲</button>
+          <div><button class="move" data-move="left" aria-label="Step left">◀</button><button class="move" data-move="backward" aria-label="Step back">▼</button><button class="move" data-move="right" aria-label="Step right">▶</button></div>
+        </div>
+        <div class="look-pad">
+          <button class="move" data-look="left" aria-label="Look left">↶</button>
+          <button class="move" data-look="right" aria-label="Look right">↷</button>
+        </div>
+      </div>
+    </div>
+    <div class="no-webgl" id="noWebGL" hidden>
+      <strong>Your market is still open 🥬</strong>
+      <p>3D graphics are not available in this browser. Use the product counter to continue shopping normally.</p>
+      <button class="accent-button" data-native="catalog">Open the live market counter</button>
+    </div>
+  </div>
+  <section class="stall-panel" id="stallPanel" aria-label="Products in this stall" aria-hidden="true">
+    <div class="panel-heading"><div><small>FRESH FROM THE MANDI</small><h2 id="stallTitle">Vegetables</h2></div><button class="close-button" id="closeStall" aria-label="Close stall">×</button></div>
+    <div class="stall-search"><span>⌕</span><input id="stallSearch" type="search" placeholder="Search vegetables…" aria-label="Search stall products"></div>
+    <div class="stall-meta" id="stallMeta"></div><div class="stall-items" id="stallItems"></div>
+    <div class="stall-bottom"><div><small data-en="Basket subtotal" data-hi="टोकरी का कुल">Basket subtotal</small><strong id="subtotal">₹0</strong></div><button class="accent-button" id="openBasketFromStall">Go to basket →</button></div>
+  </section>
+  <section class="native-panel" id="nativePanel" aria-label="Easy Mandi live customer service counter" aria-hidden="true">
+    <div class="native-toolbar"><div class="native-toolbar-brand"><span>🛒</span><div><strong id="nativeTitle">Easy Mandi service counter</strong><small>REAL ACCOUNT · REAL ORDERS · OFFICIAL CHECKOUT</small></div></div><div class="native-actions"><button id="nativeRefresh" class="hud-button" title="Refresh native storefront">↻</button><button id="nativeClose" class="close-button" aria-label="Return to 3D market">×</button></div></div>
+    <div class="native-wait" id="nativeWait">Connecting to the live Easy Mandi customer system…</div>
+    <iframe id="nativeStorefront" src="../web/index.html?from=walk-in-3d" title="Easy Mandi live customer storefront, checkout, login and orders" loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  </section>
+  <div id="overlay" class="overlay" hidden></div>
+  <dialog id="welcome" class="welcome-dialog">
+    <button class="close-button welcome-close" id="dismissWelcome" aria-label="Close welcome instructions">×</button>
+    <div class="welcome-emoji">🛍️ 🌽 🥬 🍅</div>
+    <small>WELCOME TO YOUR MANDI</small><h2>Walk in. Pick fresh.<br><em>Check out for real.</em></h2>
+    <p>Explore the stalls like a real vegetable market. Walk with <strong>W A S D</strong>, drag to look around, or use the controls on your phone. Tap a stall to shop from Easy Mandi's live catalog.</p>
+    <p class="welcome-hi">स्टॉल तक जाएँ, सामान चुनें और असली Easy Mandi खाते से ऑर्डर करें।</p>
+    <div class="welcome-cta"><button id="enterMarket" class="accent-button">Enter the market →</button><button id="openCounterWelcome" class="muted-button">Open shopping counter</button></div>
+    <small class="unlisted-note">UNLISTED EXPERIENCE · This entrance is not linked from the homepage.</small>
+  </dialog>
+  <div class="live-toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+<script src="./walk.js?v=20261018-2" defer></script>
+<script type="module" src="./scene.js?v=20261018-2"></script>
 </body>
 </html>
