@@ -4,11 +4,11 @@ const app=window.EMWalk;
 if(!app){throw new Error('Easy Mandi walk controller unavailable');}
 let THREE;
 try{THREE=await import('https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js');}
-catch(e){console.warn('3D engine unavailable',e);app.failedWebGL();}
+catch(first){try{THREE=await import('https://unpkg.com/three@0.164.1/build/three.module.js');}catch(e){console.warn('3D engine unavailable',first,e);app.failedWebGL();}}
 if(THREE){
 try{
 const host=document.getElementById('canvasHost'),renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));renderer.setSize(host.clientWidth,host.clientHeight);
+renderer.setPixelRatio(Math.min(window.matchMedia('(max-width: 790px)').matches?1.5:2,window.devicePixelRatio||1));renderer.setSize(host.clientWidth,host.clientHeight);
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.28;
 host.appendChild(renderer.domElement);
