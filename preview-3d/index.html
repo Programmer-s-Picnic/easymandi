@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#133c32">
+<title>Easy Mandi 3D • Private approval preview</title>
+<meta name="description" content="Unlisted, non-transactional Easy Mandi 3D marketplace approval prototype.">
+<link rel="icon" type="image/svg+xml" href="../web/brand-symbol.svg">
+<link rel="stylesheet" href="./style.css?v=1">
+</head>
+<body>
+<div class="announcement"><span class="led"></span><strong>APPROVAL PREVIEW</strong><span data-t="banner">Independent 3D experience · real catalog, simulated checkout · no live orders or catalog edits</span></div>
+<header class="site-header">
+ <div class="brand-lockup"><img src="../web/brand-symbol.svg" alt="" width="48" height="48"><div><strong>easy<span>mandi</span><sup>3D</sup></strong><small>FRESHNESS, REIMAGINED · VARANASI</small></div></div>
+ <nav class="main-nav" aria-label="Market navigation"><button class="nav-link active" data-action="home" data-t="market">Explore market</button><button class="nav-link" data-action="orders" data-t="orders">My orders</button><button class="nav-link" data-action="favorites" data-t="favorites">♡ Favorites</button></nav>
+ <div class="header-tools"><button class="language pill-btn" id="languageButton" title="Change language">हिंदी / EN</button><button class="icon-btn" data-action="account" aria-label="Demo account" title="Demo account">♙</button><button class="cart-trigger" data-action="basket" aria-label="Open basket"><span>🧺</span><span data-t="basket">Basket</span><b id="cartCount">0</b></button></div>
+</header>
+<main>
+ <section class="showcase">
+  <div class="showcase-intro"><span class="eyebrow"><span class="spark">✳</span> YOUR NEIGHBOURHOOD MANDI, NOW IMMERSIVE</span><h1 data-t="hero">Step into<br><em>freshness.</em></h1><p data-t="heroText">Walk through our virtual vegetable market. Explore the stalls, discover today's mandi prices, and fill your basket with a tap.</p><div class="hero-actions"><button class="primary-btn" id="startExplore" data-action="scrollmarket" data-t="start">Explore today's market ↗</button><button class="outline-btn" data-action="help">✦ How it works</button></div><div class="hero-trust"><div><b>60<span> min</span></b><small data-t="target">Delivery attempt target*</small></div><i></i><div><b>₹<span id="freeThreshold">499</span></b><small data-t="freeFrom">Free delivery from</small></div><i></i><div><b>7–23</b><small data-t="openHours">Operating hours · IST</small></div></div></div>
+  <div class="market-shell" id="market" aria-label="Interactive three-dimensional virtual vegetable market">
+   <div class="market-topline"><div><span class="live-indicator"></span><span data-t="explore3d">EXPLORE THE 3D MANDI</span></div><button class="scene-tool" data-action="fullscreen" id="fullscreenButton" aria-label="Full screen">⛶ <span data-t="fullscreen">Full screen</span></button></div>
+   <div class="sky-sun"></div><div class="sky-hill h1"></div><div class="sky-hill h2"></div>
+   <div id="scene" class="scene" tabindex="0" aria-label="Drag to rotate marketplace; choose a stall to filter products">
+    <div class="market-world" id="world"><div class="ground"></div><div class="avenue one"></div><div class="avenue two"></div><div class="market-center"><span>ईज़ी मंडी</span><small>VARANASI'S FRESH MARKET</small></div><div id="stalls"></div><span class="scene-tree tree-a">🌳</span><span class="scene-tree tree-b">🌳</span><span class="scene-tree tree-c">🌳</span><span class="scene-tree tree-d">🌴</span><div class="scene-sign">✧ FRESH PICKS EVERY DAY ✧</div></div>
+   </div>
+   <div class="scene-controls"><span class="drag-hint" data-t="drag">↔ Drag to rotate · click a stall to shop</span><div class="camera-buttons"><button class="scene-tool" data-action="left" aria-label="Rotate left">↶</button><button class="scene-tool" data-action="right" aria-label="Rotate right">↷</button><button class="scene-tool" data-action="zoomout" aria-label="Zoom out">−</button><button class="scene-tool" data-action="zoomin" aria-label="Zoom in">＋</button><button class="scene-tool" data-action="resetcamera" aria-label="Reset camera">⌖</button></div></div>
+   <div class="market-status" id="catalogStatus" role="status">Connecting to today's live catalog…</div>
+  </div>
+ </section>
+ <section class="shop-section" id="shop"><div class="shop-top"><div><span class="eyebrow">THE DAILY HARVEST</span><h2 data-t="pick">Fresh from the stalls<span class="heading-dot">.</span></h2><p data-t="pickText">Shop by stall, or search everything the mandi has to offer.</p></div><button class="outline-btn studio-btn" data-action="studio">⚒ <span data-t="studio">Preview product studio</span></button></div>
+ <div class="search-controls"><label class="search-field"><span>⌕</span><input id="search" type="search" autocomplete="off" placeholder="Search bhindi, ladyfinger, tomato..." aria-label="Search catalog"><button class="clear-btn" data-action="clearsearch" title="Clear search">×</button></label><button class="outline-btn filter-fav" id="favoriteFilter" data-action="favoritefilter">♡ <span data-t="favorites">Favorites</span></button><button class="outline-btn" data-action="refresh">↻ <span data-t="refresh">Refresh</span></button></div>
+ <div id="categories" class="category-list" role="group" aria-label="Product categories"></div><div class="result-meta"><p id="resultCount">Discovering your fresh picks…</p><p><span class="status-dot"></span><span data-t="livePrices">Live prices when available</span></p></div><div id="productGrid" class="product-grid" aria-live="polite"></div>
+ </section>
+ <section class="perks"><div class="perk"><span>🥬</span><div><strong data-t="fresh">Fresh from the mandi</strong><p data-t="freshSub">Everyday essentials at everyday prices.</p></div></div><div class="perk"><span>🏷</span><div><strong data-t="mandiRate">Mandi rate savings</strong><p data-t="mandiSub">Quantity-based discounts where available.</p></div></div><div class="perk"><span>🛵</span><div><strong data-t="delivery">Local delivery</strong><p data-t="deliverySub">To enabled Varanasi service localities.</p></div></div></section>
+</main>
+<footer><strong>easymandi <span>3D</span></strong><span>Private approval preview · Not connected to live orders · Not indexed</span><small>Concept developed for Easy Mandi · 2026</small></footer>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Market panel" aria-hidden="true"><div class="drawer-head"><div><small id="drawerKicker">EASY MANDI 3D</small><h2 id="drawerTitle">Your basket</h2></div><button class="icon-btn" data-action="closedrawer" aria-label="Close panel">×</button></div><div class="drawer-body" id="drawerBody"></div></aside>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="./app.js?v=1" defer></script>
+</body>
+</html>
