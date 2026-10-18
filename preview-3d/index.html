@@ -14,7 +14,7 @@
 <div class="announcement"><span class="led"></span><strong>APPROVAL PREVIEW</strong><span data-t="banner">Independent 3D experience · real catalog, simulated checkout · no live orders or catalog edits</span></div>
 <header class="site-header">
  <div class="brand-lockup"><img src="../web/brand-symbol.svg" alt="" width="48" height="48"><div><strong>easy<span>mandi</span><sup>3D</sup></strong><small>FRESHNESS, REIMAGINED · VARANASI</small></div></div>
- <nav class="main-nav" aria-label="Market navigation"><button class="nav-link active" data-action="home" data-t="market">Explore market</button><button class="nav-link" data-action="orders" data-t="orders">My orders</button><button class="nav-link" data-action="favorites" data-t="favorites">♡ Favorites</button></nav>
+ <nav class="main-nav" aria-label="Market navigation"><button class="nav-link active" data-action="home" data-t="market">Explore market</button><button class="nav-link" data-action="orders" data-t="orders">My orders</button><button class="nav-link" data-action="previous">Buy again</button><button class="nav-link" data-action="favorites" data-t="favorites">♡ Favorites</button></nav>
  <div class="header-tools"><button class="language pill-btn" id="languageButton" title="Change language">हिंदी / EN</button><button class="icon-btn" data-action="account" aria-label="Demo account" title="Demo account">♙</button><button class="cart-trigger" data-action="basket" aria-label="Open basket"><span>🧺</span><span data-t="basket">Basket</span><b id="cartCount">0</b></button></div>
 </header>
 <main>
@@ -40,6 +40,7 @@
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Market panel" aria-hidden="true"><div class="drawer-head"><div><small id="drawerKicker">EASY MANDI 3D</small><h2 id="drawerTitle">Your basket</h2></div><button class="icon-btn" data-action="closedrawer" aria-label="Close panel">×</button></div><div class="drawer-body" id="drawerBody"></div></aside>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="./app.js?v=1" defer></script>
+<script src="../web/vendor/qrcode.min.js" defer></script>
+<script src="./app.js?v=2" defer></script>
 </body>
 </html>
