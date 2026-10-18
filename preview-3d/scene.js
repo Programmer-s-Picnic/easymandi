@@ -226,8 +226,8 @@ if(inStock.length){
 const title=category==='All'?'FRESH MARKET':category;
 const big=boardTexture(title, 'FRESH · TODAY · MANDI RATE');
 const signX=side===-1?2.17:-2.17;
-placard(root,big,3.55,.97,signX,2.49,0,side===-1?Math.PI/2:-Math.PI/2);
-const emoji=['🥬','🍅','🥔','🌽','🥕','🍆','🫑','🍋'][i%8];
+placard(root,big,3.55,.97,signX,3.54,0,side===-1?Math.PI/2:-Math.PI/2);
+const emoji=String(inStock[0]?.emoji||'🥬');
 emojiPlane(root,emoji,signX+face*.07,1.68,-1.25,.94,side===-1?Math.PI/2:-Math.PI/2);
 const rugs=new THREE.Mesh(new THREE.CircleGeometry(.62,24),new THREE.MeshStandardMaterial({color:'#c8b58b',roughness:1}));rugs.rotation.x=-Math.PI/2;rugs.position.set(signX+face*.65,.045,0);root.add(rugs);
 const hit=new THREE.Mesh(new THREE.BoxGeometry(4.9,3.9,5.8),new THREE.MeshBasicMaterial({visible:false}));hit.position.set(0,1.9,0);root.add(hit);hit.userData.category=category;hitMeshes.push(hit);
