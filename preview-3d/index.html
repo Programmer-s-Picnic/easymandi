@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#102e22">
 <title>Walk Through the Mandi | Easy Mandi 3D</title>
 <meta name="description" content="An unlisted, immersive first-person Easy Mandi shopping experience in Varanasi.">
 <link rel="icon" href="../web/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./walk.css?v=20261018-gate-stocks-v3">
+<link rel="stylesheet" href="./walk.css?v=20261018-mobile-ux-v4">
 </head>
 <body>
 <div id="app" class="world-app">
@@ -38,12 +38,24 @@
         <button class="hud-button side-button" data-native="account">♙ <span data-en="My account" data-hi="मेरा खाता">My account</span></button>
         <button class="hud-button side-button" data-native="notifications">🔔 <span data-en="Notifications" data-hi="सूचनाएँ">Notifications</span></button>
       </div>
+      <nav class="mobile-quick-nav" aria-label="Quick shopping actions">
+        <button type="button" data-native="catalog"><span aria-hidden="true">🥬</span><span data-en="Shop" data-hi="खरीदें">Shop</span></button>
+        <button type="button" data-native="orders"><span aria-hidden="true">📦</span><span data-en="Orders" data-hi="ऑर्डर">Orders</span></button>
+        <button type="button" data-native="favorites"><span aria-hidden="true">♡</span><span data-en="Saved" data-hi="पसंदीदा">Saved</span></button>
+        <button type="button" data-native="account"><span aria-hidden="true">♙</span><span data-en="Account" data-hi="खाता">Account</span></button>
+      </nav>
+      <div class="mobile-prompt" id="mobilePrompt" role="status">
+        <span data-en="Move the circle to walk • Swipe the market to look • Tap a stall to shop"
+              data-hi="चलने के लिए गोला घुमाएँ • देखने के लिए स्क्रीन खिसकाएँ • दुकान छुएँ">Move the circle to walk • Swipe the market to look • Tap a stall to shop</span>
+        <button id="dismissMobilePrompt" type="button" aria-label="Dismiss mobile instructions">×</button>
+      </div>
       <div class="crosshair" aria-hidden="true"><span></span><span></span></div>
       <div class="near-stall" id="nearStall" hidden>
         <span class="near-icon" id="nearIcon">🥕</span>
         <div><small data-en="YOU'RE AT THE STALL" data-hi="आप इस स्टॉल पर हैं">YOU'RE AT THE STALL</small><strong id="nearName">Vegetables</strong></div>
         <button id="shopStall" class="shop-stall-button">Shop stall ↗</button>
       </div>
+      <div class="maker-credit">Developed &amp; maintained by <strong>Champak Roy</strong></div>
       <div class="walk-footer">
         <div class="walk-instructions">
           <span>⌨ <b>W A S D</b> <small data-en="to walk" data-hi="चलने के लिए">to walk</small></span>
@@ -53,11 +65,12 @@
         <div class="walk-actions"><button class="hud-button" id="resetButton">⌂ <span data-en="Entrance" data-hi="प्रवेश द्वार">Entrance</span></button><button class="hud-button" id="helpButton">? <span data-en="Help" data-hi="सहायता">Help</span></button></div>
       </div>
       <div class="mobile-controls" aria-label="Walking controls">
-        <div class="move-pad">
-          <button class="move" data-move="forward" aria-label="Walk forward">▲</button>
-          <div><button class="move" data-move="left" aria-label="Step left">◀</button><button class="move" data-move="backward" aria-label="Step back">▼</button><button class="move" data-move="right" aria-label="Step right">▶</button></div>
+        <div class="virtual-joystick" id="walkJoystick" role="group" tabindex="0" aria-label="Walking joystick. Drag up to move forward, drag left or right to move sideways.">
+          <span class="joystick-label" aria-hidden="true">MOVE</span>
+          <span class="joystick-track" aria-hidden="true"></span>
+          <span class="joystick-thumb" id="joystickThumb" aria-hidden="true">✣</span>
         </div>
-        <div class="look-pad">
+        <div class="look-pad" aria-label="Turn your view">
           <button class="move" data-look="left" aria-label="Look left">↶</button>
           <button class="move" data-look="right" aria-label="Look right">↷</button>
         </div>
@@ -85,14 +98,14 @@
     <button class="close-button welcome-close" id="dismissWelcome" aria-label="Close welcome instructions">×</button>
     <div class="welcome-emoji">🛍️ 🌽 🥬 🍅</div>
     <small>WELCOME TO YOUR MANDI</small><h2>Walk in. Pick fresh.<br><em>Check out for real.</em></h2>
-    <p>Explore the stalls like a real vegetable market. Walk with <strong>W A S D</strong>, drag to look around, or use the controls on your phone. Tap a stall to shop from Easy Mandi's live catalog.</p>
+    <p>Explore the stalls like a real vegetable market. Walk with <strong>W A S D</strong> on desktop. On mobile, drag the circular joystick to walk and swipe the market to look around. Tap a stall to shop from Easy Mandi's live catalog.</p>
     <p class="welcome-hi">स्टॉल तक जाएँ, सामान चुनें और असली Easy Mandi खाते से ऑर्डर करें।</p>
     <div class="welcome-cta"><button id="enterMarket" class="accent-button">Enter the market →</button><button id="openCounterWelcome" class="muted-button">Open shopping counter</button></div>
     <small class="unlisted-note">UNLISTED EXPERIENCE · This entrance is not linked from the homepage.</small>
   </dialog>
   <div class="live-toast" id="toast" role="status" aria-live="polite"></div>
 </div>
-<script src="./walk.js?v=20261018-gate-stocks-v3" defer></script>
-<script type="module" src="./scene.js?v=20261018-gate-stocks-v3"></script>
+<script src="./walk.js?v=20261018-mobile-ux-v4" defer></script>
+<script type="module" src="./scene.js?v=20261018-mobile-ux-v4"></script>
 </body>
 </html>
