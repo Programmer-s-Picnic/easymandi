@@ -8,16 +8,18 @@ catch(first){try{THREE=await import('https://unpkg.com/three@0.164.1/build/three
 if(THREE){
 try{
 const host=document.getElementById('canvasHost'),renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.matchMedia('(max-width: 790px)').matches?1.5:2,window.devicePixelRatio||1));renderer.setSize(host.clientWidth,host.clientHeight);
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const compactMobile=window.matchMedia('(max-width:790px) and (pointer:coarse)').matches;
+renderer.setPixelRatio(Math.min(compactMobile?1.25:2,window.devicePixelRatio||1));renderer.setSize(host.clientWidth,host.clientHeight);
+renderer.shadowMap.enabled=!compactMobile;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.28;
 host.appendChild(renderer.domElement);
 renderer.domElement.setAttribute('tabindex','0');renderer.domElement.setAttribute('aria-label','Walkable three-dimensional vegetable market. Use WASD to walk and drag to look around.');
 renderer.domElement.style.touchAction='none';
 const world=new THREE.Scene();world.background=new THREE.Color('#b4d7cd');world.fog=new THREE.Fog('#b4d7cd',32,78);
-const camera=new THREE.PerspectiveCamera(72,Math.max(.3,host.clientWidth/host.clientHeight),.08,125);camera.position.set(0,1.68,29.2);
+const camera=new THREE.PerspectiveCamera(72,Math.max(.3,host.clientWidth/host.clientHeight),.08,125);camera.position.set(0,1.68,window.matchMedia('(max-width:790px)').matches?35.4:29.2);
 let yaw=0,pitch=0,last=performance.now(),walking=0,walkRows=3,nearest=null,stalls=[],hitMeshes=[];
 let lastNearAt=0,pressed=new Set(),mobilePressed=new Set(),lookHeld=new Set(),activeDrag=null,clickStart=null;
+let thumbVector={x:0,y:0},joystickPointer=null;
 const price=n=>'₹'+Math.round(Number(n)||0);
 const mats={
 cream:new THREE.MeshStandardMaterial({color:'#f2e2bd',roughness:.94}),
@@ -181,10 +183,10 @@ const length=Math.max(42,rows*10+20),centerZ=18.5-length/2;
 block(floorGroup,new THREE.MeshStandardMaterial({color:'#e5d9b7',roughness:1}),26,.22,length,0,-.16,centerZ,false);
 // A separate forecourt starts beyond the entrance arch, so the visitor can see
 // the complete gate from the outside before walking into the market.
-block(floorGroup,new THREE.MeshStandardMaterial({color:'#b9ccaa',roughness:1}),26,.18,16,0,-.19,27.2,false);
-block(floorGroup,new THREE.MeshStandardMaterial({color:'#f2e2c3',roughness:1}),8.35,.035,15.2,0,-.065,27.0,false);
-for(let z=20.2;z<=34;z+=1.75)block(floorGroup,mats.cement,8.35,.008,.05,0,-.041,z,false);
-for(const edge of [-4.3,4.3])block(floorGroup,mats.pineDark,.13,.09,15.2,edge,-.018,27.0,false);
+block(floorGroup,new THREE.MeshStandardMaterial({color:'#b9ccaa',roughness:1}),26,.18,24,0,-.19,30.1,false);
+block(floorGroup,new THREE.MeshStandardMaterial({color:'#f2e2c3',roughness:1}),8.35,.035,23.2,0,-.065,30.0,false);
+for(let z=20.2;z<=41;z+=1.75)block(floorGroup,mats.cement,8.35,.008,.05,0,-.041,z,false);
+for(const edge of [-4.3,4.3])block(floorGroup,mats.pineDark,.13,.09,23.2,edge,-.018,30.0,false);
 block(floorGroup,new THREE.MeshStandardMaterial({color:'#f8eccc',roughness:1}),7.1,.035,length,0,-.03,centerZ,false);
 for(let z=19;z>19-length;z-=2){block(floorGroup,mats.cement,7.1,.006,.055,0,.003,z,false);for(let x of [-3.58,3.58])block(floorGroup,mats.pineDark,.16,.13,2.1,x,.02,z,false);}
 for(let x=-12;x<=12;x+=2){block(floorGroup,mats.cement,.035,.006,length,x,.001,centerZ,false);}
@@ -276,10 +278,10 @@ function rebuild(cats,products){
 }
 function updateLabels(language){/* Sign boards retain bilingual produce illustrations and category names. */}
 // Camera begins on the public approach facing the front of the Easy Mandi gateway.
-function reset(){camera.position.set(0,1.68,29.2);yaw=0;pitch=0;nearest=null;app.near(null);updateDirection();}
+function reset(){camera.position.set(0,1.68,window.matchMedia('(max-width:790px)').matches?35.4:29.2);yaw=0;pitch=0;nearest=null;app.near(null);resetJoystick();updateDirection();}
 function updateDirection(){camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;}
-function move(dx,dz,dt){const speed=pressed.has('ShiftLeft')||pressed.has('ShiftRight')?6.2:3.7;const len=Math.hypot(dx,dz);if(len>0){dx/=len;dz/=len;}const vx=dx*Math.cos(yaw)+dz*Math.sin(yaw),vz=dz*Math.cos(yaw)-dx*Math.sin(yaw);
-const minZ=13-Math.max(2,walkRows-1)*9.4-6;camera.position.x=Math.max(-3.1,Math.min(3.1,camera.position.x+vx*dt*speed));camera.position.z=Math.max(minZ,Math.min(31.3,camera.position.z+vz*dt*speed));return len>0;}
+function move(dx,dz,dt){const baseSpeed=pressed.has('ShiftLeft')||pressed.has('ShiftRight')?6.2:3.7;const len=Math.hypot(dx,dz);const speed=baseSpeed*Math.min(1,len);if(len>0){dx/=len;dz/=len;}const vx=dx*Math.cos(yaw)+dz*Math.sin(yaw),vz=dz*Math.cos(yaw)-dx*Math.sin(yaw);
+const minZ=13-Math.max(2,walkRows-1)*9.4-6;camera.position.x=Math.max(-3.1,Math.min(3.1,camera.position.x+vx*dt*speed));camera.position.z=Math.max(minZ,Math.min(39.5,camera.position.z+vz*dt*speed));return len>0;}
 function animate(now){requestAnimationFrame(animate);const dt=Math.min(.052,(now-last)/1000||0);last=now;
 const active=app.active&&!document.hidden;let forward=0,side=0;
 if(active){if(pressed.has('KeyW')||pressed.has('ArrowUp')||mobilePressed.has('forward'))forward-=1;
@@ -288,7 +290,7 @@ if(pressed.has('KeyA')||mobilePressed.has('left'))side-=1;
 if(pressed.has('KeyD')||mobilePressed.has('right'))side+=1;
 if(lookHeld.has('left'))yaw+=1.25*dt;
 if(lookHeld.has('right'))yaw-=1.25*dt;
-const walkingNow=move(side,forward,dt);if(walkingNow)walking+=dt*10;
+side+=thumbVector.x;forward+=thumbVector.y;const walkingNow=move(side,forward,dt);if(walkingNow)walking+=dt*10;
 camera.position.y=1.68+(walkingNow?Math.sin(walking)*.045:0);
 }
 updateDirection();
@@ -304,7 +306,33 @@ canvas.addEventListener('pointermove',e=>{if(!activeDrag||!app.active)return;con
 canvas.addEventListener('pointerup',e=>{if(!activeDrag)return;const delta=Math.hypot(e.clientX-activeDrag.initialX,e.clientY-activeDrag.initialY);activeDrag=null;if(delta<9&&app.active)clicked(e);});
 canvas.addEventListener('pointercancel',()=>activeDrag=null);
 window.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target?.tagName)||e.target?.isContentEditable)return;if(e.code==='KeyR'&&app.active)reset();if(e.code==='KeyE'&&app.active&&nearest){e.preventDefault();app.stallSelect(nearest.category);}if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)&&app.active){e.preventDefault();pressed.add(e.code);}if(e.code==='ArrowLeft'&&app.active){yaw+=.075;}if(e.code==='ArrowRight'&&app.active){yaw-=.075;}});
-window.addEventListener('keyup',e=>pressed.delete(e.code));window.addEventListener('blur',()=>{pressed.clear();mobilePressed.clear();lookHeld.clear();});
+window.addEventListener('keyup',e=>pressed.delete(e.code));window.addEventListener('blur',()=>{pressed.clear();mobilePressed.clear();lookHeld.clear();resetJoystick();});
+const joystick=document.getElementById('walkJoystick'),thumb=document.getElementById('joystickThumb');
+function resetJoystick(){joystickPointer=null;thumbVector={x:0,y:0};if(thumb)thumb.style.transform='translate(-50%,-50%) translate(0px,0px)';joystick?.classList.remove('is-active');}
+function updateJoystick(e){
+ if(!joystick||joystickPointer!==e.pointerId)return;
+ const rect=joystick.getBoundingClientRect(),radius=Math.max(20,Math.min(rect.width,rect.height)*.31);
+ let x=e.clientX-(rect.left+rect.width/2),y=e.clientY-(rect.top+rect.height/2);
+ const magnitude=Math.hypot(x,y);
+ if(magnitude>radius){x*=radius/magnitude;y*=radius/magnitude;}
+ const deadzone=.12;
+ const normX=x/radius,normY=y/radius;
+ thumbVector={x:Math.abs(normX)>deadzone?normX:0,y:Math.abs(normY)>deadzone?normY:0};
+ thumb.style.transform='translate(-50%,-50%) translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)';
+}
+if(joystick){
+ joystick.addEventListener('pointerdown',e=>{
+  if(!app.active||joystickPointer!==null)return;
+  e.preventDefault();joystickPointer=e.pointerId;joystick.classList.add('is-active');
+  try{joystick.setPointerCapture(e.pointerId);}catch{}
+  updateJoystick(e);
+  window.EMWalk?.dismissMobileHint?.();
+ });
+ joystick.addEventListener('pointermove',e=>{if(joystickPointer===e.pointerId){e.preventDefault();updateJoystick(e);}});
+ for(const type of ['pointerup','pointercancel','lostpointercapture']){
+  joystick.addEventListener(type,e=>{if(joystickPointer===e.pointerId)resetJoystick();});
+ }
+}
 for(const button of document.querySelectorAll('[data-move]')){const dir=button.dataset.move;button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture?.(e.pointerId);mobilePressed.add(dir);});for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,()=>mobilePressed.delete(dir));}
 for(const button of document.querySelectorAll('[data-look]')){const dir=button.dataset.look;button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture?.(e.pointerId);lookHeld.add(dir);});for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,()=>lookHeld.delete(dir));}
 app.sceneReady({rebuild,reset,language:updateLabels});
