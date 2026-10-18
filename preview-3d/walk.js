@@ -54,7 +54,7 @@ function changeProduct(id,delta){const api=nativeApi(),p=products.find(x=>String
 async function loadCatalog(){status('Loading fresh catalog…');let data;try{const r=await fetch(api+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);data=await r.json();if(!Array.isArray(data.products)||!data.store)throw Error('Invalid catalog');catalogSource='live';}catch(e){try{const r=await fetch(archive+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('snapshot unavailable');data=await r.json();catalogSource='snapshot';}catch{try{data=JSON.parse(localStorage.getItem('easy-mandi-catalog')||'null');if(!data?.products)throw Error('no cache');catalogSource='cached';}catch{data={products:[],categories:['All']};catalogSource='unavailable';}}}
 products=Array.isArray(data.products)?data.products.filter(p=>p&&p.id!=null&&p.name).map(p=>({...p,id:String(p.id)})):[];categories=['All',...new Set(products.map(p=>p.category||'Other'))];if(products.length){status(catalogSource==='live'?'Live prices':'Catalog snapshot',catalogSource!=='live');}else status('Catalog offline',true);if(scene?.rebuild)scene.rebuild(categories,products);refreshTotals();if(stallOpen)renderStall();}
 function translations(){document.querySelectorAll('[data-en]').forEach(el=>el.textContent=language==='hi'?el.dataset.hi:el.dataset.en);$('languageButton').textContent=language==='en'?'हिन्दी / EN':'EN / हिंदी';if(stallOpen)renderStall();if(scene?.language)scene.language(language);try{if(frame.contentWindow?.EMI18n&&frame.contentWindow.EMI18n.lang!==language){const lang=frame.contentDocument.getElementById('siteLanguage');if(lang){lang.value=language;lang.dispatchEvent(new Event('change',{bubbles:true}));}}}catch{}}
-function onSceneReady(apiScene){scene=apiScene;if(scene?.rebuild&&products.length)scene.rebuild(categories,products);hideLoading();translations();}
+function onSceneReady(apiScene){$('noWebGL').hidden=true;scene=apiScene;if(scene?.rebuild&&products.length)scene.rebuild(categories,products);hideLoading();translations();}
 window.EMWalk=Object.freeze({
 sceneReady:onSceneReady,
 stallSelect:category=>openStall(category),
@@ -79,7 +79,7 @@ $('shopStall').addEventListener('click',()=>openStall($('shopStall').dataset.cat
 $('languageButton').addEventListener('click',()=>{language=language==='en'?'hi':'en';try{localStorage.setItem('easy-mandi-language',language);}catch{}translations();});
 $('resetButton').addEventListener('click',()=>scene?.reset());
 $('helpButton').addEventListener('click',()=>{try{$('welcome').showModal();}catch{}});
-$('fullscreenButton').addEventListener('click',()=>{if(document.fullscreenElement)document.exitFullscreen();else $('worldFrame').requestFullscreen?.().catch(()=>toast('Fullscreen unavailable'));});
+$('fullscreenButton').addEventListener('click',()=>{if(document.fullscreenElement)document.exitFullscreen();else $('app').requestFullscreen?.().catch(()=>toast('Fullscreen unavailable'));});
 function dismiss(){try{$('welcome').close();}catch{}try{sessionStorage.setItem('easy-mandi-3d-visited','yes');}catch{}}
 $('dismissWelcome').addEventListener('click',dismiss);$('enterMarket').addEventListener('click',dismiss);
 $('openCounterWelcome').addEventListener('click',()=>{dismiss();openNative('catalog');});
