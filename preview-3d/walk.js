@@ -21,7 +21,7 @@ const totalCart=()=>products.reduce((sum,p)=>sum+getCount(p.id),0);
 const priceInfo=p=>{const q=getCount(p.id),price=Number(p.price||0),m=p.mandi||{},threshold=Number(m.minimumQuantity),mandiPrice=Number(m.unitPrice);const reduced=m.enabled===true&&q>=threshold&&threshold>=2&&mandiPrice>0&&mandiPrice<price;return {qty:q,price:reduced?mandiPrice:price,saving:reduced?(price-mandiPrice)*q:0,enabled:!!m.enabled,threshold,mandiPrice};};
 const subtotal=()=>products.reduce((s,p)=>s+(p.available?priceInfo(p).price*getCount(p.id):0),0);
 function toast(s){const el=$('toast');el.textContent=s;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2700);}
-function hideLoading(){if(!$('loading').classList.contains('done')){$('loading').classList.add('done');setTimeout(()=>$('loading').hidden=true,500);if(!sessionStorage.getItem('easy-mandi-3d-visited')){setTimeout(()=>{if(!$('welcome').open){try{$('welcome').showModal();}catch{}}},500);}}}
+function hideLoading(){if(!$('loading').classList.contains('done')){$('loading').classList.add('done');setTimeout(()=>$('loading').hidden=true,500);if(!sessionStorage.getItem('easy-mandi-3d-visited')){setTimeout(()=>toast('The Easy Mandi gate is ahead — walk in with W / ▲ and explore the stocked stalls.'),550);sessionStorage.setItem('easy-mandi-3d-visited','yes');}}}
 function status(text,error=false){const el=$('serverStatus');el.innerHTML='<span class="green-dot"></span>'+esc(text);el.classList.toggle('error',error);}
 function frameDocument(){try{const d=frame.contentDocument;return d&&d.querySelector('#basketButton')?d:null;}catch{return null;}}
 function nativeApi(){try{const w=frame.contentWindow;return w?.EasyMandiCatalog||null;}catch{return null;}}
