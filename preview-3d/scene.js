@@ -144,7 +144,7 @@ function producePile(parent,x,baseY,z,product,seed){
   leaves.instanceMatrix.needsUpdate=true;leaves.castShadow=false;parent.add(leaves);
  }
 }
-function stockedCrate(g,x,y,z,product,side,seed,upper=false){
+function stockedCrate(g,x,y,z,product,side,seed,upper=false,backRow=false){
  const frame=upper?1.16:1.29;
  block(g,mats.pine,frame,.13,1.14,x,y+.08,z);
  block(g,mats.pineDark,.085,.43,1.14,x-frame/2+.04,y+.24,z);
@@ -157,8 +157,8 @@ function stockedCrate(g,x,y,z,product,side,seed,upper=false){
  const rowPrice=Number(product.price);
  const shortName=String(product.name||'Fresh produce').slice(0,20);
  const subtitle=(Number.isFinite(rowPrice)?'₹'+rowPrice.toFixed(rowPrice%1?2:0):'FRESH')+' / '+String(product.unit||'unit').slice(0,18);
- const board=boardTexture(shortName,subtitle,true);
- placard(g,board,1.22,.43,signX,y+.83,z,side===-1?Math.PI/2:-Math.PI/2);
+ if(!backRow){const board=boardTexture(shortName,subtitle,true);
+ placard(g,board,1.22,.43,signX,y+.83,z,side===-1?Math.PI/2:-Math.PI/2);}
 }
 function stockedSacks(root,kind,side){
  const sackMaterial=new THREE.MeshStandardMaterial({color:'#cbb58b',roughness:1});
@@ -213,7 +213,7 @@ const positions=[-1.77,-.59,.59,1.77];
 if(inStock.length){
  for(let j=0;j<positions.length;j++){
   stockedCrate(root,frontX,.15,positions[j],inStock[j%inStock.length],side,i*30+j);
-  stockedCrate(root,backX,.15,positions[j],inStock[(j+4)%inStock.length],side,i*30+8+j);
+  stockedCrate(root,backX,.15,positions[j],inStock[(j+4)%inStock.length],side,i*30+8+j,false,true);
   stockedCrate(root,frontX,1.24,positions[j],inStock[(j+8)%inStock.length],side,i*30+16+j,true);
  }
  stockedSacks(root,produceKind(inStock[0]),side);
