@@ -121,14 +121,17 @@ block(arch,mats.pine,9.3,.5,.7,0,5.05,0);
 placard(arch,boardTexture('ईज़ीमंडी', 'WELCOME · ताज़गी का बाज़ार',true),7.6,1.42,0,4.25,.44);
 }
 let extrasReady=false;
-function disposeGroup(group){group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();if(obj.material){const arr=Array.isArray(obj.material)?obj.material:[obj.material];for(const m of arr){if(m.map)m.map.dispose();m.dispose();}}});}
+function disposeGroup(group){group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();/* Shared palette materials are retained; the renderer reuses them across market rebuilds. */});}
 function rebuild(cats,products){
  const list=(Array.isArray(cats)?cats:[]).filter(x=>x!=='All').slice(0,18);
  if(!list.length)list.push('Vegetables','Fruits','Leafy greens','Essentials');
  for(const stall of stalls){market.remove(stall.root);disposeGroup(stall.root);}
- stalls=[];hitMeshes=[];for(let i=0;i<list.length;i++)storeCategory(list[i],i);
- if(!extrasReady){marketExtras(Math.ceil(Math.max(6,list.length)/2));extrasReady=true;}
- walkRows=Math.ceil(list.length/2);
+ stalls=[];hitMeshes=[];const rows=Math.ceil(Math.max(6,list.length)/2);
+ while(floorGroup.children.length){const child=floorGroup.children[0];floorGroup.remove(child);if(child?.geometry)child.geometry.dispose();}
+ streetLength=makeStreet(rows);
+ for(let i=0;i<list.length;i++)storeCategory(list[i],i);
+ if(!extrasReady){marketExtras(rows);extrasReady=true;}
+ walkRows=rows;
 }
 function updateLabels(language){/* Sign boards retain bilingual produce illustrations and category names. */}
 const clock=new THREE.Clock();
