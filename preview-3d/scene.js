@@ -35,7 +35,10 @@ const sun=new THREE.DirectionalLight('#fff4cb',3.2);sun.position.set(-12,27,12);
 const fill=new THREE.DirectionalLight('#cee9ed',.85);fill.position.set(15,9,-19);world.add(fill);
 function block(group,material,w,h,d,x,y,z,cast=true){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;group.add(m);return m;}
 function cylinder(group,material,top,bottom,height,x,y,z){const m=new THREE.Mesh(new THREE.CylinderGeometry(top,bottom,height,9),material);m.position.set(x,y,z);m.castShadow=true;group.add(m);return m;}
+const boardCache=new Map();
 function boardTexture(title,subtitle,light=false){
+const key=String(title)+'|'+String(subtitle)+'|'+(light?'light':'dark');
+if(boardCache.has(key))return boardCache.get(key);
 const cv=document.createElement('canvas');cv.width=1024;cv.height=284;const c=cv.getContext('2d');
 c.fillStyle=light?'#fae9af':'#1d654c';c.fillRect(0,0,1024,284);
 c.strokeStyle=light?'#d3af60':'#e7ba63';c.lineWidth=14;c.strokeRect(12,12,1000,260);
@@ -43,7 +46,7 @@ c.textAlign='center';c.textBaseline='middle';c.fillStyle=light?'#244e39':'#fffbe
 c.font='bold 97px system-ui';let s=String(title).slice(0,28);
 while(c.measureText(s).width>920&&s.length>4){s=s.slice(0,-1);}c.fillText(s,512,115);
 c.fillStyle=light?'#637047':'#f4d68c';c.font='bold 39px system-ui';c.fillText(String(subtitle).slice(0,35),512,213);
-const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t;
+const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=renderer.capabilities.getMaxAnisotropy();boardCache.set(key,t);return t;
 }
 function placard(group,texture,w,h,x,y,z,ry=0){const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:texture,transparent:false,side:THREE.DoubleSide}));mesh.position.set(x,y,z);mesh.rotation.y=ry;group.add(mesh);return mesh;}
 function emojiTexture(emoji){const cv=document.createElement('canvas');cv.width=256;cv.height=256;const c=cv.getContext('2d');c.font='175px "Segoe UI Emoji", "Apple Color Emoji",sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(emoji,128,142);const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;return t;}
@@ -105,7 +108,7 @@ function producePile(parent,x,baseY,z,product,seed){
  // 25 on the base, 16 stacked, 9 on top, so every crate looks full.
  const layers=[5,4,3],count=layers.reduce((n,v)=>n+v*v,0);
  const geometry=produceGeometry(kind),mesh=new THREE.InstancedMesh(geometry,produceMaterial,count);
- mesh.frustumCulled=false;
+ mesh.frustumCulled=true;
  let index=0;
  for(let layer=0;layer<layers.length;layer++){
   const side=layers[layer],spacing=kind==='leafy'?.255:.23,offset=(side-1)*spacing/2;
@@ -128,7 +131,7 @@ function producePile(parent,x,baseY,z,product,seed){
    index++;
   }
  }
- mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+ mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;mesh.computeBoundingSphere();
  mesh.castShadow=false;mesh.receiveShadow=true;parent.add(mesh);
  // Small contrasting leaves make tomatoes / onions / carrots read more clearly.
  if(['tomato','onion','carrot','cauliflower','cabbage','garlic','chilli'].includes(kind)){
@@ -141,7 +144,7 @@ function producePile(parent,x,baseY,z,product,seed){
    dummyProduce.scale.setScalar(.8+(i%3)*.14);
    dummyProduce.updateMatrix();leaves.setMatrixAt(i,dummyProduce.matrix);
   }
-  leaves.instanceMatrix.needsUpdate=true;leaves.castShadow=false;parent.add(leaves);
+  leaves.instanceMatrix.needsUpdate=true;leaves.computeBoundingSphere();leaves.castShadow=false;parent.add(leaves);
  }
 }
 function stockedCrate(g,x,y,z,product,side,seed,upper=false,backRow=false){
