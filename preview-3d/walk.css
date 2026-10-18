@@ -160,3 +160,10 @@
  .walk-footer{bottom:calc(env(safe-area-inset-bottom,0px) + 120px)}
  .stall-panel{height:100dvh;max-height:100dvh;border-radius:16px 16px 0 0}
 }
+
+/* Mobile safety: keep secondary buttons out of the nearby-stall buy action. */
+@media(max-width:790px){
+ #nearStall:not([hidden]) ~ .walk-footer .walk-actions{display:none}
+ .stall-panel .panel-heading{touch-action:none;user-select:none}
+ .virtual-joystick.is-active{border-color:#fff9cf;box-shadow:0 0 0 5px #fff9d024,0 8px 25px #0d271d58}
+}
