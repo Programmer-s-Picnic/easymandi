@@ -45,6 +45,26 @@ export function createLivingMandi({THREE,world,renderer,camera,mobile=false}){
    const bag=box(arms[1],.30,.32,.15,.02,-.75,0,'#edc575');
    groupMesh(arms[1],new THREE.TorusGeometry(.095,.018,5,12,Math.PI),'#8c6b3b',.02,-.55,0).rotation.z=Math.PI/2;
   }
+  // An occasional delivery worker moves a small, non-interactive produce cart.
+  if(!vendor&&i%9===6){
+   const trolley=new THREE.Group();
+   trolley.position.set(0,0,-.84);
+   box(trolley,.65,.14,.78,0,.52,0,'#9e774c');
+   box(trolley,.66,.38,.07,0,.68,.37,'#755638');
+   box(trolley,.66,.38,.07,0,.68,-.37,'#755638');
+   for(const x of [-.32,.32]){
+    const wheel=cylinder(trolley,.16,.16,.075,x,.2,.25,'#343a34');
+    wheel.rotation.z=Math.PI/2;
+    const wheel2=cylinder(trolley,.16,.16,.075,x,.2,-.25,'#343a34');
+    wheel2.rotation.z=Math.PI/2;
+   }
+   for(let n=0;n<7;n++){
+    groupMesh(trolley,shared.produce,n%2?'#6e9856':'#d27e4d',((n%3)-1)*.19,.65+(n%2)*.13,(Math.floor(n/3)-1)*.19);
+   }
+   box(trolley,.05,.75,.05,-.3,.94,.43,'#775c3b');
+   box(trolley,.05,.75,.05,.3,.94,.43,'#775c3b');
+   p.add(trolley);
+  }
   p.scale.setScalar(.94+(i%4)*.04);
   return {root:p,torso,arms,legs,phase:i*1.7,id:i,direction:i%2?-1:1,pause:0,wait:2+i*.31};
  }
@@ -141,7 +161,7 @@ export function createLivingMandi({THREE,world,renderer,camera,mobile=false}){
    let x=p.lane;
    // Stay in the walking aisle; give both the camera and other simulated
    // shoppers space. No real customer identities or locations are accessed.
-   if(Math.abs(player.z-p.z)<1.5&&Math.abs(player.x-x)<1.2)x+=(player.x<=x?.72:-.72);
+   if(Math.abs(player.z-p.z)<1.5&&Math.abs(player.x-x)<1.2)x+=(player.x<=x ? .72 : -.72);
    for(let j=0;j<i;j++){
     const q=shoppers[j];
     if(q?.root.visible&&Math.abs(p.z-q.z)<.8&&Math.abs(q.root.position.x-x)<.75){x+=(x<0?-.29:.29);break;}
