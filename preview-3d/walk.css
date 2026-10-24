@@ -443,3 +443,9 @@ body:not(.has-entered) .market-location{display:none!important}
  .maker-credit{display:none}
  .directory-panel{height:100dvh;max-height:100dvh;border-radius:0}
 }
+
+/* The first-visit decision card owns the visual focus at the gate. */
+body:not(.has-entered) .maker-credit{display:none}
+body:not(.has-entered) .market-location{display:none!important}
+.directory-panel[aria-hidden="true"],.stall-panel[aria-hidden="true"],.native-panel[aria-hidden="true"]{visibility:hidden}
+.directory-panel.open,.stall-panel.open,.native-panel.open{visibility:visible}
