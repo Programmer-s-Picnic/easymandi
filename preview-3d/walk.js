@@ -12,7 +12,7 @@ const archive='https://raw.githubusercontent.com/Programmer-s-Picnic/easymandida
 const money=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(Number(n)||0);
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 let products=[],categories=['All'],catalogStatus='loading',currentCategory='All',catalogSource='';
-let scene=null,stallOpen=false,nativeOpen=false,language='en',nativeLoaded=false,frameError='',toastTimer=null,queuedNative=null,readyCount=0;
+let scene=null,stallOpen=false,nativeOpen=false,experienceOpen=false,language='en',nativeLoaded=false,frameError='',toastTimer=null,queuedNative=null,readyCount=0;
 const isTouchPhone=()=>window.matchMedia('(max-width:790px) and (pointer:coarse)').matches;
 const mobilePrompt=$('mobilePrompt');
 function dismissMobileHint(){mobilePrompt.hidden=true;try{sessionStorage.setItem('easy-mandi-3d-mobile-guided','1');}catch{}}
@@ -46,11 +46,11 @@ else if(mode==='checkout'){el('basketButton')?.click();}
 else if(mode==='search'){el('shopCatalog')?.scrollIntoView({block:'start'});el('search')?.focus();}
 return true;
 }catch(e){console.warn('Native counter action failed',e);return false;}}
-function openNative(mode='catalog'){dismissMobileHint();closeStall(false);nativeOpen=true;queuedNative=mode;$('nativePanel').classList.add('open');$('nativePanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;document.body.classList.add('counter-open');$('nativeTitle').textContent=({basket:'Your real basket & checkout',orders:'My real orders & deliveries',account:'Your Easy Mandi account',previous:'Reorder previous purchases',notifications:'Your customer notifications',favorites:'Saved favorites',catalog:'The fresh product market',checkout:'Checkout'}[mode]||'Easy Mandi service counter');
+function openNative(mode='catalog'){closeExperience();dismissMobileHint();closeStall(false);nativeOpen=true;queuedNative=mode;$('nativePanel').classList.add('open');$('nativePanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;document.body.classList.add('counter-open');$('nativeTitle').textContent=({basket:'Your real basket & checkout',orders:'My real orders & deliveries',account:'Your Easy Mandi account',previous:'Reorder previous purchases',notifications:'Your customer notifications',favorites:'Saved favorites',catalog:'The fresh product market',checkout:'Checkout'}[mode]||'Easy Mandi service counter');
 waitReady(()=>{modifyIframe();$('nativeWait').hidden=true;if(queuedNative===mode)frameAction(mode);refreshTotals();});}
 function closeNative(){nativeOpen=false;queuedNative=null;$('nativePanel').classList.remove('open');$('nativePanel').setAttribute('aria-hidden','true');$('overlay').hidden=true;document.body.classList.remove('counter-open');refreshTotals();renderStall();}
 function closeStall(restore=true){stallOpen=false;$('stallPanel').classList.remove('open');$('stallPanel').setAttribute('aria-hidden','true');if(restore&&!nativeOpen)$('overlay').hidden=true;}
-function openStall(category='All'){dismissMobileHint();closeNative();stallOpen=true;currentCategory=category||'All';$('stallPanel').classList.add('open');$('stallPanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;$('stallSearch').value='';renderStall();if(!isTouchPhone())$('stallSearch').focus();}
+function openStall(category='All'){closeExperience();dismissMobileHint();closeNative();stallOpen=true;currentCategory=category||'All';$('stallPanel').classList.add('open');$('stallPanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;$('stallSearch').value='';renderStall();if(!isTouchPhone())$('stallSearch').focus();}
 function validImage(p){const raw=String(p?.imageUrl||p?.image||'');try{const u=new URL(raw);return u.protocol==='https:'&&u.hostname?raw:'';}catch{return '';}}
 function localCard(p){const q=priceInfo(p),cmp=Number(p.compareAtPrice),img=validImage(p);return '<article class="stall-item"><div class="stall-item-art">'+(img?'<img src="'+esc(img)+'" loading="lazy" alt="'+esc(p.name)+'">':'<span>'+esc(p.emoji||'🥬')+'</span>')+'</div><div><h3>'+esc(name(p))+'</h3><p>'+esc(p.unit||'unit')+' · '+esc(language==='hi'?p.name:(p.hindi||p.category||''))+'</p><strong>'+money(q.price)+'</strong>'+(cmp>q.price?'<del>'+money(cmp)+'</del>':'')+(q.enabled&&Number.isFinite(q.mandiPrice)?'<div class="mandi-price">'+(q.qty>=q.threshold?'✓ Mandi price active':'🏷 Mandi rate '+money(q.mandiPrice)+' from '+q.threshold+' units')+'</div>':'')+'</div><div>'+(p.available?(q.qty?'<div class="counter"><button data-qty="'+esc(p.id)+'" data-delta="-1" aria-label="Remove one '+esc(p.name)+'">−</button><span>'+q.qty+'</span><button data-qty="'+esc(p.id)+'" data-delta="1" aria-label="Add one '+esc(p.name)+'">+</button></div>':'<button class="stall-add" data-qty="'+esc(p.id)+'" data-delta="1" aria-label="Add '+esc(p.name)+'">＋</button>'):'<small>Sold out</small>')+'</div></article>';}
 function renderStall(){const title=currentCategory==='All'?(language==='hi'?'सारी मंडी':'Entire marketplace'):currentCategory;$('stallTitle').textContent=title;const search=$('stallSearch').value.toLocaleLowerCase().trim();const items=products.filter(p=>(currentCategory==='All'||p.category===currentCategory)&&(search.length===0||[p.name,p.hindi,p.category,p.description,Array.isArray(p.searchWords)?p.searchWords.join(' '):p.searchWords,Array.isArray(p.keywords)?p.keywords.join(' '):p.keywords].join(' ').toLocaleLowerCase().includes(search)));$('stallMeta').textContent=items.length+' products · '+(catalogSource==='live'?'Live public catalog':'Catalog snapshot')+' · '+'All additions use the official Easy Mandi basket';$('stallItems').innerHTML=items.length?items.map(localCard).join(''):'<p style="text-align:center;padding:40px 12px;color:#879c8d">No products match your search.</p>';refreshTotals();}
@@ -59,17 +59,100 @@ function changeProduct(id,delta){const api=nativeApi(),p=products.find(x=>String
 async function loadCatalog(){status('Loading fresh catalog…');let data;try{const r=await fetch(api+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);data=await r.json();if(!Array.isArray(data.products)||!data.store)throw Error('Invalid catalog');catalogSource='live';}catch(e){try{const r=await fetch(archive+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('snapshot unavailable');data=await r.json();catalogSource='snapshot';}catch{try{data=JSON.parse(localStorage.getItem('easy-mandi-catalog')||'null');if(!data?.products)throw Error('no cache');catalogSource='cached';}catch{data={products:[],categories:['All']};catalogSource='unavailable';}}}
 products=Array.isArray(data.products)?data.products.filter(p=>p&&p.id!=null&&p.name).map(p=>({...p,id:String(p.id)})):[];categories=['All',...new Set(products.map(p=>p.category||'Other'))];if(products.length){status(catalogSource==='live'?'Live prices':'Catalog snapshot',catalogSource!=='live');}else status('Catalog offline',true);if(scene?.rebuild)scene.rebuild(categories,products);refreshTotals();if(stallOpen)renderStall();}
 function translations(){document.querySelectorAll('[data-en]').forEach(el=>el.textContent=language==='hi'?el.dataset.hi:el.dataset.en);$('languageButton').textContent=language==='en'?'हिन्दी / EN':'EN / हिंदी';if(stallOpen)renderStall();if(scene?.language)scene.language(language);try{if(frame.contentWindow?.EMI18n&&frame.contentWindow.EMI18n.lang!==language){const lang=frame.contentDocument.getElementById('siteLanguage');if(lang){lang.value=language;lang.dispatchEvent(new Event('change',{bubbles:true}));}}}catch{}}
-function onSceneReady(apiScene){$('noWebGL').hidden=true;scene=apiScene;if(scene?.rebuild)scene.rebuild(categories,products);hideLoading();translations();showMobileHint();}
+function onSceneReady(apiScene){$('noWebGL').hidden=true;scene=apiScene;if(scene?.rebuild)scene.rebuild(categories,products);scene?.setQuality?.($('qualitySelect').value);scene?.setCrowd?.($('crowdToggle').checked);syncExperienceInfo();hideLoading();translations();showMobileHint();}
 window.EMWalk=Object.freeze({
 sceneReady:onSceneReady,
 dismissMobileHint,
 stallSelect:category=>openStall(category),
 near:stall=>{if(stallOpen||nativeOpen)return;$('nearStall').hidden=!stall;if(stall){$('nearIcon').textContent=stall.emoji||'🥬';$('nearName').textContent=stall.category||'All';$('shopStall').dataset.category=stall.category||'All';}},
-get active(){return !stallOpen&&!nativeOpen&&!$('welcome').open;},
+get active(){return !stallOpen&&!nativeOpen&&!experienceOpen&&!$('welcome').open;},
 failedWebGL:()=>{$('noWebGL').hidden=false;hideLoading();},
 getCatalog:()=>({categories,products}),
 toast
 });
+
+/* Quality and crowd settings remain local to this preview browser. */
+function readQuality(){try{return localStorage.getItem('easy-mandi-3d-quality-v2')||'auto';}catch{return 'auto';}}
+function readCrowd(){try{return localStorage.getItem('easy-mandi-3d-crowd-v2')!=='off';}catch{return true;}}
+$('qualitySelect').value=['auto','battery','high'].includes(readQuality())?readQuality():'auto';
+$('crowdToggle').checked=readCrowd();
+$('soundToggle').checked=false; // never start audio without an explicit gesture
+function syncExperienceInfo(){
+ const v=scene?.getCrowdState?.();
+ $('experienceInfo').textContent=v
+  ?'Simulated shoppers: '+v.shoppersVisible+' · Animated vendors: '+v.vendors+'. The existing Easy Mandi checkout remains unchanged.'
+  :'3D market settings will apply when the scene is ready.';
+}
+function closeExperience(){
+ experienceOpen=false;$('experiencePanel').hidden=true;
+ $('experienceButton').setAttribute('aria-expanded','false');
+}
+$('experienceButton').addEventListener('click',()=>{
+ experienceOpen=!experienceOpen;
+ $('experiencePanel').hidden=!experienceOpen;
+ $('experienceButton').setAttribute('aria-expanded',String(experienceOpen));
+ if(experienceOpen){dismissMobileHint();syncExperienceInfo();}
+});
+$('closeExperience').addEventListener('click',closeExperience);
+$('qualitySelect').addEventListener('change',e=>{
+ const quality=e.target.value;
+ try{localStorage.setItem('easy-mandi-3d-quality-v2',quality);}catch{}
+ scene?.setQuality?.(quality);syncExperienceInfo();
+});
+$('crowdToggle').addEventListener('change',e=>{
+ const enabled=e.target.checked;
+ try{localStorage.setItem('easy-mandi-3d-crowd-v2',enabled?'on':'off');}catch{}
+ scene?.setCrowd?.(enabled);syncExperienceInfo();
+});
+/* User-enabled, low-volume, generated ambience. No audio files, microphone,
+   autoplay, customer recordings or spoken user data. */
+function makeAmbience(){
+ let audio=null,wind=null,timer=null;
+ function chirp(){
+  if(!audio||document.hidden||audio.state!=='running')return;
+  try{
+   const now=audio.currentTime,osc=audio.createOscillator(),vol=audio.createGain();
+   osc.type='sine';
+   osc.frequency.setValueAtTime(740,now);
+   osc.frequency.exponentialRampToValueAtTime(1020,now+.11);
+   osc.frequency.exponentialRampToValueAtTime(650,now+.32);
+   vol.gain.setValueAtTime(.0001,now);
+   vol.gain.exponentialRampToValueAtTime(.018,now+.045);
+   vol.gain.exponentialRampToValueAtTime(.0001,now+.34);
+   osc.connect(vol).connect(audio.destination);
+   osc.start(now);osc.stop(now+.36);
+  }catch{}
+ }
+ async function start(){
+  if(!audio){
+   const AC=window.AudioContext||window.webkitAudioContext;
+   if(!AC)throw Error('Sound is not supported in this browser');
+   audio=new AC();
+   const buffer=audio.createBuffer(1,audio.sampleRate*2,audio.sampleRate),channel=buffer.getChannelData(0);
+   for(let i=0;i<channel.length;i++)channel[i]=(Math.random()*2-1)*.7;
+   const src=audio.createBufferSource();src.buffer=buffer;src.loop=true;
+   const low=audio.createBiquadFilter();low.type='lowpass';low.frequency.value=290;
+   wind=audio.createGain();wind.gain.value=.009;src.connect(low).connect(wind).connect(audio.destination);
+   src.start();
+  }
+  await audio.resume();
+  if(timer===null)timer=setInterval(chirp,9500);
+ }
+ function stop(){if(timer!==null){clearInterval(timer);timer=null;}if(audio)audio.suspend().catch(()=>{});}
+ return {start,stop};
+}
+const ambience=makeAmbience();
+$('soundToggle').addEventListener('change',async e=>{
+ if(e.target.checked){
+  try{await ambience.start();toast('Soft market ambience enabled');}
+  catch{e.target.checked=false;toast('Audio is not available on this device');}
+ }else ambience.stop();
+});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden)ambience.stop();
+ else if($('soundToggle').checked)ambience.start().catch(()=>{});
+});
+
 frame.addEventListener('load',()=>{nativeLoaded=true;modifyIframe();$('nativeWait').hidden=true;const w=frame.contentWindow;try{w.addEventListener('easy-mandi-catalog-rendered',refreshTotals);w.addEventListener('customer-account-changed',refreshTotals);}catch{}if(queuedNative){const mode=queuedNative;waitReady(()=>frameAction(mode));}refreshTotals();});
 frame.addEventListener('error',()=>{frameError='Could not load customer system';$('nativeWait').hidden=false;$('nativeWait').textContent=frameError;});
 document.querySelectorAll('[data-native]').forEach(el=>el.addEventListener('click',()=>openNative(el.dataset.native)));
@@ -106,7 +189,7 @@ function dismiss(){try{$('welcome').close();}catch{}try{sessionStorage.setItem('
 $('dismissWelcome').addEventListener('click',dismiss);$('enterMarket').addEventListener('click',dismiss);
 $('openCounterWelcome').addEventListener('click',()=>{dismiss();openNative('catalog');});
 $('welcome').addEventListener('cancel',()=>{try{sessionStorage.setItem('easy-mandi-3d-visited','yes');}catch{}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(nativeOpen)closeNative();else if(stallOpen)closeStall();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(experienceOpen)closeExperience();else if(nativeOpen)closeNative();else if(stallOpen)closeStall();}});
 window.addEventListener('storage',e=>{if(e.key==='easy-mandi-cart'){refreshTotals();if(stallOpen)renderStall();}});
 window.addEventListener('focus',refreshTotals);
 setInterval(()=>{if(nativeLoaded){modifyIframe();refreshTotals();}if(stallOpen)renderStall();},5000);
