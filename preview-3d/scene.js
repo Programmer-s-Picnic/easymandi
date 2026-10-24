@@ -300,7 +300,19 @@ function focusCategory(category){
 }
 function updateDirection(){camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;}
 function move(dx,dz,dt){if((dx||dz)&&cameraJourney)cameraJourney=null;const baseSpeed=pressed.has('ShiftLeft')||pressed.has('ShiftRight')?6.2:3.7;const len=Math.hypot(dx,dz);const speed=baseSpeed*Math.min(1,len);if(len>0){dx/=len;dz/=len;}const vx=dx*Math.cos(yaw)+dz*Math.sin(yaw),vz=dz*Math.cos(yaw)-dx*Math.sin(yaw);
-const minZ=13-Math.max(2,walkRows-1)*9.4-6;camera.position.x=Math.max(-3.1,Math.min(3.1,camera.position.x+vx*dt*speed));camera.position.z=Math.max(minZ,Math.min(39.5,camera.position.z+vz*dt*speed));return len>0;}
+const minZ=13-Math.max(2,walkRows-1)*9.4-6;
+ const targetX=Math.max(-3.1,Math.min(3.1,camera.position.x+vx*dt*speed));
+ const targetZ=Math.max(minZ,Math.min(39.5,camera.position.z+vz*dt*speed));
+ // The visitor also has a physical footprint; prevent manual walking
+ // directly through any animated shopper, while allowing sliding past.
+ if(living.canMoveTo(targetX,targetZ)){
+  camera.position.x=targetX;camera.position.z=targetZ;
+ }else if(living.canMoveTo(targetX,camera.position.z)){
+  camera.position.x=targetX;
+ }else if(living.canMoveTo(camera.position.x,targetZ)){
+  camera.position.z=targetZ;
+ }
+ return len>0;}
 function animate(now){requestAnimationFrame(animate);const dt=Math.min(.052,(now-last)/1000||0);last=now;
 const active=app.active&&!document.hidden;let forward=0,side=0;
 if(active){if(pressed.has('KeyW')||pressed.has('ArrowUp')||mobilePressed.has('forward'))forward-=1;
