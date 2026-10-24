@@ -66,7 +66,10 @@ export function createLivingMandi({THREE,world,renderer,camera,mobile=false}){
    p.add(trolley);
   }
   p.scale.setScalar(.94+(i%4)*.04);
-  return {root:p,torso,arms,legs,phase:i*1.7,id:i,direction:i%2?-1:1,pause:0,wait:2+i*.31};
+  // Footprint of the whole character, including the occasional pushcart.
+  const hasTrolley=!vendor&&i%9===6;
+  return {root:p,torso,arms,legs,phase:i*1.7,id:i,direction:i%2?-1:1,
+    radius:hasTrolley?.74:.39,pause:0,wait:2+i*.31};
  }
  function decorate(stall,i,items){
   const root=stall.root,side=stall.side;
@@ -125,15 +128,97 @@ export function createLivingMandi({THREE,world,renderer,camera,mobile=false}){
   const available=Array.isArray(products)?products.filter(p=>p&&p.available!==false):[];
   stalls.forEach((stall,i)=>decorate(stall,i,available.filter(p=>p.category===stall.category)));
   const inside=Math.min(-5,10-(Math.max(1,Math.ceil(stalls.length/2))-1)*9.4-7);
+  // Two separated traffic lanes. Spread all spawn points so even a high
+  // graphics-quality setting never begins with overlapping characters.
+  const rows=9,step=Math.min(5.4,(26-(inside+1.8))/(rows-1));
   for(let i=0;i<18;i++){
    const p=makeHuman(i+1);
-   p.lane=(i%2?1:-1)*(1.15+(i%3)*.25);
-   p.minZ=inside;p.z=27-((i*6.41)%(27-inside));
-   p.speed=.75+(i%5)*.12;p.pause=0;
+   p.lane=i%2?1.52:-1.52;
+   p.minZ=inside;
+   p.z=26-Math.floor(i/2)*step;
+   p.speed=.72+(i%5)*.12;p.pause=0;
    p.root.position.set(p.lane,0,p.z);
+   p.root.rotation.y=p.direction===-1?0:Math.PI;
    actors.add(p.root);shoppers.push(p);
   }
   applyQuality();
+ }
+ // Shoppers are discs in the ground plane. A gap between their footprints
+ // keeps arms, shopping bags and trolley geometry from cutting through people.
+ const clearance=(a,b)=>a.radius+b.radius+.22;
+ const cameraRadius=.44;
+ function canMoveTo(x,z){
+  for(const p of shoppers){
+   if(!p.root.visible)continue;
+   if(Math.hypot(x-p.root.position.x,z-p.z)<p.radius+cameraRadius+.10)return false;
+  }
+  return true;
+ }
+ // Sort within each direction from the front of the queue backwards. Leaders
+ // move first and followers yield instead of crossing through stalled shoppers.
+ function moveCrowd(dt,player){
+  const moving=shoppers.filter(p=>p.root.visible).sort((a,b)=>
+   a.direction===b.direction
+    ? a.direction*(b.z-a.z)
+    : a.id-b.id);
+  for(const p of moving){
+   if(p.pause>0){p.pause=Math.max(0,p.pause-dt);}
+   else{
+    p.wait-=dt;
+    if(p.wait<0){
+     const atShop=vendors.some(v=>Math.abs(p.z-v.stall.z)<.65);
+     if(atShop){p.pause=2.2+(p.id%3)*.65;p.wait=5+(p.id%4)*2;}
+     else p.wait=.6;
+    }
+   }
+   let travel=p.pause>0?0:p.speed*dt;
+   for(const q of shoppers){
+    if(q===p||!q.root.visible)continue;
+    const dx=p.lane-q.root.position.x;
+    const needed=clearance(p,q);
+    if(Math.abs(dx)>=needed)continue;
+    // Only someone ahead in our direction can limit progress. People
+    // coming the other way occupy the opposite marked walking lane.
+    const dz=p.direction*(q.z-p.z);
+    if(dz<0)continue;
+    const zGap=Math.sqrt(Math.max(0,needed*needed-dx*dx));
+    travel=Math.min(travel,Math.max(0,dz-zGap));
+   }
+   // A real visitor walking into a lane gets right of way. The NPC stops
+   // rather than sliding sideways through other simulated shoppers.
+   if(player){
+    const dx=p.lane-player.x,needed=p.radius+cameraRadius+.19;
+    if(Math.abs(dx)<needed){
+     const dz=p.direction*(player.z-p.z);
+     if(dz>=0){
+      const gap=Math.sqrt(Math.max(0,needed*needed-dx*dx));
+      travel=Math.min(travel,Math.max(0,dz-gap));
+     }
+    }
+   }
+   const candidate=p.z+p.direction*travel;
+   if(candidate<p.minZ){p.z=p.minZ;p.direction=1;p.pause=.55;}
+   else if(candidate>29){p.z=29;p.direction=-1;p.pause=.5;}
+   else p.z=candidate;
+   p.root.position.z=p.z;
+   // Fixed separate lanes remove the previous sudden lateral swings which
+   // caused two bodies to briefly occupy the same space while passing.
+   p.root.position.x=p.lane;
+   p.isWalking=travel>.0003;
+  }
+ }
+ function animatePeople(t){
+  for(let i=0;i<shoppers.length;i++){
+   const p=shoppers[i];if(!p.root.visible)continue;
+   const targetYaw=p.direction===-1?0:Math.PI;
+   const angle=((targetYaw-p.root.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI;
+   p.root.rotation.y+=angle*.18;
+   const gait=p.isWalking?Math.sin(t*(p.speed*7)+p.phase)*.37:0;
+   p.legs[0].rotation.x=gait;p.legs[1].rotation.x=-gait;
+   p.arms[0].rotation.x=-gait*.62;p.arms[1].rotation.x=gait*.62;
+   p.torso.rotation.y=p.isWalking?0:Math.sin(t*.7+i)*.18;
+   p.root.position.y=p.isWalking?.022*Math.abs(Math.sin(t*7+i)):0;
+  }
  }
  function update(dt,ms,player,active=true){
   const t=ms*.001;
@@ -147,39 +232,8 @@ export function createLivingMandi({THREE,world,renderer,camera,mobile=false}){
    v.arms[1].rotation.z=Math.sin(phase)*.08;
   }
   if(!active)return;
-  for(let i=0;i<visible;i++){
-   const p=shoppers[i];if(!p)break;
-   if(p.pause>0)p.pause-=dt;
-   else{
-    p.z+=p.direction*p.speed*dt;
-    if(p.z<=p.minZ){p.z=p.minZ;p.direction=1;p.pause=.6;}
-    if(p.z>=29){p.z=29;p.direction=-1;p.pause=.5;}
-    p.wait-=dt;
-    if(p.wait<0){
-     const atShop=vendors.some(v=>Math.abs(p.z-v.stall.z)<.65);
-     if(atShop){p.pause=2.2+(i%3)*.65;p.wait=5+(i%4)*2;}else p.wait=.6;
-    }
-   }
-   let x=p.lane;
-   // Stay in the walking aisle; give both the camera and other simulated
-   // shoppers space. No real customer identities or locations are accessed.
-   if(Math.abs(player.z-p.z)<1.5&&Math.abs(player.x-x)<1.2)x+=(player.x<=x ? .72 : -.72);
-   for(let j=0;j<i;j++){
-    const q=shoppers[j];
-    if(q?.root.visible&&Math.abs(p.z-q.z)<.8&&Math.abs(q.root.position.x-x)<.75){x+=(x<0?-.29:.29);break;}
-   }
-   p.root.position.x+=(Math.max(-2.7,Math.min(2.7,x))-p.root.position.x)*Math.min(1,dt*3);
-   p.root.position.z=p.z;
-   const targetYaw=p.direction===-1?0:Math.PI;
-   let da=((targetYaw-p.root.rotation.y+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
-   p.root.rotation.y+=da*Math.min(1,dt*3);
-   const walking=p.pause<=0;
-   const gait=walking?Math.sin(t*(p.speed*7)+p.phase)*.37:0;
-   p.legs[0].rotation.x=gait;p.legs[1].rotation.x=-gait;
-   p.arms[0].rotation.x=-gait*.62;p.arms[1].rotation.x=gait*.62;
-   p.torso.rotation.y=walking?0:Math.sin(t*.7+i)*.18;
-   p.root.position.y=walking?.022*Math.abs(Math.sin(t*7+i)):0;
-  }
+  moveCrowd(Math.min(dt,.06),player);
+  animatePeople(t);
   if(quality==='auto'){
    if(dt>.04)slowSeconds+=dt;else slowSeconds=Math.max(0,slowSeconds-dt*.3);
    if(slowSeconds>3.5&&reduction<3){reduction++;slowSeconds=0;applyQuality();}
@@ -188,5 +242,5 @@ export function createLivingMandi({THREE,world,renderer,camera,mobile=false}){
  function setQuality(v){quality=['auto','battery','high'].includes(v)?v:'auto';reduction=0;slowSeconds=0;applyQuality();}
  function setCrowd(v){crowdEnabled=!!v;applyQuality();}
  function getState(){return {quality,crowdEnabled,shoppersVisible:visible,vendors:crowdEnabled?vendors.length:0};}
- return {rebuild,update,setQuality,setCrowd,getState};
+ return {rebuild,update,setQuality,setCrowd,getState,canMoveTo};
 }
