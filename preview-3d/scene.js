@@ -18,7 +18,7 @@ renderer.domElement.style.touchAction='none';
 const world=new THREE.Scene();world.background=new THREE.Color('#b4d7cd');world.fog=new THREE.Fog('#b4d7cd',32,78);
 const {createLivingMandi}=await import('./living.js?v=20261024-living-v2');
 const camera=new THREE.PerspectiveCamera(72,Math.max(.3,host.clientWidth/host.clientHeight),.08,125);camera.position.set(0,1.68,window.matchMedia('(max-width:790px)').matches?35.4:29.2);
-let yaw=0,pitch=0,last=performance.now(),walking=0,walkRows=3,nearest=null,stalls=[],hitMeshes=[];
+let yaw=0,pitch=0,last=performance.now(),walking=0,walkRows=3,nearest=null,stalls=[],hitMeshes=[],cameraJourney=null;
 const living=createLivingMandi({THREE,world,renderer,camera,mobile:compactMobile});
 let lastNearAt=0,pressed=new Set(),mobilePressed=new Set(),lookHeld=new Set(),activeDrag=null,clickStart=null;
 let thumbVector={x:0,y:0},joystickPointer=null;
@@ -281,9 +281,25 @@ function rebuild(cats,products){
 }
 function updateLabels(language){/* Sign boards retain bilingual produce illustrations and category names. */}
 // Camera begins on the public approach facing the front of the Easy Mandi gateway.
-function reset(){camera.position.set(0,1.68,window.matchMedia('(max-width:790px)').matches?35.4:29.2);yaw=0;pitch=0;nearest=null;app.near(null);resetJoystick();updateDirection();}
+function reset(){cameraJourney=null;camera.position.set(0,1.68,window.matchMedia('(max-width:790px)').matches?35.4:29.2);yaw=0;pitch=0;nearest=null;app.near(null);resetJoystick();updateDirection();}
+function travelTo(x,z,targetYaw=0,duration=1400){
+ cameraJourney={
+  start:performance.now(),duration,
+  fromX:camera.position.x,fromZ:camera.position.z,fromYaw:yaw,fromPitch:pitch,
+  toX:x,toZ:z,toYaw:targetYaw,toPitch:0
+ };
+ resetJoystick();
+}
+function enterMarket(){travelTo(0,15.2,0,2100);}
+function focusCategory(category){
+ const stall=stalls.find(s=>s.category===category);
+ if(!stall)return false;
+ // Face the shop from the public walkway; never teleport into its fixtures.
+ travelTo(0,stall.z+2.7,stall.side===-1?1.04:-1.04,Math.max(850,Math.min(1900,Math.abs(camera.position.z-stall.z)*65)));
+ return true;
+}
 function updateDirection(){camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;}
-function move(dx,dz,dt){const baseSpeed=pressed.has('ShiftLeft')||pressed.has('ShiftRight')?6.2:3.7;const len=Math.hypot(dx,dz);const speed=baseSpeed*Math.min(1,len);if(len>0){dx/=len;dz/=len;}const vx=dx*Math.cos(yaw)+dz*Math.sin(yaw),vz=dz*Math.cos(yaw)-dx*Math.sin(yaw);
+function move(dx,dz,dt){if((dx||dz)&&cameraJourney)cameraJourney=null;const baseSpeed=pressed.has('ShiftLeft')||pressed.has('ShiftRight')?6.2:3.7;const len=Math.hypot(dx,dz);const speed=baseSpeed*Math.min(1,len);if(len>0){dx/=len;dz/=len;}const vx=dx*Math.cos(yaw)+dz*Math.sin(yaw),vz=dz*Math.cos(yaw)-dx*Math.sin(yaw);
 const minZ=13-Math.max(2,walkRows-1)*9.4-6;camera.position.x=Math.max(-3.1,Math.min(3.1,camera.position.x+vx*dt*speed));camera.position.z=Math.max(minZ,Math.min(39.5,camera.position.z+vz*dt*speed));return len>0;}
 function animate(now){requestAnimationFrame(animate);const dt=Math.min(.052,(now-last)/1000||0);last=now;
 const active=app.active&&!document.hidden;let forward=0,side=0;
@@ -294,10 +310,19 @@ if(pressed.has('KeyD')||mobilePressed.has('right'))side+=1;
 if(lookHeld.has('left'))yaw+=1.25*dt;
 if(lookHeld.has('right'))yaw-=1.25*dt;
 side+=thumbVector.x;forward+=thumbVector.y;const walkingNow=move(side,forward,dt);if(walkingNow)walking+=dt*10;
+if(cameraJourney){
+ const j=cameraJourney,p=Math.min(1,Math.max(0,(now-j.start)/j.duration));
+ const ease=p*p*(3-2*p);
+ camera.position.x=j.fromX+(j.toX-j.fromX)*ease;
+ camera.position.z=j.fromZ+(j.toZ-j.fromZ)*ease;
+ yaw=j.fromYaw+(j.toYaw-j.fromYaw)*ease;
+ pitch=j.fromPitch+(j.toPitch-j.fromPitch)*ease;
+ if(p===1)cameraJourney=null;
+}
 camera.position.y=1.68+(walkingNow?Math.sin(walking)*.045:0);
 }
 updateDirection();
-if(active&&now-lastNearAt>240){lastNearAt=now;let near=null,distance=7;for(const stall of stalls){const d=Math.hypot(camera.position.z-stall.z,camera.position.x-stall.x);if(d<distance){distance=d;near=stall;}}if(near!==nearest){nearest=near;app.near(near);}}
+if(active&&now-lastNearAt>240){lastNearAt=now;let near=null,distance=9.2;for(const stall of stalls){const d=Math.hypot(camera.position.z-stall.z,camera.position.x-stall.x);if(d<distance){distance=d;near=stall;}}if(near!==nearest){nearest=near;app.near(near);}}
 living.update(dt,now,camera.position,active);
 // Culling distant stocked shop interiors avoids thousands of unnecessary
 // produce/fixture draw calls while visitors move through long market aisles.
@@ -342,7 +367,7 @@ if(joystick){
 }
 for(const button of document.querySelectorAll('[data-move]')){const dir=button.dataset.move;button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture?.(e.pointerId);mobilePressed.add(dir);});for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,()=>mobilePressed.delete(dir));}
 for(const button of document.querySelectorAll('[data-look]')){const dir=button.dataset.look;button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture?.(e.pointerId);lookHeld.add(dir);});for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,()=>lookHeld.delete(dir));}
-app.sceneReady({rebuild,reset,language:updateLabels,setQuality:living.setQuality,setCrowd:living.setCrowd,getCrowdState:living.getState});
+app.sceneReady({rebuild,reset,enterMarket,focusCategory,language:updateLabels,setQuality:living.setQuality,setCrowd:living.setCrowd,getCrowdState:living.getState});
 requestAnimationFrame(animate);
 }catch(e){console.error('3D market initialization error',e);app.failedWebGL();}
 }
