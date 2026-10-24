@@ -369,7 +369,18 @@ if(THREE)try{
   return {u,seg};
  }
  function updateAssets(events){
-  allAssets.forEach(a=>{if(a.kind==='buyer'||a.kind==='partner')a.g.visible=false;});
+  // The private feed refreshes repeatedly. Remove old scene objects rather
+  // than accumulating invisible pedestrians and loaded trolleys forever.
+  for(const asset of allAssets){
+   if(!asset.g)continue;
+   world.remove(asset.g);
+   asset.g.traverse(node=>{
+    if(node.geometry)node.geometry.dispose();
+    // Geometry is unique to each animated asset; palette materials may be
+    // shared across the market and must not be disposed here.
+   });
+  }
+  allAssets.length=0;
   processStates.length=0;
   const visible=events.filter(e=>e.stage!=='cancelled').slice(0,mobile?10:16);
   visible.forEach((e,i)=>{
