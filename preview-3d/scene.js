@@ -16,7 +16,7 @@ host.appendChild(renderer.domElement);
 renderer.domElement.setAttribute('tabindex','0');renderer.domElement.setAttribute('aria-label','Walkable three-dimensional vegetable market. Use WASD to walk and drag to look around.');
 renderer.domElement.style.touchAction='none';
 const world=new THREE.Scene();world.background=new THREE.Color('#b4d7cd');world.fog=new THREE.Fog('#b4d7cd',32,78);
-const {createLivingMandi}=await import('./living.js?v=20261024-living-v2');
+const {createLivingMandi}=await import('./living.js?v=20261024-crowd-collision-v1');
 const camera=new THREE.PerspectiveCamera(72,Math.max(.3,host.clientWidth/host.clientHeight),.08,125);camera.position.set(0,1.68,window.matchMedia('(max-width:790px)').matches?35.4:29.2);
 let yaw=0,pitch=0,last=performance.now(),walking=0,walkRows=3,nearest=null,stalls=[],hitMeshes=[],cameraJourney=null;
 const living=createLivingMandi({THREE,world,renderer,camera,mobile:compactMobile});
