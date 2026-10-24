@@ -111,6 +111,7 @@ export function createLivingMandi({THREE,world,renderer,camera,mobile=false}){
   const max=quality==='battery'?(mobile?4:6):quality==='high'?(mobile?8:16):(mobile?7:12);
   visible=crowdEnabled?Math.max(0,max-reduction):0;
   shoppers.forEach((p,i)=>p.root.visible=i<visible);
+  vendors.forEach(v=>v.root.visible=crowdEnabled);
   renderer.shadowMap.enabled=!mobile&&quality!=='battery';
   const dpr=quality==='battery'?(mobile?1:1.25):quality==='high'?(mobile?1.5:2):(mobile?1.2:1.65);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,dpr));
@@ -138,6 +139,7 @@ export function createLivingMandi({THREE,world,renderer,camera,mobile=false}){
   const t=ms*.001;
   for(const awning of awnings)awning.group.rotation.z=Math.sin(t*.8+awning.seed)*.055;
   for(const v of vendors){
+   if(!v.root.visible)continue;
    const phase=t*.85+v.phase;
    v.torso.rotation.y=Math.sin(phase*.55)*.075;
    v.arms[0].rotation.x=-.2-.28*(.5+.5*Math.sin(phase));
@@ -185,6 +187,6 @@ export function createLivingMandi({THREE,world,renderer,camera,mobile=false}){
  }
  function setQuality(v){quality=['auto','battery','high'].includes(v)?v:'auto';reduction=0;slowSeconds=0;applyQuality();}
  function setCrowd(v){crowdEnabled=!!v;applyQuality();}
- function getState(){return {quality,crowdEnabled,shoppersVisible:visible,vendors:vendors.length};}
+ function getState(){return {quality,crowdEnabled,shoppersVisible:visible,vendors:crowdEnabled?vendors.length:0};}
  return {rebuild,update,setQuality,setCrowd,getState};
 }
