@@ -12,7 +12,7 @@ const archive='https://raw.githubusercontent.com/Programmer-s-Picnic/easymandida
 const money=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(Number(n)||0);
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 let products=[],categories=['All'],catalogStatus='loading',currentCategory='All',catalogSource='';
-let scene=null,stallOpen=false,nativeOpen=false,experienceOpen=false,language='en',nativeLoaded=false,frameError='',toastTimer=null,queuedNative=null,readyCount=0;
+let scene=null,stallOpen=false,nativeOpen=false,experienceOpen=false,directoryOpen=false,moreOpen=false,entered=false,directoryCategory='All',language='en',nativeLoaded=false,frameError='',toastTimer=null,queuedNative=null,readyCount=0;
 const isTouchPhone=()=>window.matchMedia('(max-width:790px) and (pointer:coarse)').matches;
 const mobilePrompt=$('mobilePrompt');
 function dismissMobileHint(){mobilePrompt.hidden=true;try{sessionStorage.setItem('easy-mandi-3d-mobile-guided','1');}catch{}}
@@ -46,30 +46,166 @@ else if(mode==='checkout'){el('basketButton')?.click();}
 else if(mode==='search'){el('shopCatalog')?.scrollIntoView({block:'start'});el('search')?.focus();}
 return true;
 }catch(e){console.warn('Native counter action failed',e);return false;}}
-function openNative(mode='catalog'){closeExperience();dismissMobileHint();closeStall(false);nativeOpen=true;queuedNative=mode;$('nativePanel').classList.add('open');$('nativePanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;document.body.classList.add('counter-open');$('nativeTitle').textContent=({basket:'Your real basket & checkout',orders:'My real orders & deliveries',account:'Your Easy Mandi account',previous:'Reorder previous purchases',notifications:'Your customer notifications',favorites:'Saved favorites',catalog:'The fresh product market',checkout:'Checkout'}[mode]||'Easy Mandi service counter');
+function openNative(mode='catalog'){closeMore();closeDirectory();closeExperience();dismissMobileHint();closeStall(false);nativeOpen=true;queuedNative=mode;$('nativePanel').inert=false;$('nativePanel').classList.add('open');$('nativePanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;document.body.classList.add('counter-open');$('nativeTitle').textContent=({basket:'Your real basket & checkout',orders:'My real orders & deliveries',account:'Your Easy Mandi account',previous:'Reorder previous purchases',notifications:'Your customer notifications',favorites:'Saved favorites',catalog:'The fresh product market',checkout:'Checkout'}[mode]||'Easy Mandi service counter');
 waitReady(()=>{modifyIframe();$('nativeWait').hidden=true;if(queuedNative===mode)frameAction(mode);refreshTotals();});}
-function closeNative(){nativeOpen=false;queuedNative=null;$('nativePanel').classList.remove('open');$('nativePanel').setAttribute('aria-hidden','true');$('overlay').hidden=true;document.body.classList.remove('counter-open');refreshTotals();renderStall();}
-function closeStall(restore=true){stallOpen=false;$('stallPanel').classList.remove('open');$('stallPanel').setAttribute('aria-hidden','true');if(restore&&!nativeOpen)$('overlay').hidden=true;}
-function openStall(category='All'){closeExperience();dismissMobileHint();closeNative();stallOpen=true;currentCategory=category||'All';$('stallPanel').classList.add('open');$('stallPanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;$('stallSearch').value='';renderStall();if(!isTouchPhone())$('stallSearch').focus();}
+function closeNative(){nativeOpen=false;queuedNative=null;$('nativePanel').inert=true;$('nativePanel').classList.remove('open');$('nativePanel').setAttribute('aria-hidden','true');$('overlay').hidden=true;document.body.classList.remove('counter-open');refreshTotals();renderStall();}
+function closeStall(restore=true){stallOpen=false;$('stallPanel').inert=true;$('stallPanel').classList.remove('open');$('stallPanel').setAttribute('aria-hidden','true');if(restore&&!nativeOpen)$('overlay').hidden=true;}
+function openStall(category='All'){markEntered();closeMore();closeDirectory();closeExperience();dismissMobileHint();closeNative();stallOpen=true;currentCategory=category||'All';$('stallPanel').inert=false;$('stallPanel').classList.add('open');$('stallPanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;$('stallSearch').value='';renderStall();if(!isTouchPhone())$('stallSearch').focus();}
 function validImage(p){const raw=String(p?.imageUrl||p?.image||'');try{const u=new URL(raw);return u.protocol==='https:'&&u.hostname?raw:'';}catch{return '';}}
 function localCard(p){const q=priceInfo(p),cmp=Number(p.compareAtPrice),img=validImage(p);return '<article class="stall-item"><div class="stall-item-art">'+(img?'<img src="'+esc(img)+'" loading="lazy" alt="'+esc(p.name)+'">':'<span>'+esc(p.emoji||'🥬')+'</span>')+'</div><div><h3>'+esc(name(p))+'</h3><p>'+esc(p.unit||'unit')+' · '+esc(language==='hi'?p.name:(p.hindi||p.category||''))+'</p><strong>'+money(q.price)+'</strong>'+(cmp>q.price?'<del>'+money(cmp)+'</del>':'')+(q.enabled&&Number.isFinite(q.mandiPrice)?'<div class="mandi-price">'+(q.qty>=q.threshold?'✓ Mandi price active':'🏷 Mandi rate '+money(q.mandiPrice)+' from '+q.threshold+' units')+'</div>':'')+'</div><div>'+(p.available?(q.qty?'<div class="counter"><button data-qty="'+esc(p.id)+'" data-delta="-1" aria-label="Remove one '+esc(p.name)+'">−</button><span>'+q.qty+'</span><button data-qty="'+esc(p.id)+'" data-delta="1" aria-label="Add one '+esc(p.name)+'">+</button></div>':'<button class="stall-add" data-qty="'+esc(p.id)+'" data-delta="1" aria-label="Add '+esc(p.name)+'">＋</button>'):'<small>Sold out</small>')+'</div></article>';}
 function renderStall(){const title=currentCategory==='All'?(language==='hi'?'सारी मंडी':'Entire marketplace'):currentCategory;$('stallTitle').textContent=title;const search=$('stallSearch').value.toLocaleLowerCase().trim();const items=products.filter(p=>(currentCategory==='All'||p.category===currentCategory)&&(search.length===0||[p.name,p.hindi,p.category,p.description,Array.isArray(p.searchWords)?p.searchWords.join(' '):p.searchWords,Array.isArray(p.keywords)?p.keywords.join(' '):p.keywords].join(' ').toLocaleLowerCase().includes(search)));$('stallMeta').textContent=items.length+' products · '+(catalogSource==='live'?'Live public catalog':'Catalog snapshot')+' · '+'All additions use the official Easy Mandi basket';$('stallItems').innerHTML=items.length?items.map(localCard).join(''):'<p style="text-align:center;padding:40px 12px;color:#879c8d">No products match your search.</p>';refreshTotals();}
-function refreshTotals(){const cart=readCart();$('cartCount').textContent=Object.entries(cart).reduce((x,[,q])=>x+Math.max(0,Number(q)||0),0);$('subtotal').textContent=money(subtotal());}
-function changeProduct(id,delta){const api=nativeApi(),p=products.find(x=>String(x.id)===String(id));if(!p||!p.available){toast('Product unavailable');return;}if(!api?.ready()){toast('Waiting for official Easy Mandi cart…');openNative('catalog');return;}const real=api.getProduct(id);if(!real||!real.available){toast('Product not currently available at the official shop.');return;}const card=api.createCard(real);const buttons=[...card.querySelectorAll('.step button')];const b=buttons.find(x=>x.textContent.trim()===(delta>0?'+':'−'));if(!b||b.disabled){toast('Quantity cannot be changed');return;}try{b.click();refreshTotals();renderStall();toast((delta>0?'Added to':'Removed from')+' your real basket · '+name(p));}catch(e){toast('Could not update the official basket');console.warn(e);}}
+function refreshTotals(){
+ const cart=readCart(),count=Object.entries(cart).reduce((x,[,q])=>x+Math.max(0,Number(q)||0),0);
+ $('cartCount').textContent=String(count);
+ $('dockCartCount').textContent=String(count);
+ $('directoryCartCount').textContent=String(count);
+ $('subtotal').textContent=money(subtotal());
+ $('dockBasket').setAttribute('aria-label',count?'Open basket with '+count+' items':'Open empty basket');
+}
+function changeProduct(id,delta){const api=nativeApi(),p=products.find(x=>String(x.id)===String(id));if(!p||!p.available){toast('Product unavailable');return;}if(!api?.ready()){toast('Waiting for official Easy Mandi cart…');openNative('catalog');return;}const real=api.getProduct(id);if(!real||!real.available){toast('Product not currently available at the official shop.');return;}const card=api.createCard(real);const buttons=[...card.querySelectorAll('.step button')];const b=buttons.find(x=>x.textContent.trim()===(delta>0?'+':'−'));if(!b||b.disabled){toast('Quantity cannot be changed');return;}try{b.click();refreshTotals();if(stallOpen)renderStall();if(directoryOpen)renderDirectory();toast((delta>0?'Added to':'Removed from')+' your real basket · '+name(p));}catch(e){toast('Could not update the official basket');console.warn(e);}}
 async function loadCatalog(){status('Loading fresh catalog…');let data;try{const r=await fetch(api+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);data=await r.json();if(!Array.isArray(data.products)||!data.store)throw Error('Invalid catalog');catalogSource='live';}catch(e){try{const r=await fetch(archive+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('snapshot unavailable');data=await r.json();catalogSource='snapshot';}catch{try{data=JSON.parse(localStorage.getItem('easy-mandi-catalog')||'null');if(!data?.products)throw Error('no cache');catalogSource='cached';}catch{data={products:[],categories:['All']};catalogSource='unavailable';}}}
-products=Array.isArray(data.products)?data.products.filter(p=>p&&p.id!=null&&p.name).map(p=>({...p,id:String(p.id)})):[];categories=['All',...new Set(products.map(p=>p.category||'Other'))];if(products.length){status(catalogSource==='live'?'Live prices':'Catalog snapshot',catalogSource!=='live');}else status('Catalog offline',true);if(scene?.rebuild)scene.rebuild(categories,products);refreshTotals();if(stallOpen)renderStall();}
-function translations(){document.querySelectorAll('[data-en]').forEach(el=>el.textContent=language==='hi'?el.dataset.hi:el.dataset.en);$('languageButton').textContent=language==='en'?'हिन्दी / EN':'EN / हिंदी';if(stallOpen)renderStall();if(scene?.language)scene.language(language);try{if(frame.contentWindow?.EMI18n&&frame.contentWindow.EMI18n.lang!==language){const lang=frame.contentDocument.getElementById('siteLanguage');if(lang){lang.value=language;lang.dispatchEvent(new Event('change',{bubbles:true}));}}}catch{}}
+products=Array.isArray(data.products)?data.products.filter(p=>p&&p.id!=null&&p.name).map(p=>({...p,id:String(p.id)})):[];categories=['All',...new Set(products.map(p=>p.category||'Other'))];if(products.length){status(catalogSource==='live'?'Live prices':'Catalog snapshot',catalogSource!=='live');}else status('Catalog offline',true);if(scene?.rebuild)scene.rebuild(categories,products);refreshTotals();if(stallOpen)renderStall();if(directoryOpen)renderDirectory();}
+function translations(){document.querySelectorAll('[data-en]').forEach(el=>el.textContent=language==='hi'?el.dataset.hi:el.dataset.en);$('languageButton').textContent=language==='en'?'हिन्दी / EN':'EN / हिंदी';if(stallOpen)renderStall();if(directoryOpen)renderDirectory();if(scene?.language)scene.language(language);try{if(frame.contentWindow?.EMI18n&&frame.contentWindow.EMI18n.lang!==language){const lang=frame.contentDocument.getElementById('siteLanguage');if(lang){lang.value=language;lang.dispatchEvent(new Event('change',{bubbles:true}));}}}catch{}}
 function onSceneReady(apiScene){$('noWebGL').hidden=true;scene=apiScene;if(scene?.rebuild)scene.rebuild(categories,products);scene?.setQuality?.($('qualitySelect').value);scene?.setCrowd?.($('crowdToggle').checked);syncExperienceInfo();hideLoading();translations();showMobileHint();}
 window.EMWalk=Object.freeze({
 sceneReady:onSceneReady,
 dismissMobileHint,
 stallSelect:category=>openStall(category),
 near:stall=>{if(stallOpen||nativeOpen)return;$('nearStall').hidden=!stall;if(stall){$('nearIcon').textContent=stall.emoji||'🥬';$('nearName').textContent=stall.category||'All';$('shopStall').dataset.category=stall.category||'All';}},
-get active(){return !stallOpen&&!nativeOpen&&!experienceOpen&&!$('welcome').open;},
+get active(){return !stallOpen&&!nativeOpen&&!directoryOpen&&!moreOpen&&!experienceOpen&&!$('welcome').open;},
 failedWebGL:()=>{$('noWebGL').hidden=false;hideLoading();},
 getCatalog:()=>({categories,products}),
 toast
 });
+
+
+/* UX V3: guided entry, shopping directory and one-tap direct stall access. */
+function markEntered(){
+ if(entered)return;
+ entered=true;document.body.classList.add('has-entered');$('introActions').hidden=true;
+ $('marketLocation').hidden=false;
+}
+function syncDock(){
+ const active=directoryOpen?'dockStalls':nativeOpen&&queuedNative==='basket'?'dockBasket':'dockExplore';
+ for(const id of ['dockExplore','dockStalls','dockBasket','dockMore']){
+  const el=$(id),on=id===(moreOpen?'dockMore':active);
+  el.classList.toggle('active',on);
+  if(on)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');
+ }
+ $('dockMore').setAttribute('aria-expanded',String(moreOpen));
+}
+function closeMore(){
+ moreOpen=false;$('morePanel').hidden=true;$('morePanel').inert=true;syncDock();
+}
+function toggleMore(){
+ if(moreOpen){closeMore();return;}
+ if(directoryOpen)closeDirectory();
+ closeExperience();moreOpen=true;$('morePanel').inert=false;$('morePanel').hidden=false;syncDock();
+}
+function closeDirectory(){
+ if(!directoryOpen)return;
+ directoryOpen=false;$('directoryPanel').classList.remove('open');
+ $('directoryPanel').setAttribute('aria-hidden','true');$('directoryPanel').inert=true;
+ if(!nativeOpen&&!stallOpen)$('overlay').hidden=true;
+ syncDock();
+}
+function openDirectory(){
+ markEntered();dismissMobileHint();closeMore();closeExperience();
+ closeStall(false);closeNative();
+ directoryOpen=true;directoryCategory='All';
+ $('directoryPanel').classList.add('open');$('directoryPanel').inert=false;
+ $('directoryPanel').setAttribute('aria-hidden','false');$('overlay').hidden=false;
+ $('directorySearch').value='';
+ renderDirectory();syncDock();
+ // Focus the dialog heading/close, not the search box: avoid opening the
+ // mobile keyboard before shoppers intend to search.
+ $('closeDirectory').focus({preventScroll:true});
+}
+function productTerms(p){return [
+ p.name,p.hindi,p.category,p.description,p.unit,
+ Array.isArray(p.searchWords)?p.searchWords.join(' '):p.searchWords,
+ Array.isArray(p.keywords)?p.keywords.join(' '):p.keywords
+].join(' ').toLocaleLowerCase();}
+function renderDirectory(){
+ const all=products.filter(p=>p.available!==false);
+ const search=$('directorySearch').value.trim().toLocaleLowerCase();
+ const cats=['All',...new Set(all.map(p=>p.category||'Other'))];
+ if(!cats.includes(directoryCategory))directoryCategory='All';
+ $('directoryTabs').innerHTML=cats.map(cat=>'<button type="button" data-directory-cat="'+esc(cat)+'" class="'+(cat===directoryCategory?'active':'')+'">'+esc(cat==='All'?(language==='hi'?'सभी':'All'):cat)+'</button>').join('');
+ const filtered=all.filter(p=>(directoryCategory==='All'||(p.category||'Other')===directoryCategory)&&(!search||productTerms(p).includes(search)));
+ const makeProduct=p=>{
+  const q=priceInfo(p),img=validImage(p),compare=Number(p.compareAtPrice);
+  const visual=img?'<img src="'+esc(img)+'" loading="lazy" alt="'+esc(p.name)+'">':esc(p.emoji||'🥬');
+  const control=q.qty?'<div class="mini-counter"><button type="button" data-directory-qty="'+esc(p.id)+'" data-delta="-1" aria-label="Remove one '+esc(p.name)+'">−</button><span>'+q.qty+'</span><button type="button" data-directory-qty="'+esc(p.id)+'" data-delta="1" aria-label="Add one '+esc(p.name)+'">+</button></div>':
+  '<button type="button" data-directory-qty="'+esc(p.id)+'" data-delta="1" aria-label="Add '+esc(p.name)+'">+</button>';
+  return '<article class="directory-product"><div class="image">'+visual+'</div><div class="details"><strong>'+esc(name(p))+'</strong><small>'+esc(p.unit||'unit')+' · '+esc(p.category||'Other')+'</small><b>'+money(q.price)+'</b>'+(Number.isFinite(compare)&&compare>q.price?'<del>'+money(compare)+'</del>':'')+'</div>'+control+'</article>';
+ };
+ let html='';
+ if(!search&&directoryCategory==='All'){
+  html+='<div class="directory-section-label">'+(language==='hi'?'दुकान चुनें':'Choose a stall')+'</div>';
+  for(const cat of cats.filter(c=>c!=='All')){
+   const stock=all.filter(p=>p.category===cat);
+   if(!stock.length)continue;
+   html+='<button type="button" class="directory-stall" data-shop-cat="'+esc(cat)+'" aria-label="Shop '+esc(cat)+'"><span class="visual">'+stock.slice(0,2).map(p=>esc(p.emoji||'🥬')).join('')+'</span><span class="text"><strong>'+esc(cat)+'</strong><small>'+stock.length+' '+(language==='hi'?'उत्पाद':'fresh products')+' · '+(language==='hi'?'दुकान खोलें':'Shop now')+'</small></span><span class="arrow" aria-hidden="true">↗</span></button>';
+  }
+  html+='<div class="directory-section-label">'+(language==='hi'?'सभी सामान':'Shop individual items')+'</div>';
+ }
+ if(filtered.length)html+=filtered.slice(0,80).map(makeProduct).join('');
+ else html+='<div class="directory-empty">🌿<p>'+(language==='hi'?'सामान नहीं मिला। दूसरी खोज करें।':'No items found. Try a different name or category.')+'</p><button class="intro-secondary" type="button" id="resetDirectorySearch">Show all</button></div>';
+ $('directoryResults').innerHTML=html;
+}
+function updateLocation(text){
+ $('locationText').textContent=text;
+ $('marketLocation').hidden=false;
+}
+function enterNow(){
+ markEntered();closeDirectory();closeMore();
+ updateLocation(language==='hi'?'मंडी में प्रवेश':'Walking into Easy Mandi');
+ if(scene?.enterMarket)scene.enterMarket();else toast('Use W or the joystick to walk into the market');
+ syncDock();
+}
+function viewCategory(category){
+ markEntered();closeDirectory();closeStall();
+ scene?.focusCategory?.(category);
+ updateLocation(category);
+}
+$('enterNowButton').addEventListener('click',enterNow);
+$('chooseStallButton').addEventListener('click',openDirectory);
+$('topBrowseButton').addEventListener('click',openDirectory);
+$('dockExplore').addEventListener('click',()=>{markEntered();closeDirectory();closeMore();closeStall();closeNative();updateLocation(language==='hi'?'मंडी की सैर':'Explore the marketplace');syncDock();});
+$('dockStalls').addEventListener('click',openDirectory);
+$('dockBasket').addEventListener('click',()=>openNative('basket'));
+$('dockMore').addEventListener('click',toggleMore);
+$('directoryToBasket').addEventListener('click',()=>openNative('basket'));
+$('closeDirectory').addEventListener('click',closeDirectory);
+$('clearDirectorySearch').addEventListener('click',()=>{$('directorySearch').value='';renderDirectory();$('directorySearch').focus();});
+$('directorySearch').addEventListener('input',()=>{renderDirectory();});
+$('directoryTabs').addEventListener('click',e=>{
+ const btn=e.target.closest('[data-directory-cat]');
+ if(btn){directoryCategory=btn.dataset.directoryCat;renderDirectory();}
+});
+$('directoryResults').addEventListener('click',e=>{
+ const quantity=e.target.closest('[data-directory-qty]');
+ if(quantity){changeProduct(quantity.dataset.directoryQty,Number(quantity.dataset.delta));return;}
+ const stall=e.target.closest('[data-shop-cat]');
+ if(stall){const cat=stall.dataset.shopCat;scene?.focusCategory?.(cat);openStall(cat);updateLocation(cat);return;}
+ if(e.target.closest('#resetDirectorySearch')){$('directorySearch').value='';directoryCategory='All';renderDirectory();}
+});
+$('walkToStall').addEventListener('click',()=>viewCategory(currentCategory));
+$('morePanel').inert=true;
+$('directoryPanel').inert=true;
+$('nativePanel').inert=true;
+$('stallPanel').inert=true;
+$('morePanel').addEventListener('click',e=>{
+ const button=e.target.closest('button');if(!button)return;
+ if(button.dataset.native){closeMore();return;} // document data-native handler acts
+ switch(button.id){
+ case'moreGoEntrance':closeMore();markEntered();scene?.reset?.();updateLocation(language==='hi'?'मंडी का प्रवेश':'Market gate');break;
+ case'moreSettings':closeMore();$('experienceButton').click();break;
+ case'moreHelp':closeMore();$('helpButton').click();break;
+ }
+});
+window.EMWalkUX={markEntered,updateLocation};
 
 /* Quality and crowd settings remain local to this preview browser. */
 function readQuality(){try{return localStorage.getItem('easy-mandi-3d-quality-v2')||'auto';}catch{return 'auto';}}
@@ -161,7 +297,7 @@ $('openBasketFromStall').addEventListener('click',()=>openNative('basket'));
 $('nativeClose').addEventListener('click',closeNative);
 $('closeStall').addEventListener('click',()=>closeStall());
 $('nativeRefresh').addEventListener('click',()=>{frame.contentWindow?.location.reload();$('nativeWait').hidden=false;});
-$('overlay').addEventListener('click',()=>{if(nativeOpen)closeNative();else closeStall();});
+$('overlay').addEventListener('click',()=>{if(directoryOpen)closeDirectory();else if(nativeOpen)closeNative();else closeStall();});
 $('stallSearch').addEventListener('input',renderStall);
 // The header of the phone-sized product sheet is a swipe-down dismiss handle.
 // Dragging product rows still scrolls normally, without closing the sheet.
@@ -189,10 +325,10 @@ function dismiss(){try{$('welcome').close();}catch{}try{sessionStorage.setItem('
 $('dismissWelcome').addEventListener('click',dismiss);$('enterMarket').addEventListener('click',dismiss);
 $('openCounterWelcome').addEventListener('click',()=>{dismiss();openNative('catalog');});
 $('welcome').addEventListener('cancel',()=>{try{sessionStorage.setItem('easy-mandi-3d-visited','yes');}catch{}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(experienceOpen)closeExperience();else if(nativeOpen)closeNative();else if(stallOpen)closeStall();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(experienceOpen)closeExperience();else if(moreOpen)closeMore();else if(directoryOpen)closeDirectory();else if(nativeOpen)closeNative();else if(stallOpen)closeStall();}});
 window.addEventListener('storage',e=>{if(e.key==='easy-mandi-cart'){refreshTotals();if(stallOpen)renderStall();}});
 window.addEventListener('focus',refreshTotals);
-setInterval(()=>{if(nativeLoaded){modifyIframe();refreshTotals();}if(stallOpen)renderStall();},5000);
+setInterval(()=>{if(nativeLoaded){modifyIframe();refreshTotals();}if(stallOpen)renderStall();if(directoryOpen)renderDirectory();},5000);
 setTimeout(()=>{if(!$('loading').classList.contains('done')){window.EMWalk.failedWebGL();}},13000);
 translations();loadCatalog();
 })();
