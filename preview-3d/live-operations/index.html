@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="robots" content="noindex,nofollow,noarchive">
+ <meta name="theme-color" content="#183e32">
+ <meta name="description" content="Private Easy Mandi 3D visualisation of purchasing, packing and trolley dispatch operations.">
+ <title>Easy Mandi · Live 3D Order Journey</title>
+ <link rel="icon" href="../../web/favicon.svg" type="image/svg+xml">
+ <link rel="stylesheet" href="./operations.css?v=20261024-1">
+</head>
+<body>
+<div class="screen">
+ <header class="top">
+   <div class="identity"><div class="logo">em<span>.</span></div><div><strong>Easy Mandi <em>3D</em></strong><small>THE LIVING ORDER JOURNEY</small></div></div>
+   <div class="top-right">
+    <div id="liveStatus" class="live-state"><span class="status-dot"></span><span id="statusText">Preview · not connected</span></div>
+    <button id="refreshBtn" class="top-action" type="button" title="Refresh orders" aria-label="Refresh orders" disabled>↻ <span>Refresh</span></button>
+    <button id="signInButton" class="signin" type="button">Connect real orders</button>
+   </div>
+ </header>
+ <main>
+  <section class="heading">
+   <div><span class="eyebrow">FROM PURCHASE TO DELIVERY</span>
+    <h1>Watch your mandi <i>come alive.</i></h1>
+    <p>Follow shoppers, packing staff and delivery partners as orders move through Easy Mandi. Real operations are shown only after authorised admin sign-in.</p>
+   </div>
+   <div class="heading-right"><div id="modeLabel" class="mode-label">DEMO ACTIVITY</div><p id="feedSummary">Illustrative activity only · not actual orders</p></div>
+  </section>
+  <section class="stage">
+    <div class="viewport" id="viewport">
+      <div id="threeHost" class="three-host"></div>
+      <div class="scene-gradient"></div>
+      <div class="viewport-upper">
+       <div class="view-controls" role="group" aria-label="3D camera view">
+        <button class="view-btn active" data-camera="overview">Overview</button>
+        <button class="view-btn" data-camera="shopping">Shopping</button>
+        <button class="view-btn" data-camera="packing">Packing</button>
+        <button class="view-btn" data-camera="dispatch">Dispatch</button>
+       </div>
+       <button id="pauseAnimation" class="pause" type="button" aria-pressed="false">Ⅱ <span>Pause</span></button>
+      </div>
+      <div class="scene-caption" id="sceneCaption">Drag to rotate · Scroll to zoom · Tap a stage to explore</div>
+      <div id="graphicsFailure" class="graphics-error" hidden><strong>3D animation unavailable</strong><p>Order summaries are still accessible on the right. Try a browser with WebGL enabled.</p></div>
+      <div class="world-tag">3D ILLUSTRATION <span>•</span> NOT CCTV OR A LIVE CAMERA</div>
+    </div>
+    <aside class="side">
+      <div class="side-heading"><div><small>OPERATIONS SNAPSHOT</small><h2 id="snapshotTitle">Preview activity</h2></div><span id="asOf">Illustrative</span></div>
+      <div class="stats">
+        <div class="stat"><span class="stat-icon">🛒</span><span>Orders received</span><strong id="receivedCount">—</strong></div>
+        <div class="stat"><span class="stat-icon">📦</span><span>Being prepared</span><strong id="preparingCount">—</strong></div>
+        <div class="stat"><span class="stat-icon">🛺</span><span>Out for delivery</span><strong id="dispatchCount">—</strong></div>
+        <div class="stat"><span class="stat-icon">✓</span><span>Delivered</span><strong id="deliveredCount">—</strong></div>
+      </div>
+      <div class="queue-heading"><h3>Order movement</h3><span id="ordersTotal">Demo orders</span></div>
+      <div class="queue" id="orderQueue" aria-live="polite"></div>
+      <p class="privacy">Illustrated figures are anonymous. No names, phone numbers, locations, payment details or order references are displayed.</p>
+    </aside>
+  </section>
+  <section class="journey" aria-label="How an order moves through the market">
+    <div class="journey-item"><div class="journey-number">01</div><div><strong>Choose &amp; purchase</strong><small>Shoppers at produce stalls</small></div></div>
+    <div class="journey-item"><div class="journey-number">02</div><div><strong>Confirm &amp; pack</strong><small>Fresh produce sorted by staff</small></div></div>
+    <div class="journey-item"><div class="journey-number">03</div><div><strong>Load &amp; dispatch</strong><small>Goods leave on loaded trolleys</small></div></div>
+    <div class="journey-item"><div class="journey-number">04</div><div><strong>Delivered</strong><small>Real status, without personal data</small></div></div>
+  </section>
+ </main>
+ <footer><span>Developed and maintained by <strong>Champak Roy</strong></span><span>Easy Mandi · Unlisted approval preview</span></footer>
+</div>
+<dialog id="authDialog" class="auth-dialog" aria-labelledby="authHeading">
+ <form id="authForm">
+  <button class="dialog-close" type="button" id="authClose" aria-label="Close">×</button>
+  <div class="lock-visual">🔒</div>
+  <small>ADMIN-ONLY LIVE ACTIVITY</small>
+  <h2 id="authHeading">Connect real orders</h2>
+  <p>Use your existing Easy Mandi admin password to read recent operational statuses. This page never saves your password, or shows identifiable customer information.</p>
+  <label for="adminPassword">Easy Mandi admin password</label>
+  <input id="adminPassword" type="password" autocomplete="current-password" required minlength="1" placeholder="Enter admin password">
+  <p id="authError" class="auth-error" role="alert" hidden></p>
+  <button id="authSubmit" class="submit" type="submit">Connect securely →</button>
+  <p class="auth-note">Access lasts up to 30 minutes; you can disconnect at any time.</p>
+ </form>
+</dialog>
+<script type="module" src="./operations.js?v=20261024-1"></script>
+</body>
+</html>
