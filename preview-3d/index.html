@@ -5,10 +5,11 @@
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#102e22">
+<meta name="color-scheme" content="light">
 <title>Walk Through the Mandi | Easy Mandi 3D</title>
 <meta name="description" content="An unlisted, immersive first-person Easy Mandi shopping experience in Varanasi.">
 <link rel="icon" href="../web/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./walk.css?v=20261024-living-mandi-v2">
+<link rel="stylesheet" href="./walk.css?v=20261024-ux-overhaul-v3">
 </head>
 <body>
 <div id="app" class="world-app">
@@ -24,6 +25,7 @@
       <div class="hud-top">
         <div class="hud-brand"><img src="../web/brand-symbol.svg" alt=""><div><strong>easy<span>mandi</span> <sup>3D</sup></strong><small>WALK-IN MARKET · VARANASI</small></div></div>
         <div class="hud-actions">
+          <button class="hud-button header-stalls" id="topBrowseButton" type="button" aria-label="Browse all market stalls">▦ <span data-en="Stalls" data-hi="दुकानें">Stalls</span></button>
           <span class="server-status" id="serverStatus"><span class="green-dot"></span>Connecting</span>
           <button class="hud-button language-button" id="languageButton" title="Change language" aria-label="Change language">हिन्दी / EN</button>
           <button class="hud-button icon-only" id="fullscreenButton" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button>
@@ -44,6 +46,15 @@
         <label class="experience-toggle"><span><strong data-en="Market ambience" data-hi="मंडी की आवाज़ें">Market ambience</strong><small data-en="Soft breeze, birds and market sounds • off by default" data-hi="हल्की हवा, पक्षी और मंडी की ध्वनियाँ • शुरू में बंद">Soft breeze, birds and market sounds • off by default</small></span><input id="soundToggle" type="checkbox"></label>
         <p class="experience-info" id="experienceInfo" role="status">Preparing animated shops…</p>
       </section>
+      <div class="intro-actions" id="introActions">
+        <div class="intro-copy"><span class="intro-eyebrow" data-en="YOUR MANDI IS OPEN" data-hi="आपकी मंडी खुली है">YOUR MANDI IS OPEN</span>
+          <h1 data-en="Welcome to Easy Mandi" data-hi="ईज़ी मंडी में स्वागत है">Welcome to Easy Mandi</h1>
+          <p data-en="Walk through the gate, or shop a stall right away." data-hi="गेट से अंदर जाएँ या सीधे दुकान से खरीदें।">Walk through the gate, or shop a stall right away.</p>
+        </div>
+        <div class="intro-buttons"><button type="button" id="enterNowButton" class="intro-primary"><span data-en="Enter market" data-hi="मंडी में चलें">Enter market</span> <span aria-hidden="true">→</span></button>
+        <button type="button" id="chooseStallButton" class="intro-secondary" data-en="Browse stalls" data-hi="दुकानें देखें">Browse stalls</button></div>
+      </div>
+      <div class="market-location" id="marketLocation" aria-live="polite" hidden>⌖ <span id="locationText">Market entrance</span></div>
       <div class="hud-side">
         <button class="hud-button side-button" data-native="catalog">🥬 <span data-en="Shop all" data-hi="सारा सामान">Shop all</span></button>
         <button class="hud-button side-button" data-native="orders">📦 <span data-en="My orders" data-hi="मेरे ऑर्डर">My orders</span></button>
@@ -63,12 +74,28 @@
               data-hi="चलने के लिए गोला घुमाएँ • देखने के लिए स्क्रीन खिसकाएँ • दुकान छुएँ">Move the circle to walk • Swipe the market to look • Tap a stall to shop</span>
         <button id="dismissMobilePrompt" type="button" aria-label="Dismiss mobile instructions">×</button>
       </div>
+      <nav class="primary-dock" aria-label="Main marketplace navigation">
+        <button type="button" id="dockExplore" class="dock-item active" aria-label="Explore 3D market" aria-current="page"><span aria-hidden="true">⌖</span><small data-en="Explore" data-hi="घूमें">Explore</small></button>
+        <button type="button" id="dockStalls" class="dock-item" aria-label="Browse shopping stalls"><span aria-hidden="true">▦</span><small data-en="Stalls" data-hi="दुकानें">Stalls</small></button>
+        <button type="button" id="dockBasket" class="dock-item dock-basket" aria-label="Open basket"><span aria-hidden="true">🧺</span><small data-en="Basket" data-hi="टोकरी">Basket</small><b id="dockCartCount">0</b></button>
+        <button type="button" id="dockMore" class="dock-item" aria-label="More market options" aria-expanded="false"><span aria-hidden="true">☰</span><small data-en="More" data-hi="अन्य">More</small></button>
+      </nav>
       <div class="crosshair" aria-hidden="true"><span></span><span></span></div>
       <div class="near-stall" id="nearStall" hidden>
         <span class="near-icon" id="nearIcon">🥕</span>
         <div><small data-en="YOU'RE AT THE STALL" data-hi="आप इस स्टॉल पर हैं">YOU'RE AT THE STALL</small><strong id="nearName">Vegetables</strong></div>
         <button id="shopStall" class="shop-stall-button">Shop stall ↗</button>
       </div>
+      <section class="more-panel" id="morePanel" hidden aria-label="More marketplace options">
+        <button type="button" data-native="orders">📦 <span data-en="My orders" data-hi="मेरे ऑर्डर">My orders</span></button>
+        <button type="button" data-native="previous">↻ <span data-en="Buy again" data-hi="फिर खरीदें">Buy again</span></button>
+        <button type="button" data-native="favorites">♡ <span data-en="Favorites" data-hi="पसंदीदा">Favorites</span></button>
+        <button type="button" data-native="account">♙ <span data-en="My account" data-hi="मेरा खाता">My account</span></button>
+        <button type="button" data-native="notifications">🔔 <span data-en="Notifications" data-hi="सूचनाएँ">Notifications</span></button>
+        <button type="button" id="moreGoEntrance">⌂ <span data-en="Return to gate" data-hi="गेट पर लौटें">Return to gate</span></button>
+        <button type="button" id="moreSettings">⚙ <span data-en="Graphics & sound" data-hi="ग्राफिक्स और आवाज़">Graphics & sound</span></button>
+        <button type="button" id="moreHelp">? <span data-en="How to shop" data-hi="खरीदारी कैसे करें">How to shop</span></button>
+      </section>
       <div class="maker-credit">Developed and maintained by <strong>Champak Roy</strong></div>
       <div class="walk-footer">
         <div class="walk-instructions">
@@ -96,8 +123,20 @@
       <button class="accent-button" data-native="catalog">Open the live market counter</button>
     </div>
   </div>
+  <section class="directory-panel" id="directoryPanel" aria-label="Explore market stalls and find products" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="directory-heading">
+      <div><small data-en="SHOP YOUR WAY" data-hi="अपनी पसंद से खरीदें">SHOP YOUR WAY</small><h2 data-en="Find your fresh picks." data-hi="अपना ताज़ा सामान चुनें।">Find your fresh picks.</h2><p data-en="Select a shop or search products. No need to walk." data-hi="दुकान चुनें या सामान खोजें। चलना ज़रूरी नहीं।">Select a shop or search products. No need to walk.</p></div>
+      <button type="button" id="closeDirectory" class="close-button" aria-label="Close stall browser">×</button>
+    </div>
+    <label class="directory-search"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" autocomplete="off" placeholder="Search tomato, bhindi, आलू..." aria-label="Search all market products"><button type="button" id="clearDirectorySearch" aria-label="Clear search">×</button></label>
+    <div class="directory-content"><div class="directory-tabs" id="directoryTabs" aria-label="Market categories"></div>
+      <div class="directory-results" id="directoryResults" aria-live="polite"></div>
+    </div>
+    <div class="directory-bottom"><span data-en="Real catalog • Real basket" data-hi="असली कैटलॉग • असली टोकरी">Real catalog • Real basket</span><button type="button" id="directoryToBasket" class="accent-button">Basket <b id="directoryCartCount">0</b> →</button></div>
+  </section>
   <section class="stall-panel" id="stallPanel" aria-label="Products in this stall" aria-hidden="true">
     <div class="panel-heading"><div><small>FRESH FROM THE MANDI</small><h2 id="stallTitle">Vegetables</h2></div><button class="close-button" id="closeStall" aria-label="Close stall">×</button></div>
+    <div class="stall-view-actions"><button id="walkToStall" type="button" class="walk-to-stall">⌖ <span data-en="View this stall in 3D" data-hi="3D में दुकान देखें">View this stall in 3D</span></button></div>
     <div class="stall-search"><span>⌕</span><input id="stallSearch" type="search" placeholder="Search vegetables…" aria-label="Search stall products"></div>
     <div class="stall-meta" id="stallMeta"></div><div class="stall-items" id="stallItems"></div>
     <div class="stall-bottom"><div><small data-en="Basket subtotal" data-hi="टोकरी का कुल">Basket subtotal</small><strong id="subtotal">₹0</strong></div><button class="accent-button" id="openBasketFromStall">Go to basket →</button></div>
@@ -119,7 +158,7 @@
   </dialog>
   <div class="live-toast" id="toast" role="status" aria-live="polite"></div>
 </div>
-<script src="./walk.js?v=20261024-living-mandi-v2" defer></script>
-<script type="module" src="./scene.js?v=20261024-living-mandi-v2"></script>
+<script src="./walk.js?v=20261024-ux-overhaul-v3" defer></script>
+<script type="module" src="./scene.js?v=20261024-ux-overhaul-v3"></script>
 </body>
 </html>
