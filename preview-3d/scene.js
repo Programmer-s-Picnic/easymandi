@@ -235,7 +235,7 @@ const emoji=String(inStock[0]?.emoji||'🥬');
 emojiPlane(root,emoji,signX+face*.07,1.68,-1.25,.94,side===-1?Math.PI/2:-Math.PI/2);
 const rugs=new THREE.Mesh(new THREE.CircleGeometry(.62,24),new THREE.MeshStandardMaterial({color:'#c8b58b',roughness:1}));rugs.rotation.x=-Math.PI/2;rugs.position.set(signX+face*.65,.045,0);root.add(rugs);
 const hit=new THREE.Mesh(new THREE.BoxGeometry(4.9,3.9,5.8),new THREE.MeshBasicMaterial({visible:false}));hit.position.set(0,1.9,0);root.add(hit);hit.userData.category=category;hitMeshes.push(hit);
-const spotlight=new THREE.PointLight('#ffd1a0',1.2,8,2);spotlight.position.set(0,2.5,0);root.add(spotlight);
+const spotlight=new THREE.PointLight('#ffd1a0',1.2,8,2);spotlight.position.set(0,2.5,0);spotlight.visible=!compactMobile;root.add(spotlight);
 stalls.push({category,z,x,side,emoji,root,titleMesh:null,texture:big});
 return root;
 }
@@ -299,6 +299,9 @@ camera.position.y=1.68+(walkingNow?Math.sin(walking)*.045:0);
 updateDirection();
 if(active&&now-lastNearAt>240){lastNearAt=now;let near=null,distance=7;for(const stall of stalls){const d=Math.hypot(camera.position.z-stall.z,camera.position.x-stall.x);if(d<distance){distance=d;near=stall;}}if(near!==nearest){nearest=near;app.near(near);}}
 living.update(dt,now,camera.position,active);
+// Culling distant stocked shop interiors avoids thousands of unnecessary
+// produce/fixture draw calls while visitors move through long market aisles.
+for(const stall of stalls)stall.root.visible=Math.abs(camera.position.z-stall.z)<(compactMobile?32:43);
 renderer.render(world,camera);
 }
 window.addEventListener('resize',()=>{const w=host.clientWidth,h=host.clientHeight;camera.aspect=Math.max(.3,w/h);camera.updateProjectionMatrix();renderer.setSize(w,h);});
