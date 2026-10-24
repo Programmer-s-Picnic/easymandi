@@ -197,9 +197,20 @@ export function createLivingMandi({THREE,world,renderer,camera,mobile=false}){
     }
    }
    const candidate=p.z+p.direction*travel;
-   if(candidate<p.minZ){p.z=p.minZ;p.direction=1;p.pause=.55;}
-   else if(candidate>29){p.z=29;p.direction=-1;p.pause=.5;}
-   else p.z=candidate;
+   const atEnd=p.direction<0?candidate<=p.minZ:candidate>=29;
+   if(atEnd){
+    // A pedestrian exits at the end of this traffic lane and later enters
+    // from the opposite end. Never U-turn through approaching customers.
+    const entry=p.direction<0?29:p.minZ;
+    let free=true;
+    for(const q of shoppers){
+     if(q===p||!q.root.visible)continue;
+     if(Math.hypot(p.lane-q.root.position.x,entry-q.z)<clearance(p,q)+.3){free=false;break;}
+    }
+    if(player&&Math.hypot(p.lane-player.x,entry-player.z)<p.radius+cameraRadius+.5)free=false;
+    if(free){p.z=entry;p.pause=.8;p.wait=2.5;}
+    else {p.z=p.direction<0?p.minZ:29;p.pause=.4;}
+   }else p.z=candidate;
    p.root.position.z=p.z;
    // Fixed separate lanes remove the previous sudden lateral swings which
    // caused two bodies to briefly occupy the same space while passing.
