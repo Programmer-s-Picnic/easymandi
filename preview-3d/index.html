@@ -8,7 +8,7 @@
 <title>Walk Through the Mandi | Easy Mandi 3D</title>
 <meta name="description" content="An unlisted, immersive first-person Easy Mandi shopping experience in Varanasi.">
 <link rel="icon" href="../web/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./walk.css?v=20261018-credit-contrast-v5">
+<link rel="stylesheet" href="./walk.css?v=20261024-living-mandi-v2">
 </head>
 <body>
 <div id="app" class="world-app">
@@ -27,9 +27,23 @@
           <span class="server-status" id="serverStatus"><span class="green-dot"></span>Connecting</span>
           <button class="hud-button language-button" id="languageButton" title="Change language" aria-label="Change language">हिन्दी / EN</button>
           <button class="hud-button icon-only" id="fullscreenButton" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button>
+          <button class="hud-button settings-trigger" id="experienceButton" type="button" aria-label="Market settings" aria-expanded="false" aria-controls="experiencePanel" title="Market settings">⚙</button>
           <button class="hud-button cart-button" id="basketButton" aria-label="Open live basket">🧺 <span id="cartCount">0</span></button>
         </div>
       </div>
+      <section class="experience-panel" id="experiencePanel" aria-label="Market experience settings" hidden>
+        <div class="experience-heading"><div><small>PERSONALISE YOUR MANDI</small><h2 data-en="Market experience" data-hi="मंडी का अनुभव">Market experience</h2></div><button type="button" class="settings-close" id="closeExperience" aria-label="Close market settings">×</button></div>
+        <label class="experience-field" for="qualitySelect"><span data-en="Graphics quality" data-hi="ग्राफिक्स की गुणवत्ता">Graphics quality</span>
+          <select id="qualitySelect" aria-label="Graphics quality">
+            <option value="auto">Automatic (recommended)</option>
+            <option value="battery">Battery Saver</option>
+            <option value="high">High Quality</option>
+          </select>
+        </label>
+        <label class="experience-toggle"><span><strong data-en="Moving shoppers & vendors" data-hi="चलते ग्राहक और दुकानदार">Moving shoppers & vendors</strong><small data-en="Simulated people, not actual Easy Mandi customers" data-hi="काल्पनिक पात्र, असली ग्राहक नहीं">Simulated people, not actual Easy Mandi customers</small></span><input id="crowdToggle" type="checkbox" checked></label>
+        <label class="experience-toggle"><span><strong data-en="Market ambience" data-hi="मंडी की आवाज़ें">Market ambience</strong><small data-en="Soft breeze, birds and market sounds • off by default" data-hi="हल्की हवा, पक्षी और मंडी की ध्वनियाँ • शुरू में बंद">Soft breeze, birds and market sounds • off by default</small></span><input id="soundToggle" type="checkbox"></label>
+        <p class="experience-info" id="experienceInfo" role="status">Preparing animated shops…</p>
+      </section>
       <div class="hud-side">
         <button class="hud-button side-button" data-native="catalog">🥬 <span data-en="Shop all" data-hi="सारा सामान">Shop all</span></button>
         <button class="hud-button side-button" data-native="orders">📦 <span data-en="My orders" data-hi="मेरे ऑर्डर">My orders</span></button>
@@ -105,7 +119,7 @@
   </dialog>
   <div class="live-toast" id="toast" role="status" aria-live="polite"></div>
 </div>
-<script src="./walk.js?v=20261018-mobile-ux-v4" defer></script>
-<script type="module" src="./scene.js?v=20261018-mobile-ux-v4"></script>
+<script src="./walk.js?v=20261024-living-mandi-v2" defer></script>
+<script type="module" src="./scene.js?v=20261024-living-mandi-v2"></script>
 </body>
 </html>
