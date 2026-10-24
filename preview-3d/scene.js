@@ -16,8 +16,10 @@ host.appendChild(renderer.domElement);
 renderer.domElement.setAttribute('tabindex','0');renderer.domElement.setAttribute('aria-label','Walkable three-dimensional vegetable market. Use WASD to walk and drag to look around.');
 renderer.domElement.style.touchAction='none';
 const world=new THREE.Scene();world.background=new THREE.Color('#b4d7cd');world.fog=new THREE.Fog('#b4d7cd',32,78);
+const {createLivingMandi}=await import('./living.js?v=20261024-living-v2');
 const camera=new THREE.PerspectiveCamera(72,Math.max(.3,host.clientWidth/host.clientHeight),.08,125);camera.position.set(0,1.68,window.matchMedia('(max-width:790px)').matches?35.4:29.2);
 let yaw=0,pitch=0,last=performance.now(),walking=0,walkRows=3,nearest=null,stalls=[],hitMeshes=[];
+const living=createLivingMandi({THREE,world,renderer,camera,mobile:compactMobile});
 let lastNearAt=0,pressed=new Set(),mobilePressed=new Set(),lookHeld=new Set(),activeDrag=null,clickStart=null;
 let thumbVector={x:0,y:0},joystickPointer=null;
 const price=n=>'₹'+Math.round(Number(n)||0);
@@ -275,6 +277,7 @@ function rebuild(cats,products){
  }
  if(!extrasReady){marketExtras(rows);extrasReady=true;}
  walkRows=rows;
+ living.rebuild(stalls,availableProducts);
 }
 function updateLabels(language){/* Sign boards retain bilingual produce illustrations and category names. */}
 // Camera begins on the public approach facing the front of the Easy Mandi gateway.
@@ -295,6 +298,7 @@ camera.position.y=1.68+(walkingNow?Math.sin(walking)*.045:0);
 }
 updateDirection();
 if(active&&now-lastNearAt>240){lastNearAt=now;let near=null,distance=7;for(const stall of stalls){const d=Math.hypot(camera.position.z-stall.z,camera.position.x-stall.x);if(d<distance){distance=d;near=stall;}}if(near!==nearest){nearest=near;app.near(near);}}
+living.update(dt,now,camera.position,active);
 renderer.render(world,camera);
 }
 window.addEventListener('resize',()=>{const w=host.clientWidth,h=host.clientHeight;camera.aspect=Math.max(.3,w/h);camera.updateProjectionMatrix();renderer.setSize(w,h);});
@@ -335,7 +339,7 @@ if(joystick){
 }
 for(const button of document.querySelectorAll('[data-move]')){const dir=button.dataset.move;button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture?.(e.pointerId);mobilePressed.add(dir);});for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,()=>mobilePressed.delete(dir));}
 for(const button of document.querySelectorAll('[data-look]')){const dir=button.dataset.look;button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture?.(e.pointerId);lookHeld.add(dir);});for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,()=>lookHeld.delete(dir));}
-app.sceneReady({rebuild,reset,language:updateLabels});
+app.sceneReady({rebuild,reset,language:updateLabels,setQuality:living.setQuality,setCrowd:living.setCrowd,getCrowdState:living.getState});
 requestAnimationFrame(animate);
 }catch(e){console.error('3D market initialization error',e);app.failedWebGL();}
 }
