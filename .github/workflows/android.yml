@@ -26,7 +26,7 @@ jobs:
         run: flutter create --platforms=android --org in.easymandi .
       - name: Enable network access and app name
         run: |
-          sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"\/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"\/><application/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"\/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"\/><uses-permission android:name="android.permission.RECORD_AUDIO"\/><queries><intent><action android:name="android.speech.RecognitionService"\/><\/intent><\/queries><application/' android/app/src/main/AndroidManifest.xml
           sed -i 's/android:label="easy_mandi"/android:label="Easy Mandi"/' android/app/src/main/AndroidManifest.xml
           sed -i 's/<application/<application android:allowBackup="false"/' android/app/src/main/AndroidManifest.xml
       - name: Verify Android manifest and SQLite support
@@ -41,6 +41,7 @@ jobs:
               "android.permission.INTERNET",
               "android.permission.ACCESS_FINE_LOCATION",
               "android.permission.ACCESS_COARSE_LOCATION",
+              "android.permission.RECORD_AUDIO",
           }
           assert required <= permissions, f"Missing Android permissions: {required - permissions}"
           print("Android manifest permissions verified; SQLite requires no storage permission.")

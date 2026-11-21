@@ -31,6 +31,7 @@ import 'app_update.dart';
 import 'delivery_window.dart';
 import 'customer_catalog_loader.dart';
 import 'customer_startup.dart';
+import 'voice_search_button.dart';
 
 const catalogUrl =
     'https://cserver.learnwithchampak.live/easymandi/api/catalog.php';
@@ -1379,10 +1380,24 @@ class _StorePageState extends State<StorePage> {
                 hintText:tr('Search fruits, vegetables, essentials…','फल, सब्ज़ी, किराने का सामान खोजें…'),
                 hintStyle:const TextStyle(fontSize:12),
                 prefixIcon:const Icon(Icons.search,size:21),
-                suffixIcon:query.isEmpty?null:IconButton(
-                  tooltip:tr('Clear search','खोज साफ करें'),
-                  onPressed:(){_searchController.clear();setState(()=>query='');},
-                  icon:const Icon(Icons.close,size:17)),
+                suffixIconConstraints:const BoxConstraints(minHeight:42),
+                suffixIcon:Row(mainAxisSize:MainAxisSize.min,children:[
+                  if(query.isNotEmpty)IconButton(
+                    tooltip:tr('Clear search','खोज साफ करें'),
+                    onPressed:(){_searchController.clear();setState(()=>query='');},
+                    icon:const Icon(Icons.close,size:17),
+                    padding:EdgeInsets.zero,
+                    constraints:const BoxConstraints(minWidth:36,minHeight:42)),
+                  VoiceSearchButton(
+                    hindi:EasyMandiLanguage.hindi.value,
+                    onText:(text){
+                      _searchController.value=TextEditingValue(
+                        text:text,
+                        selection:TextSelection.collapsed(offset:text.length),
+                      );
+                      setState(()=>query=text);
+                    }),
+                ]),
               ),
             )),
             if(favoritesOnly)Padding(padding:const EdgeInsets.only(top:5),
