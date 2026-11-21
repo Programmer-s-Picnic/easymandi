@@ -18,5 +18,7 @@ jobs:
         run: find web admin shared -type f -name '*.js' -print0 | xargs -0 -n1 node --check
       - name: Check sessions, filters, notifications and checkout
         run: node tests/web-regression.cjs
+      - name: Check Hindi/English voice search fallback
+        run: node tests/voice-search.cjs
       - name: Check compact bilingual delivery notices
         run: node tests/compact-delivery-policy.cjs
