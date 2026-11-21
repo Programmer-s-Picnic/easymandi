@@ -43,21 +43,21 @@ jobs:
           mkdir -p /tmp/easymandi-apks
           # Do not publish a new manifest until BOTH upstream APKs have been
           # built, checksum-verified and installed at their source URLs.
-          crun="$(jq -er '.customer.workflowRun' apk/release-config.json)"
-          artifact="$(jq -er '.customer.artifactId' apk/release-config.json)"
-          curl -fLsS --retry 3 -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "$CUSTOMER/actions/runs/$crun" -o /tmp/easymandi-apks/customer-run.json
-          jq -e --arg sha "$csha" '.conclusion=="success" and .head_sha==$sha' \
-            /tmp/easymandi-apks/customer-run.json >/dev/null
-          curl -fLsS --retry 3 -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "$CUSTOMER/actions/artifacts/$artifact/zip" -o /tmp/easymandi-apks/customer-artifact.zip
-          unzip -p /tmp/easymandi-apks/customer-artifact.zip app-arm64-v8a-release.apk > /tmp/easymandi-apks/easymani64.apk
-          unzip -p /tmp/easymandi-apks/customer-artifact.zip app-armeabi-v7a-release.apk > /tmp/easymandi-apks/easymani32.apk
-          echo "$(jq -er '.customer.sha256_64' apk/release-config.json)  /tmp/easymandi-apks/easymani64.apk" | sha256sum -c -
-          echo "$(jq -er '.customer.sha256_32' apk/release-config.json)  /tmp/easymandi-apks/easymani32.apk" | sha256sum -c -
+          # Older signed customer APK artifacts may expire from GitHub Actions.
+          # Reuse ONLY the already published customer APKs if their original pinned
+          # checksums and release manifest still match exactly. Do not rebuild,
+          # re-sign, or alter the customer download files during a delivery update.
+          jq -e --arg ver "$cver" --arg sha "$csha" \
+            '.domain=="easymandi.in" and .customer.version==$ver and .customer.sourceCommit==$sha' \
+            apk/build.json >/dev/null
+          test -s apk/easymani64.apk
+          test -s apk/easymani32.apk
+          echo "$(jq -er '.customer.sha256_64' apk/release-config.json)  apk/easymani64.apk" | sha256sum -c -
+          echo "$(jq -er '.customer.sha256_32' apk/release-config.json)  apk/easymani32.apk" | sha256sum -c -
           for f in easymani64.apk easymani32.apk; do
-            test "$(stat -c '%s' "/tmp/easymandi-apks/$f")" -gt 1000000
-            unzip -tq "/tmp/easymandi-apks/$f" >/dev/null
+            test "$(stat -c '%s' "apk/$f")" -gt 1000000
+            unzip -tq "apk/$f" >/dev/null
+            cp "apk/$f" "/tmp/easymandi-apks/$f"
           done
           # Resolve the successful pinned delivery partner APK build and
           # compare its released asset digest, never trust a mutable URL alone.
