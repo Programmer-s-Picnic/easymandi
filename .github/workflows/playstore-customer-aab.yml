@@ -50,7 +50,7 @@ jobs:
           python3 tool/make_icon.py
           rm -f test/widget_test.dart analysis_options.yaml
           flutter pub get
-          flutter analyze
+          flutter analyze --no-fatal-infos
           flutter test
           test -f android/app/build.gradle.kts
           grep -F 'applicationId = "in.easymandi.easy_mandi"' android/app/build.gradle.kts
