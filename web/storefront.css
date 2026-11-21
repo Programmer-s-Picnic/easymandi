@@ -760,3 +760,12 @@ padding:2px 6px;border-radius:6px;margin-top:4px;white-space:normal}
 @media(prefers-reduced-motion:no-preference){
   .hero-delivery-banner{transition:padding .16s ease,margin .16s ease}
 }
+
+/* Optional, explicit microphone input alongside the existing catalogue search. */
+.catalog-search-field{display:flex;align-items:center;gap:8px;flex:1 1 260px;min-width:0}
+.catalog-search-field .search{flex:1 1 auto;min-width:0;margin:0}
+.voice-search-btn{flex:0 0 48px;display:grid;place-items:center;min-width:48px;min-height:48px;background:#edf7ef;color:#176b46;border:1px solid #b9dac4;border-radius:13px}
+.voice-search-btn:hover,.voice-search-btn:focus-visible{outline:2px solid #176b46;outline-offset:1px}
+.voice-search-btn[aria-pressed="true"]{background:#176b46;color:#fff;box-shadow:0 0 0 3px #b5e5c5}
+.voice-search-btn[hidden]{display:none!important}
+@media(max-width:600px){.catalog-search-field{flex-basis:100%}.catalog-search-field .search{flex-basis:auto}.catalog-search-tools .voice-search-btn{flex:0 0 48px}}

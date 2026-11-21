@@ -67,7 +67,7 @@
   ]
 }
 </script>
-<link rel="stylesheet" href="storefront.css?v=20261017-policy-ui-v3">
+<link rel="stylesheet" href="storefront.css?v=20261121-voice-v1">
 <script src="i18n.js?v=20261017-policy-ui-v3" defer></script>
 <link rel="stylesheet" href="../shared/notifications.css?v=20261010-draggable-v1">
 <script src="../shared/api-client.js?v=20260930-cleanup" defer>
@@ -167,7 +167,7 @@
   <button id="moreMyOrders" class="btn ghost" type="button" hidden>Load more orders</button>
 </section>
 
-<div class="catalog-search-tools"><input class="search" id="search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products" data-i18n-aria-label="searchAria"><button type="button" class="btn ghost" id="clearSearch" data-i18n="clearSearch">Clear search</button><button type="button" class="btn ghost" id="favoritesFilter" aria-pressed="false" data-i18n="showFavorites">♡ Favorites</button></div>
+<div class="catalog-search-tools"><div class="catalog-search-field"><input class="search" id="search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search onions, potatoes, tomatoes..." aria-label="Search products" data-i18n-aria-label="searchAria"><button type="button" class="voice-search-btn" id="voiceSearch" hidden aria-pressed="false" aria-label="Search by voice" title="Search by voice"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg></button></div><span class="sr-only" role="status" aria-live="polite" id="voiceSearchStatus"></span><button type="button" class="btn ghost" id="clearSearch" data-i18n="clearSearch">Clear search</button><button type="button" class="btn ghost" id="favoritesFilter" aria-pressed="false" data-i18n="showFavorites">♡ Favorites</button></div>
 <div class="filters" id="filters">
 </div>
 <div class="head" id="shopCatalog">
@@ -321,6 +321,7 @@
 <script src="savings-moment.js?v=20261011-market-savings-v1" defer></script>
 <script src="compact-delivery-policy.js?v=20261017-v3" defer></script>
 <script src="delivery-window.js?v=20261016-policy-v2" defer></script>
+<script src="voice-search.js?v=20261121-voice-v1" defer></script>
 <script src="storefront.js?v=20261016-policy-v2" defer>
 </script>
 <script src="auth.js?v=20261010-branding-v15" defer>
