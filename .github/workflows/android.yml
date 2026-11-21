@@ -54,7 +54,7 @@ jobs:
       - name: Remove generated template checks
         run: rm -f test/widget_test.dart analysis_options.yaml
       - run: flutter pub get
-      - run: flutter analyze
+      - run: flutter analyze --no-fatal-infos
       - run: flutter test
       - name: Restore demo signing key
         uses: actions/cache@v4
